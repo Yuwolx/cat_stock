@@ -75,7 +75,7 @@ def get_investor_flows(target_date: str, use_mock_data: bool = True) -> dict:
             "foreign_top_buy": ["삼성전자", "SK하이닉스", "현대차"],
             "foreign_top_sell": ["LG에너지솔루션", "POSCO홀딩스", "에코프로비엠"],
             "institution_top_buy": ["KB금융", "NAVER", "기아"],
-            "institution_top_sell": ["삼성바이오로직스", "셀트리온", "한화에어로스페이스"],
+            "institution_top_sell": ["삼성바이오로직스", "한화에어로스페이스", "셀트리온"],
         }
 
     try:

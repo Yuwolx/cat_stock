@@ -21,7 +21,7 @@ def format_stock_report(payload: dict) -> str:
 
     sections = [
         f"[개별 종목 분석 - {basics['name']} - {payload['target_date']}]",
-        "※ 현재는 뼈대 단계이며 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
+        "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
         section(
             "기본 정보",
             [
@@ -52,9 +52,9 @@ def format_stock_report(payload: dict) -> str:
         section(
             "수급",
             [
-                f"외국인 최근 20일 누적 순매수: {display_value(flows['foreign_20d'])}",
-                f"기관 최근 20일 누적 순매수: {display_value(flows['institution_20d'])}",
-                f"공매도 잔고 비율: {display_value(short_selling['short_balance_ratio'])}",
+                f"외국인 최근 20일 누적 순매수 {display_value(flows['foreign_20d'])}",
+                f"기관 최근 20일 누적 순매수 {display_value(flows['institution_20d'])}",
+                f"공매도 잔고 비율 {display_value(short_selling['short_balance_ratio'])}",
             ],
         ),
         section("재무 요약", financial_lines or ["데이터 없음"]),
@@ -64,9 +64,9 @@ def format_stock_report(payload: dict) -> str:
         section(
             "추가 체크",
             [
-                f"컨센서스 목표가: {display_value(short_selling['consensus_target_price'])}",
-                f"대주주 지분율: {display_value(disclosures['major_shareholder_ratio'])}",
-                f"리스크 체크: {format_list(disclosures['risk_flags'])}",
+                f"컨센서스 목표가 {display_value(short_selling['consensus_target_price'])}",
+                f"대주주 지분율 {display_value(disclosures['major_shareholder_ratio'])}",
+                f"리스크 체크 {format_list(disclosures['risk_flags'])}",
             ],
         ),
     ]

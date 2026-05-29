@@ -109,13 +109,13 @@ def get_home_market_snapshot(use_mock_data: bool = True) -> dict:
             "foreign_top_buy": ["삼성전자", "SK하이닉스", "현대차"],
             "foreign_top_sell": ["LG에너지솔루션", "POSCO홀딩스", "에코프로비엠"],
             "institution_top_buy": ["KB금융", "NAVER", "기아"],
-            "institution_top_sell": ["삼성바이오로직스", "셀트리온", "한화에어로스페이스"],
+            "institution_top_sell": ["삼성바이오로직스", "한화에어로스페이스", "셀트리온"],
             "program_summary": {
                 "kospi": {"arbitrage": 5786, "non_arbitrage": -12723, "total": -6938},
                 "kosdaq": {"arbitrage": 2, "non_arbitrage": -1456, "total": -1454},
                 "total": {"arbitrage": 5788, "non_arbitrage": -14179, "total": -8392},
             },
-            "upper_limit": ["흥국화재우", "삼성전자우"],
+            "upper_limit": ["녹십자홀딩스2우", "삼성전자우"],
         }
 
     soup = _fetch_soup("https://finance.naver.com/sise/")
@@ -205,10 +205,10 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
 def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
         return {
-            "new_highs": ["HD현대일렉트릭", "두산", "세방전지"],
+            "new_highs": ["HD현대일렉트릭", "두산", "한화오션"],
             "new_lows": ["에코프로", "에코프로비엠"],
-            "upper_limit": ["흥국화재우"],
-            "after_hours_movers": ["한미반도체 +4.8%", "ISC -3.2%"],
+            "upper_limit": ["녹십자홀딩스2우"],
+            "after_hours_movers": ["하나머티리얼즈 +4.8%", "ISC -3.2%"],
         }
 
     snapshot = get_home_market_snapshot(use_mock_data=False)

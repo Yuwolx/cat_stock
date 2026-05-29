@@ -4,7 +4,6 @@ import re
 from datetime import date, timedelta
 from functools import lru_cache
 from io import StringIO
-from urllib.parse import quote
 
 import FinanceDataReader as fdr
 import pandas as pd
@@ -65,28 +64,21 @@ def _to_number(text: str | None) -> float | None:
         return None
 
 
-def _format_signed_billion_won(amount_million_won: float | None) -> str | None:
-    if amount_million_won is None:
-        return None
-    amount_billion = amount_million_won / 100
-    return f"{amount_billion:+,.1f}억"
-
-
 def _format_signed_shares(quantity: float | None) -> str | None:
-    if quantity is None:
+    if quantity is None or pd.isna(quantity):
         return None
     return f"{int(quantity):+,}주"
 
 
 def _format_market_cap(marcap: float | int | None) -> str | None:
-    if marcap is None:
+    if marcap is None or pd.isna(marcap):
         return None
     try:
         value = float(marcap)
     except (TypeError, ValueError):
         return None
-    if value >= 100_000_000_000_000:
-        return f"{value / 100_000_000_000_000:.1f}조"
+    if value >= 1_000_000_000_000:
+        return f"{value / 1_000_000_000_000:.1f}조"
     return f"{value / 100_000_000:.0f}억"
 
 
@@ -99,7 +91,9 @@ def _parse_main_basics(code: str) -> dict:
 
     change_node = soup.select_one("p.no_exday em span.blind")
     change_point = change_node.get_text(strip=True) if change_node else None
-    change_rate_node = soup.select_one("p.no_exday em.no_up span.blind, p.no_exday em.no_down span.blind, p.no_exday em.no_sgap span.blind")
+    change_rate_node = soup.select_one(
+        "p.no_exday em.no_up span.blind, p.no_exday em.no_down span.blind, p.no_exday em.no_sgap span.blind"
+    )
     change_pct = change_rate_node.get_text(strip=True) if change_rate_node else None
 
     no_info_values = [span.get_text(strip=True) for span in soup.select("table.no_info span.blind")]
@@ -142,7 +136,10 @@ def _parse_main_basics(code: str) -> dict:
 
 
 def _get_frgn_tables(code: str) -> list[pd.DataFrame]:
-    return _read_html_tables(f"https://finance.naver.com/item/frgn.naver?code={code}&page=1", encoding="utf-8")
+    return _read_html_tables(
+        f"https://finance.naver.com/item/frgn.naver?code={code}&page=1",
+        encoding="cp949",
+    )
 
 
 def _build_ma_position(code: str) -> dict[str, str | None]:
@@ -180,7 +177,17 @@ def _parse_investor_flow_table(code: str) -> pd.DataFrame:
             first_value = str(df.iloc[1, 0]) if len(df.index) > 1 else ""
             if not re.match(r"\d{4}\.\d{2}\.\d{2}", first_value):
                 continue
-            df.columns = ["date", "close", "change", "change_pct", "volume", "institution", "foreign", "foreign_holdings", "foreign_ratio"]
+            df.columns = [
+                "date",
+                "close",
+                "change",
+                "change_pct",
+                "volume",
+                "institution",
+                "foreign",
+                "foreign_holdings",
+                "foreign_ratio",
+            ]
             return df
     return pd.DataFrame()
 
@@ -188,24 +195,28 @@ def _parse_investor_flow_table(code: str) -> pd.DataFrame:
 def _parse_consensus_from_frgn(code: str) -> dict[str, str | None]:
     tables = _get_frgn_tables(code)
     for table in tables:
-        if table.shape == (2, 2):
-            first_label = str(table.iloc[0, 0]).strip()
-            second_label = str(table.iloc[1, 0]).strip()
-            if "목표주가" in first_label and "52주" in second_label:
-                target_cell = str(table.iloc[0, 1]).strip()
-                year_high_low_cell = str(table.iloc[1, 1]).strip()
+        if table.shape != (2, 2):
+            continue
 
-                target_match = re.search(r"([0-9,]+)\s*$", target_cell)
-                opinion_match = re.search(r"(매수|중립|보유|시장수익률|매도)", target_cell)
+        first_label = str(table.iloc[0, 0]).strip()
+        second_label = str(table.iloc[1, 0]).strip()
+        if "목표주가" not in first_label or "52주" not in second_label:
+            continue
 
-                target_price = f"{target_match.group(1)}원" if target_match else None
-                year_high_low = year_high_low_cell.replace("l", "/").replace(" ", "")
+        target_cell = str(table.iloc[0, 1]).strip()
+        year_high_low_cell = str(table.iloc[1, 1]).strip()
 
-                return {
-                    "target_price": target_price,
-                    "opinion": opinion_match.group(1) if opinion_match else None,
-                    "year_high_low": year_high_low,
-                }
+        target_match = re.search(r"([0-9,]+)\s*$", target_cell)
+        opinion_match = re.search(r"(매수|중립|보유|시장수익률|매도)", target_cell)
+
+        target_price = f"{target_match.group(1)}원" if target_match else None
+        year_high_low = year_high_low_cell.replace("l", "/").replace(" ", "")
+
+        return {
+            "target_price": target_price,
+            "opinion": opinion_match.group(1) if opinion_match else None,
+            "year_high_low": year_high_low,
+        }
     return {"target_price": None, "opinion": None, "year_high_low": None}
 
 
@@ -314,7 +325,7 @@ def get_stock_basics(stock_name: str, use_mock_data: bool = True) -> dict:
             "price": "78,500",
             "change_pct": "+1.82%",
             "turnover_krw_billion": 842,
-            "market_cap": "468조",
+            "market_cap": "46.8조",
             "year_high_low": "88,000 / 61,500",
             "per": "18.4",
             "pbr": "1.52",
@@ -350,7 +361,9 @@ def get_stock_basics(stock_name: str, use_mock_data: bool = True) -> dict:
     change_ratio = row.get("ChagesRatio")
     basics["change_pct"] = f"{float(change_ratio):+.2f}%" if pd.notna(change_ratio) else basics.get("change_pct")
     amount = row.get("Amount")
-    basics["turnover_krw_billion"] = round(float(amount) / 100_000_000, 1) if pd.notna(amount) else basics.get("turnover_krw_billion")
+    basics["turnover_krw_billion"] = (
+        round(float(amount) / 100_000_000, 1) if pd.notna(amount) else basics.get("turnover_krw_billion")
+    )
     if not history.empty:
         basics["year_high_low"] = f"{int(history['High'].max()):,} / {int(history['Low'].min()):,}"
     elif consensus.get("year_high_low"):
@@ -365,7 +378,7 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
             "foreign_20d": "+1,245,000주",
             "institution_20d": "-342,000주",
             "news": [
-                f"{stock_name}: 신제품 기대감 관련 기사",
+                f"{stock_name}: 업황 개선 기대감 관련 기사",
                 f"{stock_name}: 증권사 목표가 상향 기사",
             ],
             "reports": [

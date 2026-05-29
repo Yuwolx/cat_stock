@@ -8,8 +8,8 @@ def test_theme_formatter_includes_theme_name() -> None:
         "theme_name": "HBM",
         "stocks": [
             {
-                "name": "한미반도체",
-                "market_cap": "17조",
+                "name": "하나마이크론",
+                "market_cap": "1.7조",
                 "price": "100,000",
                 "change_pct": "+1.0%",
                 "per": "30",

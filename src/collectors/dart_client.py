@@ -133,6 +133,28 @@ def get_single_company_major_accounts(
     return data.get("list", [])
 
 
+def get_major_shareholding_reports(api_key: str, corp_code: str) -> list[dict]:
+    data = _safe_get_json(
+        "majorstock.json",
+        {
+            "crtfc_key": api_key,
+            "corp_code": corp_code,
+        },
+    )
+    return data.get("list", [])
+
+
+def get_executive_major_shareholders(api_key: str, corp_code: str) -> list[dict]:
+    data = _safe_get_json(
+        "elestock.json",
+        {
+            "crtfc_key": api_key,
+            "corp_code": corp_code,
+        },
+    )
+    return data.get("list", [])
+
+
 def recent_date_range(days: int = 30) -> tuple[str, str]:
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)

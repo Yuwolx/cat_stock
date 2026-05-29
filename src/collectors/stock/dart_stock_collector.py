@@ -5,6 +5,8 @@ from datetime import datetime
 
 from src.collectors.dart_client import (
     find_corp_by_name,
+    get_executive_major_shareholders,
+    get_major_shareholding_reports,
     get_single_company_major_accounts,
     list_disclosures,
     recent_date_range,
@@ -27,7 +29,6 @@ RISK_KEYWORDS = {
 
 
 def _select_amount(rows: list[dict], account_names: list[str]) -> str | None:
-    # Prefer consolidated financial statements when both exist.
     ordered = sorted(rows, key=lambda row: 0 if row.get("fs_div") == "CFS" else 1)
     normalized_candidates = {name.replace(" ", "") for name in account_names}
     for row in ordered:
@@ -53,6 +54,62 @@ def _candidate_reports(current_year: int) -> list[tuple[int, str]]:
     return candidates
 
 
+def _to_float(value: str | None) -> float | None:
+    cleaned = re.sub(r"[^\d.-]", "", value or "")
+    if not cleaned:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def _format_shareholder_ratio(ratio: float | None, holder: str | None = None) -> str | None:
+    if ratio is None:
+        return None
+    if holder:
+        return f"{ratio:.2f}% ({holder})"
+    return f"{ratio:.2f}%"
+
+
+def _resolve_major_shareholder_ratio(api_key: str, corp_code: str) -> str | None:
+    try:
+        reports = get_major_shareholding_reports(api_key, corp_code)
+    except Exception:
+        reports = []
+
+    if reports:
+        reports_sorted = sorted(reports, key=lambda item: item.get("rcept_dt", ""), reverse=True)
+        latest_date = reports_sorted[0].get("rcept_dt")
+        same_day = [item for item in reports_sorted if item.get("rcept_dt") == latest_date]
+        ratios = [
+            (_to_float(item.get("stkrt")), item.get("repror"))
+            for item in same_day
+            if _to_float(item.get("stkrt")) is not None
+        ]
+        if ratios:
+            ratio, holder = max(ratios, key=lambda pair: pair[0] or 0)
+            return _format_shareholder_ratio(ratio, holder)
+
+    try:
+        executives = get_executive_major_shareholders(api_key, corp_code)
+    except Exception:
+        executives = []
+
+    if executives:
+        executives_sorted = sorted(executives, key=lambda item: item.get("rcept_dt", ""), reverse=True)
+        ratios = [
+            (_to_float(item.get("sp_stock_lmp_rate")), item.get("repror"))
+            for item in executives_sorted
+            if _to_float(item.get("sp_stock_lmp_rate")) is not None
+        ]
+        if ratios:
+            ratio, holder = max(ratios, key=lambda pair: pair[0] or 0)
+            return _format_shareholder_ratio(ratio, holder)
+
+    return None
+
+
 def get_stock_disclosures(
     stock_name: str,
     api_key: str = "",
@@ -62,11 +119,12 @@ def get_stock_disclosures(
         return {
             "disclosures": [
                 f"{stock_name}: 분기보고서 제출",
-                f"{stock_name}: 주요사항보고서 점검 필요",
+                f"{stock_name}: 주요사항보고서 정정 필요",
             ],
             "major_shareholder_ratio": "20.1%",
-            "risk_flags": ["CB 없음", "BW 없음", "최근 유상증자 없음", "부채비율 점검 필요"],
+            "risk_flags": ["CB 없음", "BW 없음", "최근 유상증자 없음", "부채비율 추가 확인 필요"],
         }
+
     corp = find_corp_by_name(stock_name, api_key)
     if not corp:
         return {
@@ -99,9 +157,11 @@ def get_stock_disclosures(
         if any(keyword in joined for keyword in keywords):
             risk_flags.append(label)
 
+    major_shareholder_ratio = _resolve_major_shareholder_ratio(api_key, corp["corp_code"])
+
     return {
         "disclosures": disclosure_lines or ["최근 공시가 없습니다."],
-        "major_shareholder_ratio": None,
+        "major_shareholder_ratio": major_shareholder_ratio,
         "risk_flags": risk_flags,
     }
 
@@ -114,6 +174,7 @@ def get_financial_summary(stock_name: str, api_key: str = "", use_mock_data: boo
             {"quarter": "2025Q4", "sales": "20.0조", "op_income": "2.6조", "net_income": "2.0조"},
             {"quarter": "2026Q1", "sales": "19.8조", "op_income": "2.3조", "net_income": "1.8조"},
         ]
+
     corp = find_corp_by_name(stock_name, api_key)
     if not corp:
         return []
@@ -142,7 +203,10 @@ def get_financial_summary(stock_name: str, api_key: str = "", use_mock_data: boo
 
         sales = _select_amount(rows, ["매출액", "영업수익"])
         op_income = _select_amount(rows, ["영업이익"])
-        net_income = _select_amount(rows, ["당기순이익", "분기순이익", "반기순이익"])
+        net_income = _select_amount(
+            rows,
+            ["당기순이익", "당기순이익(손실)", "분기순이익", "분기순이익(손실)", "반기순이익", "반기순이익(손실)"],
+        )
         period_key = _period_sort_key(rows[0].get("thstrm_dt", ""))
         reports.append(
             {

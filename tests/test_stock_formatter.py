@@ -10,7 +10,7 @@ def test_stock_formatter_includes_stock_name() -> None:
             "price": "78,500",
             "change_pct": "+1.82%",
             "turnover_krw_billion": 842,
-            "market_cap": "468조",
+            "market_cap": "46.8조",
             "year_high_low": "88,000 / 61,500",
             "per": "18.4",
             "pbr": "1.52",
@@ -18,8 +18,8 @@ def test_stock_formatter_includes_stock_name() -> None:
             "ma_position": {"ma5": "상회", "ma20": "상회", "ma60": "근접"},
         },
         "flows": {
-            "foreign_20d": "+1,245억",
-            "institution_20d": "-342억",
+            "foreign_20d": "+1,245주",
+            "institution_20d": "-342주",
             "news": ["뉴스"],
             "reports": ["리포트"],
         },
@@ -36,4 +36,4 @@ def test_stock_formatter_includes_stock_name() -> None:
 
     assert "[개별 종목 분석 - 삼성전자 - 2026-05-29]" in result
     assert "■ 기본 정보" in result
-    assert "컨센서스 목표가" in result
+    assert "컨센서스 목표가 91,000원" in result

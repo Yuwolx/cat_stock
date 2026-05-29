@@ -6,8 +6,8 @@ def test_market_formatter_includes_sections() -> None:
         "target_date": "2026-05-29",
         "is_mock_data": True,
         "indices": {
-            "kospi": {"change_pct": 1.0, "turnover_trillion_krw": 10, "change_points": 20},
-            "kosdaq": {"change_pct": -0.5, "turnover_trillion_krw": 8, "change_points": -4},
+            "kospi": {"close": 2640.0, "change_pct": 1.0, "turnover_trillion_krw": 10, "change_points": 20},
+            "kosdaq": {"close": 840.0, "change_pct": -0.5, "turnover_trillion_krw": 8, "change_points": -4},
         },
         "global_macro": {
             "dow": "+0.1%",
@@ -55,5 +55,5 @@ def test_market_formatter_includes_sections() -> None:
     assert "[시황 브리핑 데이터 - 2026-05-29]" in result
     assert "■ 한국 지수" in result
     assert "■ 주요 공시" in result
-    assert "코스피 수급: 외국인 90억" in result
-    assert "프로그램 코스닥: 차익 2억" in result
+    assert "코스피 수급 외국인 90억" in result
+    assert "프로그램 코스닥 차익 2억" in result

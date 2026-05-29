@@ -12,7 +12,7 @@ def format_market_briefing(payload: dict) -> str:
     leaders = payload["leaders"]
 
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
-    mock_notice = "※ 현재는 뼈대 단계이며 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
+    mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
 
     leader_lines = [
         (
@@ -32,13 +32,13 @@ def format_market_briefing(payload: dict) -> str:
             "한국 지수",
             [
                 (
-                    f"코스피: 지수 {display_value(indices['kospi'].get('close'))} | "
+                    f"코스피 지수 {display_value(indices['kospi'].get('close'))} | "
                     f"등락률 {display_value(indices['kospi']['change_pct'])}% | "
                     f"거래대금 {display_value(indices['kospi']['turnover_trillion_krw'])}조 | "
                     f"전일대비 {display_value(indices['kospi']['change_points'])}pt"
                 ),
                 (
-                    f"코스닥: 지수 {display_value(indices['kosdaq'].get('close'))} | "
+                    f"코스닥 지수 {display_value(indices['kosdaq'].get('close'))} | "
                     f"등락률 {display_value(indices['kosdaq']['change_pct'])}% | "
                     f"거래대금 {display_value(indices['kosdaq']['turnover_trillion_krw'])}조 | "
                     f"전일대비 {display_value(indices['kosdaq']['change_points'])}pt"
@@ -58,53 +58,53 @@ def format_market_briefing(payload: dict) -> str:
                 f"심천 {display_value(global_macro['shenzhen'])}",
             ],
         ),
-        section("거래대금/거래상위", leader_lines or ["데이터 없음"]),
+        section("거래대금 상위", leader_lines or ["데이터 없음"]),
         section(
             "외국인/기관 수급",
             [
                 (
-                    f"순매수 요약: 외국인 {display_value(investor_flows['summary']['foreign'])}억 | "
+                    f"순매수 요약 외국인 {display_value(investor_flows['summary']['foreign'])}억 | "
                     f"기관 {display_value(investor_flows['summary']['institution'])}억 | "
                     f"개인 {display_value(investor_flows['summary']['retail'])}억"
                 ),
                 (
-                    f"코스피 수급: 외국인 {display_value(investor_by_market.get('kospi', {}).get('foreign'))}억 | "
+                    f"코스피 수급 외국인 {display_value(investor_by_market.get('kospi', {}).get('foreign'))}억 | "
                     f"기관 {display_value(investor_by_market.get('kospi', {}).get('institution'))}억 | "
                     f"개인 {display_value(investor_by_market.get('kospi', {}).get('retail'))}억"
                 ),
                 (
-                    f"코스닥 수급: 외국인 {display_value(investor_by_market.get('kosdaq', {}).get('foreign'))}억 | "
+                    f"코스닥 수급 외국인 {display_value(investor_by_market.get('kosdaq', {}).get('foreign'))}억 | "
                     f"기관 {display_value(investor_by_market.get('kosdaq', {}).get('institution'))}억 | "
                     f"개인 {display_value(investor_by_market.get('kosdaq', {}).get('retail'))}억"
                 ),
-                f"외국인 순매수 상위: {format_list(investor_flows['foreign_top_buy'])}",
-                f"외국인 순매도 상위: {format_list(investor_flows['foreign_top_sell'])}",
-                f"기관 순매수 상위: {format_list(investor_flows['institution_top_buy'])}",
-                f"기관 순매도 상위: {format_list(investor_flows['institution_top_sell'])}",
+                f"외국인 순매수 상위 {format_list(investor_flows['foreign_top_buy'])}",
+                f"외국인 순매도 상위 {format_list(investor_flows['foreign_top_sell'])}",
+                f"기관 순매수 상위 {format_list(investor_flows['institution_top_buy'])}",
+                f"기관 순매도 상위 {format_list(investor_flows['institution_top_sell'])}",
             ],
         ),
         section(
             "파생/프로그램 매매",
             [
                 (
-                    f"외국인 코스피200 선물 순매수: {foreign_futures}계약"
+                    f"외국인 코스피200 선물 순매수 {foreign_futures}계약"
                     if foreign_futures is not None
-                    else "외국인 코스피200 선물 순매수: 데이터 없음"
+                    else "외국인 코스피200 선물 순매수 데이터 없음"
                 ),
                 (
-                    f"기관 코스피200 선물 순매수: {institution_futures}계약"
+                    f"기관 코스피200 선물 순매수 {institution_futures}계약"
                     if institution_futures is not None
-                    else "기관 코스피200 선물 순매수: 데이터 없음"
+                    else "기관 코스피200 선물 순매수 데이터 없음"
                 ),
-                f"프로그램 차익 합산: {display_value(derivatives['program_arbitrage'])}억",
-                f"프로그램 비차익 합산: {display_value(derivatives['program_non_arbitrage'])}억",
+                f"프로그램 차익 합산 {display_value(derivatives['program_arbitrage'])}억",
+                f"프로그램 비차익 합산 {display_value(derivatives['program_non_arbitrage'])}억",
                 (
-                    f"프로그램 코스피: 차익 {display_value(program_by_market.get('kospi', {}).get('arbitrage'))}억 | "
+                    f"프로그램 코스피 차익 {display_value(program_by_market.get('kospi', {}).get('arbitrage'))}억 | "
                     f"비차익 {display_value(program_by_market.get('kospi', {}).get('non_arbitrage'))}억 | "
                     f"전체 {display_value(program_by_market.get('kospi', {}).get('total'))}억"
                 ),
                 (
-                    f"프로그램 코스닥: 차익 {display_value(program_by_market.get('kosdaq', {}).get('arbitrage'))}억 | "
+                    f"프로그램 코스닥 차익 {display_value(program_by_market.get('kosdaq', {}).get('arbitrage'))}억 | "
                     f"비차익 {display_value(program_by_market.get('kosdaq', {}).get('non_arbitrage'))}억 | "
                     f"전체 {display_value(program_by_market.get('kosdaq', {}).get('total'))}억"
                 ),
@@ -113,10 +113,10 @@ def format_market_briefing(payload: dict) -> str:
         section(
             "시장 이벤트",
             [
-                f"52주 신고가: {format_list(market_events['new_highs'])}",
-                f"52주 신저가: {format_list(market_events['new_lows'])}",
-                f"상한가: {format_list(market_events['upper_limit'])}",
-                f"시간외 급등락: {format_list(market_events['after_hours_movers'])}",
+                f"52주 신고가 {format_list(market_events['new_highs'])}",
+                f"52주 신저가 {format_list(market_events['new_lows'])}",
+                f"상한가 {format_list(market_events['upper_limit'])}",
+                f"시간외 단일가 급등락 {format_list(market_events['after_hours_movers'])}",
             ],
         ),
         section("주요 공시", payload["disclosures"] or ["데이터 없음"]),

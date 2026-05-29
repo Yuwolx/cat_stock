@@ -14,6 +14,7 @@ def get_major_disclosures(
             "현대차: 자사주 관련 공시 여부 확인 필요",
             "셀트리온: 합병/지배구조 이슈 공시 점검 필요",
         ]
+
     date_key = target_date.replace("-", "")
     try:
         items = list_disclosures(
