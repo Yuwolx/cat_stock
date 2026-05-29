@@ -55,13 +55,21 @@ def _read_html_tables(url: str, encoding: str = "utf-8") -> list[pd.DataFrame]:
 
 
 def _to_number(text: str | None) -> float | None:
-    cleaned = re.sub(r"[^\d.-]", "", text or "")
+    raw = (text or "").strip()
+    if not raw:
+        return None
+
+    sign = -1 if any(token in raw for token in ("▼", "▽")) else 1
+    cleaned = re.sub(r"[^\d.]", "", raw)
     if not cleaned:
         return None
     try:
-        return float(cleaned)
+        value = float(cleaned)
     except ValueError:
         return None
+    if sign < 0:
+        return -value
+    return value
 
 
 def _format_signed_shares(quantity: float | None) -> str | None:

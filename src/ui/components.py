@@ -201,36 +201,6 @@ def inject_app_styles() -> None:
           padding-top: 0 !important;
         }
 
-        .cat-card-header__eyebrow {
-          margin-bottom: 8px;
-          color: var(--muted);
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .cat-card-header__title {
-          margin: 0 0 8px;
-          color: var(--ink);
-          font-family: Manrope, Inter, sans-serif;
-          font-size: clamp(20px, 2vw, 25px);
-          line-height: 1.14;
-          font-weight: 800;
-          letter-spacing: -0.04em;
-          word-break: keep-all;
-          overflow-wrap: break-word;
-        }
-
-        .cat-card-header__copy {
-          margin: 0 0 16px;
-          color: var(--muted);
-          font-size: 13px;
-          line-height: 1.58;
-          letter-spacing: -0.01em;
-          word-break: keep-all;
-        }
-
         .cat-list {
           list-style: none;
           margin: 14px 0 0;
@@ -274,40 +244,6 @@ def inject_app_styles() -> None:
         .cat-note--info {
           border-left-color: #6f8fe2;
           color: #405387;
-        }
-
-        .cat-output {
-          margin-top: 38px;
-          padding-top: 22px;
-          border-top: 1px solid var(--line);
-        }
-
-        .cat-output__header {
-          display: flex;
-          align-items: baseline;
-          justify-content: space-between;
-          gap: 16px;
-          margin-bottom: 14px;
-          flex-wrap: wrap;
-        }
-
-        .cat-output__eyebrow {
-          color: var(--muted);
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .cat-output__title {
-          margin: 0;
-          color: var(--ink);
-          font-family: Manrope, Inter, sans-serif;
-          font-size: clamp(20px, 2vw, 26px);
-          line-height: 1.1;
-          font-weight: 800;
-          letter-spacing: -0.04em;
-          word-break: keep-all;
         }
 
         [data-testid="stWidgetLabel"] p,
@@ -375,72 +311,6 @@ def inject_app_styles() -> None:
           opacity: 0 !important;
         }
 
-        /* 출력 텍스트에어리어 — 디자인 통일 박스 */
-        [data-testid="stTextArea"] [data-baseweb="textarea"] {
-          border-radius: 9px !important;
-          border: 1px solid var(--line-strong) !important;
-          background-color: #faf7f1 !important;
-          box-shadow: none !important;
-          overflow: hidden !important;
-        }
-
-        [data-testid="stTextArea"] [data-baseweb="textarea"] > div {
-          background-color: #faf7f1 !important;
-        }
-
-        [data-testid="stTextArea"] textarea {
-          background-color: #faf7f1 !important;
-          color: var(--ink-soft) !important;
-          padding: 14px !important;
-          font-size: 11.5px !important;
-          line-height: 1.55 !important;
-        }
-
-        [data-testid="stTextArea"] textarea::placeholder {
-          color: var(--muted) !important;
-          opacity: 0.7 !important;
-          font-size: 12px !important;
-        }
-
-        [data-testid="stCodeBlock"] {
-          border: 1px solid var(--line-strong) !important;
-          border-radius: 9px !important;
-          overflow: hidden !important;
-          background: #faf7f1 !important;
-        }
-
-        [data-testid="stCodeBlock"] pre {
-          margin: 0 !important;
-          padding: 14px !important;
-          background: #faf7f1 !important;
-          color: var(--ink-soft) !important;
-          font-size: 11.5px !important;
-          line-height: 1.55 !important;
-          white-space: pre-wrap !important;
-          word-break: break-word !important;
-        }
-
-        [data-testid="stCodeBlock"] code {
-          font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace !important;
-          font-size: 11px !important;
-          line-height: 1.55 !important;
-        }
-
-        .cat-output-empty {
-          min-height: 420px;
-          border: 1px solid var(--line-strong);
-          border-radius: 9px;
-          background: #faf7f1;
-          color: var(--muted);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          font-size: 12px;
-          line-height: 1.6;
-          text-align: center;
-        }
-
         /* 달력 아이콘 */
         .stDateInput [data-baseweb="input"] {
           position: relative;
@@ -498,12 +368,6 @@ def inject_app_styles() -> None:
           color: #0071e3 !important;
         }
 
-        .stTextArea textarea {
-          font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace !important;
-          font-size: 11px !important;
-          line-height: 1.55 !important;
-        }
-
         .stCaption p {
           color: var(--muted) !important;
           font-size: 11px !important;
@@ -535,12 +399,6 @@ def inject_app_styles() -> None:
             padding-left: 18px;
             padding-right: 18px;
           }
-
-          .cat-block--with-line {
-            padding-left: 0;
-            border-left: 0;
-            padding-top: 24px;
-          }
         }
         </style>
         """,
@@ -566,24 +424,6 @@ def render_shell(title: str, sub: str = "") -> None:
     )
 
 
-def render_status_strip(has_dart_key: bool, output_dir: Path) -> None:
-    dart_color = "#3da968" if has_dart_key else "#cf7c28"
-    dart_label = "연결됨" if has_dart_key else "미연결"
-    dot = "width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0;"
-    item = "display:inline-flex;align-items:center;font-size:12px;color:#6f7683;white-space:nowrap;letter-spacing:-0.01em;"
-    label = "font-weight:600;color:#111318;margin-right:4px;"
-    st.markdown(
-        f"""
-        <div style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:18px;margin:8px 0 6px;">
-          <span style="{item}"><span style="{dot}background:{dart_color};"></span><span style="{label}">DART</span>{dart_label}</span>
-          <span style="{item}"><span style="{dot}background:#8b97e8;"></span><span style="{label}">출력</span>{escape(output_dir.name)}</span>
-          <span style="{item}"><span style="{dot}background:#8b97e8;"></span>복사용 텍스트 생성</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def render_page_intro(eyebrow: str, title: str, copy: str = "") -> None:
     copy_html = f'<p class="cat-section__copy">{escape(copy)}</p>' if copy else ""
     st.markdown(
@@ -598,26 +438,6 @@ def render_page_intro(eyebrow: str, title: str, copy: str = "") -> None:
     )
 
 
-def render_block_open(with_line: bool = False) -> None:
-    class_name = "cat-block cat-block--with-line" if with_line else "cat-block"
-    st.markdown(f'<div class="{class_name}">', unsafe_allow_html=True)
-
-
-def render_block_close() -> None:
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def render_card_header(eyebrow: str, title: str, copy: str) -> None:
-    st.markdown(
-        f"""
-        <div class="cat-card-header__eyebrow">{escape(eyebrow)}</div>
-        <div class="cat-card-header__title">{escape(title)}</div>
-        <div class="cat-card-header__copy">{escape(copy)}</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def render_list(items: list[str]) -> None:
     list_html = "".join(f"<li>{escape(item)}</li>" for item in items)
     st.markdown(f'<ul class="cat-list">{list_html}</ul>', unsafe_allow_html=True)
@@ -626,29 +446,3 @@ def render_list(items: list[str]) -> None:
 def render_note(message: str, tone: str = "info") -> None:
     cls = "cat-note--warn" if tone == "warn" else "cat-note--info"
     st.markdown(f'<div class="cat-note {cls}">{escape(message)}</div>', unsafe_allow_html=True)
-
-
-def render_output_panel(result_text: str, download_name: str, saved_path: Path) -> None:
-    st.markdown(
-        """
-        <section class="cat-output">
-          <div class="cat-output__header">
-            <span class="cat-output__eyebrow">Generated Output</span>
-            <h2 class="cat-output__title">결과 텍스트</h2>
-          </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.text_area("output", result_text, height=520, label_visibility="collapsed")
-    button_col, caption_col = st.columns([0.22, 0.78])
-    with button_col:
-        st.download_button(
-            "TXT 다운로드",
-            data=result_text,
-            file_name=download_name,
-            mime="text/plain",
-            use_container_width=True,
-        )
-    with caption_col:
-        st.caption(f"저장: {saved_path}")
-    st.markdown("</section>", unsafe_allow_html=True)

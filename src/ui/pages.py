@@ -169,11 +169,20 @@ def _render_theme_page() -> None:
 
 
 def _render_output_box(result_text: str, placeholder: str) -> None:
-    if not result_text:
-        st.markdown(f'<div class="cat-output-empty">{escape(placeholder)}</div>', unsafe_allow_html=True)
-        return
-
-    escaped_text = escape(result_text)
+    has_result = bool(result_text)
+    escaped_text = escape(result_text) if has_result else ""
+    escaped_placeholder = escape(placeholder)
+    button_state = "" if has_result else "disabled"
+    button_style = (
+        "opacity:1;cursor:pointer;"
+        if has_result
+        else "opacity:0.42;cursor:default;"
+    )
+    content_html = (
+        f"""<pre id="output-text" style="margin:0; padding:12px 14px 14px 14px; height:360px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; color:#303743; background:#faf7f1;">{escaped_text}</pre>"""
+        if has_result
+        else f"""<div id="output-text" style="height:360px; padding:12px 14px 14px 14px; display:flex; align-items:center; justify-content:center; text-align:center; font:12px/1.6 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:#6f7683; background:#faf7f1;">{escaped_placeholder}</div>"""
+    )
     html = f"""
     <div style="border:1px solid rgba(17,19,24,0.14); border-radius:12px; background:#faf7f1; overflow:hidden;">
       <div style="display:flex; justify-content:flex-end; align-items:center; padding:10px 12px 0 12px;">
@@ -189,18 +198,22 @@ def _render_output_box(result_text: str, placeholder: str) -> None:
             font-size:12px;
             font-weight:500;
             letter-spacing:-0.01em;
-            cursor:pointer;
+            {button_style}
           "
+          {button_state}
           onclick="copyOutput()"
         >
           복사
         </button>
       </div>
-      <pre id="output-text" style="margin:0; padding:12px 14px 14px 14px; height:360px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; color:#303743; background:#faf7f1;">{escaped_text}</pre>
+      {content_html}
     </div>
     <script>
       async function copyOutput() {{
         const button = document.getElementById('copy-btn');
+        if (button.disabled) {{
+          return;
+        }}
         const text = document.getElementById('output-text').innerText;
         try {{
           await navigator.clipboard.writeText(text);
