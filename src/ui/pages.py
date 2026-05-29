@@ -27,28 +27,24 @@ def render_app() -> None:
     )
     inject_app_styles()
     render_shell(
-        "오늘의 주식 정보를 정리해드립니다",
-        "시황 브리핑, 개별 종목 분석, 테마 공부 — 세 가지를 생성하고 바로 복사할 수 있습니다.",
+        "주식 데이터를 정리해드립니다.",
+        "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다.",
     )
-    status_col, mock_col = st.columns([0.84, 0.16], vertical_alignment="center")
-    with status_col:
-        render_status_strip(bool(settings.dart_api_key), settings.output_dir)
-    with mock_col:
-        use_mock_data = st.checkbox("더미 데이터", value=settings.use_mock_data)
+    render_status_strip(bool(settings.dart_api_key), settings.output_dir)
 
     market_tab, stock_tab, theme_tab = st.tabs(["시황 브리핑", "개별 종목 분석", "테마 공부"])
 
     with market_tab:
-        _render_market_page(use_mock_data)
+        _render_market_page()
 
     with stock_tab:
-        _render_stock_page(use_mock_data)
+        _render_stock_page()
 
     with theme_tab:
-        _render_theme_page(use_mock_data)
+        _render_theme_page()
 
 
-def _render_market_page(use_mock_data: bool) -> None:
+def _render_market_page() -> None:
     ctrl_col, out_col = st.columns([0.4, 0.6], gap="large")
 
     with ctrl_col:
@@ -56,17 +52,19 @@ def _render_market_page(use_mock_data: bool) -> None:
         target_date = st.date_input("기준일", value=date.today(), format="YYYY-MM-DD")
         if st.button("시황 브리핑 생성", type="primary", use_container_width=True, key="market_generate"):
             with st.spinner("정리하고 있습니다..."):
-                result = generate_market_briefing(target_date.isoformat(), use_mock_data=use_mock_data)
+                result = generate_market_briefing(target_date.isoformat())
             st.session_state["market_result"] = result
 
         with st.expander("연결 데이터"):
-            render_list([
-                "코스피 · 코스닥 지수와 거래대금",
-                "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해",
-                "거래대금 상위 종목",
-                "외국인 · 기관 순매수/순매도 상위",
-                "프로그램 차익 · 비차익, 상한가 종목, DART 주요 공시",
-            ])
+            render_list(
+                [
+                    "코스피 · 코스닥 지수와 거래대금",
+                    "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해",
+                    "거래대금 상위 종목",
+                    "외국인 · 기관 순매수/순매도 상위",
+                    "프로그램 차익 · 비차익, 상한가 종목, DART 주요 공시",
+                ]
+            )
 
         if "market_result" in st.session_state:
             result = st.session_state["market_result"]
@@ -89,7 +87,7 @@ def _render_market_page(use_mock_data: bool) -> None:
         )
 
 
-def _render_stock_page(use_mock_data: bool) -> None:
+def _render_stock_page() -> None:
     ctrl_col, out_col = st.columns([0.4, 0.6], gap="large")
 
     with ctrl_col:
@@ -101,16 +99,20 @@ def _render_stock_page(use_mock_data: bool) -> None:
                 render_note("종목명을 먼저 입력해주세요.", tone="warn")
             else:
                 with st.spinner("정리하고 있습니다..."):
-                    result = generate_stock_report(name, use_mock_data=use_mock_data)
+                    result = generate_stock_report(name)
                 st.session_state["stock_result"] = result
 
         with st.expander("연결 데이터"):
-            render_list([
-                "DART 최근 공시 목록",
-                "DART 주요 계정 기준 분기 · 반기 · 연간 재무 요약",
-                "종목명 기반 corp code 자동 매핑",
-                "결과 텍스트 저장과 TXT 다운로드",
-            ])
+            render_list(
+                [
+                    "현재가 · 등락률 · 거래대금 · 시가총액",
+                    "52주 고저 · PER · PBR · ROE",
+                    "이동평균선 위치",
+                    "외국인 · 기관 최근 20일 누적 수급",
+                    "DART 공시 · 최근 재무 요약 · 대주주 지분율",
+                    "최근 뉴스 · 증권사 리포트 · 컨센서스 목표가",
+                ]
+            )
 
         if "stock_result" in st.session_state:
             result = st.session_state["stock_result"]
@@ -133,7 +135,7 @@ def _render_stock_page(use_mock_data: bool) -> None:
         )
 
 
-def _render_theme_page(use_mock_data: bool) -> None:
+def _render_theme_page() -> None:
     ctrl_col, out_col = st.columns([0.4, 0.6], gap="large")
 
     with ctrl_col:
@@ -145,16 +147,17 @@ def _render_theme_page(use_mock_data: bool) -> None:
                 render_note("테마명을 먼저 입력해주세요.", tone="warn")
             else:
                 with st.spinner("정리하고 있습니다..."):
-                    result = generate_theme_report(name, use_mock_data=use_mock_data)
+                    result = generate_theme_report(name)
                 st.session_state["theme_result"] = result
 
-        with st.expander("추가 예정 데이터"):
-            render_list([
-                "관련 종목 리스트",
-                "테마 관련 뉴스와 공시",
-                "글로벌 피어 비교",
-                "증권사 리포트 요약",
-            ])
+        with st.expander("현재 상태"):
+            render_list(
+                [
+                    "테마 화면은 아직 실데이터 연결 전입니다.",
+                    "지금은 구조와 출력 형식만 준비되어 있습니다.",
+                    "실데이터 연결 후 뉴스 · 공시 · 리포트 · 글로벌 피어가 채워집니다.",
+                ]
+            )
 
         if "theme_result" in st.session_state:
             result = st.session_state["theme_result"]

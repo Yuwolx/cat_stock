@@ -86,7 +86,6 @@ python -m streamlit run app.py
 `.env.example`를 참고해서 `.env` 파일을 만들면 됩니다.
 
 - `DART_API_KEY`
-- `USE_MOCK_DATA`
 - `OUTPUT_DIR`
 - `APP_TITLE`
 
