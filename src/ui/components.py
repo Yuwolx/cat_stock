@@ -321,9 +321,9 @@ def inject_app_styles() -> None:
           letter-spacing: -0.01em !important;
         }
 
+        /* 날짜 / 텍스트 단행 입력 — 밑줄 스타일 */
         .stDateInput [data-baseweb="input"],
-        .stTextInput [data-baseweb="input"],
-        .stTextArea [data-baseweb="textarea"] {
+        .stTextInput [data-baseweb="input"] {
           border-radius: 0 !important;
           border: 0 !important;
           border-bottom: 1px solid var(--line-strong) !important;
@@ -334,14 +334,12 @@ def inject_app_styles() -> None:
         }
 
         .stDateInput [data-baseweb="input"] > div,
-        .stTextInput [data-baseweb="input"] > div,
-        .stTextArea [data-baseweb="textarea"] > div {
+        .stTextInput [data-baseweb="input"] > div {
           background: transparent !important;
         }
 
         .stDateInput input,
-        .stTextInput input,
-        .stTextArea textarea {
+        .stTextInput input {
           background: transparent !important;
           color: var(--ink) !important;
           font-size: 15px !important;
@@ -349,13 +347,75 @@ def inject_app_styles() -> None:
           letter-spacing: -0.01em !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
+          caret-color: var(--blue) !important;
+        }
+
+        .stDateInput input,
+        .stDateInput [data-baseweb="input"] {
+          cursor: pointer !important;
+        }
+
+        .stTextInput [data-baseweb="input"] {
+          transition: border-bottom-color 180ms ease !important;
+        }
+
+        .stTextInput [data-baseweb="input"]:focus-within {
+          border-bottom-color: var(--blue) !important;
+          border-bottom-width: 1.5px !important;
         }
 
         .stDateInput input::placeholder,
-        .stTextInput input::placeholder,
-        .stTextArea textarea::placeholder {
-          color: #9aa2af !important;
+        .stTextInput input::placeholder {
+          color: #b0b8c1 !important;
           opacity: 1 !important;
+          transition: opacity 120ms ease !important;
+        }
+
+        .stTextInput input:focus::placeholder {
+          opacity: 0 !important;
+        }
+
+        /* 출력 텍스트에어리어 — 디자인 통일 박스 */
+        [data-testid="stTextArea"] [data-baseweb="textarea"] {
+          border-radius: 12px !important;
+          border: 1px solid var(--line-strong) !important;
+          background-color: #faf7f1 !important;
+          box-shadow: none !important;
+          overflow: hidden !important;
+        }
+
+        [data-testid="stTextArea"] [data-baseweb="textarea"] > div {
+          background-color: #faf7f1 !important;
+        }
+
+        [data-testid="stTextArea"] textarea {
+          background-color: #faf7f1 !important;
+          color: var(--ink-soft) !important;
+          padding: 18px !important;
+          font-size: 13px !important;
+          line-height: 1.7 !important;
+        }
+
+        [data-testid="stTextArea"] textarea::placeholder {
+          color: var(--muted) !important;
+          opacity: 0.7 !important;
+          font-size: 13px !important;
+        }
+
+        /* 달력 아이콘 */
+        .stDateInput [data-baseweb="input"] {
+          position: relative;
+        }
+
+        .stDateInput [data-baseweb="input"]::after {
+          content: "📅";
+          position: absolute;
+          right: 2px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 13px;
+          pointer-events: none;
+          opacity: 0.55;
         }
 
         .stButton > button,
@@ -399,8 +459,24 @@ def inject_app_styles() -> None:
         }
 
         details {
-          background: transparent;
-          border: 0;
+          background: transparent !important;
+          border: 0 !important;
+          border-top: 1px solid var(--line) !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+        }
+
+        details summary {
+          font-size: 12px !important;
+          font-weight: 600 !important;
+          color: var(--muted) !important;
+          letter-spacing: -0.01em !important;
+          padding: 10px 0 !important;
+          cursor: pointer;
+        }
+
+        details[open] summary {
+          color: var(--ink) !important;
         }
 
         @media (max-width: 833px) {
