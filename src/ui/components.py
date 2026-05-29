@@ -61,21 +61,21 @@ def inject_app_styles() -> None:
         }
 
         .block-container {
-          max-width: 1440px;
-          padding-top: 36px;
-          padding-bottom: 84px;
-          padding-left: 28px;
-          padding-right: 28px;
+          max-width: 1520px;
+          padding-top: 22px;
+          padding-bottom: 56px;
+          padding-left: 22px;
+          padding-right: 22px;
         }
 
         .cat-shell {
-          margin-bottom: 22px;
+          margin-bottom: 14px;
         }
 
         .cat-shell__eyebrow {
           margin: 0 0 10px;
           color: var(--muted);
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.10em;
           text-transform: uppercase;
@@ -85,7 +85,7 @@ def inject_app_styles() -> None:
           margin: 0;
           color: var(--ink);
           font-family: Manrope, Inter, sans-serif;
-          font-size: clamp(34px, 3.8vw, 52px);
+          font-size: clamp(26px, 2.8vw, 38px);
           line-height: 1.04;
           font-weight: 800;
           letter-spacing: -0.05em;
@@ -94,10 +94,10 @@ def inject_app_styles() -> None:
         }
 
         .cat-shell__sub {
-          margin: 12px 0 0;
+          margin: 6px 0 0;
           color: var(--muted);
-          font-size: 16px;
-          line-height: 1.62;
+          font-size: 13px;
+          line-height: 1.5;
           font-weight: 400;
           letter-spacing: -0.01em;
           max-width: 660px;
@@ -114,21 +114,21 @@ def inject_app_styles() -> None:
           flex-direction: row !important;
           flex-wrap: nowrap !important;
           align-items: flex-end !important;
-          gap: 20px !important;
-          margin-top: 6px !important;
-          margin-bottom: 14px !important;
+          gap: 14px !important;
+          margin-top: 2px !important;
+          margin-bottom: 10px !important;
           border-bottom: 1px solid var(--line) !important;
           padding-bottom: 0 !important;
         }
 
         [data-baseweb="tab"] {
-          min-height: 36px !important;
-          padding: 0 0 8px !important;
+          min-height: 30px !important;
+          padding: 0 0 6px !important;
           border: 0 !important;
           border-radius: 0 !important;
           background: transparent !important;
           color: rgba(17, 19, 24, 0.38) !important;
-          font-size: 14px !important;
+          font-size: 13px !important;
           font-weight: 600 !important;
           letter-spacing: -0.01em !important;
           box-shadow: none !important;
@@ -146,7 +146,7 @@ def inject_app_styles() -> None:
         }
 
         .cat-section {
-          margin: 0 0 16px;
+          margin: 0 0 10px;
         }
 
         .cat-section__eyebrow {
@@ -162,7 +162,7 @@ def inject_app_styles() -> None:
           margin: 0;
           color: var(--ink);
           font-family: Manrope, Inter, sans-serif;
-          font-size: clamp(22px, 2.4vw, 30px);
+          font-size: clamp(17px, 1.8vw, 22px);
           line-height: 1.08;
           font-weight: 800;
           letter-spacing: -0.04em;
@@ -171,11 +171,11 @@ def inject_app_styles() -> None:
         }
 
         .cat-section__copy {
-          margin: 10px 0 0;
+          margin: 6px 0 0;
           max-width: 680px;
           color: var(--muted);
-          font-size: 15px;
-          line-height: 1.62;
+          font-size: 12px;
+          line-height: 1.5;
           letter-spacing: -0.01em;
           word-break: keep-all;
         }
@@ -241,11 +241,11 @@ def inject_app_styles() -> None:
           display: flex;
           align-items: baseline;
           gap: 10px;
-          padding: 11px 0;
+          padding: 9px 0;
           border-top: 1px solid var(--line);
           color: var(--ink-soft);
-          font-size: 13.5px;
-          line-height: 1.56;
+          font-size: 12px;
+          line-height: 1.5;
           letter-spacing: -0.01em;
           word-break: keep-all;
         }
@@ -261,8 +261,8 @@ def inject_app_styles() -> None:
           margin: 0 0 22px;
           padding: 0 0 0 14px;
           border-left: 2px solid transparent;
-          font-size: 13px;
-          line-height: 1.56;
+          font-size: 12px;
+          line-height: 1.5;
           letter-spacing: -0.01em;
         }
 
@@ -316,7 +316,7 @@ def inject_app_styles() -> None:
         .stTextArea label p,
         .stCheckbox label p {
           color: var(--ink) !important;
-          font-size: 12px !important;
+          font-size: 11px !important;
           font-weight: 700 !important;
           letter-spacing: -0.01em !important;
         }
@@ -342,8 +342,8 @@ def inject_app_styles() -> None:
         .stTextInput input {
           background: transparent !important;
           color: var(--ink) !important;
-          font-size: 15px !important;
-          line-height: 1.55 !important;
+          font-size: 13px !important;
+          line-height: 1.4 !important;
           letter-spacing: -0.01em !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
@@ -377,7 +377,7 @@ def inject_app_styles() -> None:
 
         /* 출력 텍스트에어리어 — 디자인 통일 박스 */
         [data-testid="stTextArea"] [data-baseweb="textarea"] {
-          border-radius: 12px !important;
+          border-radius: 9px !important;
           border: 1px solid var(--line-strong) !important;
           background-color: #faf7f1 !important;
           box-shadow: none !important;
@@ -391,15 +391,54 @@ def inject_app_styles() -> None:
         [data-testid="stTextArea"] textarea {
           background-color: #faf7f1 !important;
           color: var(--ink-soft) !important;
-          padding: 18px !important;
-          font-size: 13px !important;
-          line-height: 1.7 !important;
+          padding: 14px !important;
+          font-size: 11.5px !important;
+          line-height: 1.55 !important;
         }
 
         [data-testid="stTextArea"] textarea::placeholder {
           color: var(--muted) !important;
           opacity: 0.7 !important;
-          font-size: 13px !important;
+          font-size: 12px !important;
+        }
+
+        [data-testid="stCodeBlock"] {
+          border: 1px solid var(--line-strong) !important;
+          border-radius: 9px !important;
+          overflow: hidden !important;
+          background: #faf7f1 !important;
+        }
+
+        [data-testid="stCodeBlock"] pre {
+          margin: 0 !important;
+          padding: 14px !important;
+          background: #faf7f1 !important;
+          color: var(--ink-soft) !important;
+          font-size: 11.5px !important;
+          line-height: 1.55 !important;
+          white-space: pre-wrap !important;
+          word-break: break-word !important;
+        }
+
+        [data-testid="stCodeBlock"] code {
+          font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace !important;
+          font-size: 11px !important;
+          line-height: 1.55 !important;
+        }
+
+        .cat-output-empty {
+          min-height: 420px;
+          border: 1px solid var(--line-strong);
+          border-radius: 9px;
+          background: #faf7f1;
+          color: var(--muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          font-size: 12px;
+          line-height: 1.6;
+          text-align: center;
         }
 
         /* 달력 아이콘 */
@@ -420,37 +459,49 @@ def inject_app_styles() -> None:
 
         .stButton > button,
         .stDownloadButton > button {
-          min-height: 44px;
-          border-radius: 999px;
-          padding: 0 18px;
-          font-size: 14px;
-          font-weight: 600;
+          min-height: 34px;
+          padding: 0 14px;
+          font-size: 12px;
+          font-weight: 500;
           letter-spacing: -0.01em;
-          transition: transform 120ms ease, opacity 120ms ease;
+          box-shadow: none !important;
+          transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease, background-color 120ms ease, color 120ms ease;
         }
 
         .stButton > button {
-          background: var(--blue) !important;
+          background: linear-gradient(135deg, #6f8cf1 0%, #7c72e8 100%) !important;
           color: #ffffff !important;
-          border: 1px solid rgba(139, 151, 232, 0.76) !important;
+          border: 0 !important;
+          border-radius: 14px !important;
         }
 
         .stDownloadButton > button {
           background: transparent !important;
-          color: var(--blue) !important;
-          border: 1px solid rgba(139, 151, 232, 0.34) !important;
+          color: #0066cc !important;
+          border: 1px solid rgba(0, 102, 204, 0.34) !important;
+          border-radius: 12px !important;
         }
 
         .stButton > button:hover,
         .stDownloadButton > button:hover {
-          transform: scale(0.985);
-          opacity: 0.94;
+          transform: translateY(-1px);
+          opacity: 1;
+        }
+
+        .stButton > button:hover {
+          background: linear-gradient(135deg, #6785ee 0%, #7669e2 100%) !important;
+        }
+
+        .stDownloadButton > button:hover {
+          background: rgba(0, 102, 204, 0.06) !important;
+          border-color: rgba(0, 102, 204, 0.48) !important;
+          color: #0071e3 !important;
         }
 
         .stTextArea textarea {
           font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace !important;
-          font-size: 12.5px !important;
-          line-height: 1.7 !important;
+          font-size: 11px !important;
+          line-height: 1.55 !important;
         }
 
         .stCaption p {
