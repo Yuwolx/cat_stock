@@ -18,6 +18,19 @@ _LOGO_B64 = _load_logo_b64()
 
 
 def inject_app_styles() -> None:
+    if _LOGO_B64:
+        st.markdown(
+            f"""<script>
+            (function() {{
+                var link = document.querySelector("link[rel*='icon']");
+                if (!link) {{ link = document.createElement('link'); document.head.appendChild(link); }}
+                link.type = 'image/png';
+                link.rel = 'shortcut icon';
+                link.href = 'data:image/png;base64,{_LOGO_B64}';
+            }})();
+            </script>""",
+            unsafe_allow_html=True,
+        )
     st.markdown(
         """
         <style>

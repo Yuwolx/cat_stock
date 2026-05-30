@@ -195,11 +195,12 @@ def _render_output_box(result_text: str, placeholder: str) -> None:
         else "opacity:0.42;cursor:default;"
     )
     content_html = (
-        f"""<pre id="output-text" style="margin:0; padding:12px 14px 14px 14px; height:360px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; color:#303743; background:#faf7f1;">{escaped_text}</pre>"""
+        f"""<pre id="output-text" style="margin:0; padding:12px 14px 14px 14px; height:320px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; color:#303743; background:#faf7f1;">{escaped_text}</pre>"""
         if has_result
-        else f"""<div id="output-text" style="height:360px; padding:12px 14px 14px 14px; display:flex; align-items:center; justify-content:center; text-align:center; font:12px/1.6 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:#6f7683; background:#faf7f1;">{escaped_placeholder}</div>"""
+        else f"""<div id="output-text" style="height:320px; padding:12px 14px 14px 14px; display:flex; align-items:center; justify-content:center; text-align:center; font:12px/1.6 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:#6f7683; background:#faf7f1;">{escaped_placeholder}</div>"""
     )
     html = f"""
+    <div style="padding-bottom:8px;">
     <div style="border:1px solid rgba(17,19,24,0.14); border-radius:12px; background:#faf7f1; overflow:hidden;">
       <div style="display:flex; justify-content:flex-end; align-items:center; padding:10px 12px 0 12px;">
         <button
@@ -223,6 +224,7 @@ def _render_output_box(result_text: str, placeholder: str) -> None:
         </button>
       </div>
       {content_html}
+    </div>
     </div>
     <script>
       async function copyOutput() {{
@@ -251,7 +253,7 @@ def _render_output_box(result_text: str, placeholder: str) -> None:
       }}
     </script>
     """
-    components.html(html, height=420)
+    components.html(html, height=390)
 
 
 def _compact_date(date_text: str) -> str:

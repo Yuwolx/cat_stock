@@ -40,7 +40,7 @@
 - 5일 / 20일 / 60일선 위치
 - 외국인 / 기관 최근 20일 누적 수급
 - 최근 뉴스
-- 증권사 리포트
+- 증권사 리포트 (제목 + 요약 본문, 기간 선택 가능)
 - 컨센서스 목표가
 - 최근 공시
 - 최근 재무 요약
@@ -63,7 +63,16 @@
 
 ## 실행
 
-### PowerShell
+### Mac / Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+### Windows (PowerShell)
 
 ```powershell
 python -m venv .venv
@@ -72,7 +81,7 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-### Git Bash
+### Windows (Git Bash)
 
 ```bash
 python -m venv .venv
@@ -95,6 +104,6 @@ python -m streamlit run app.py
 
 ## 참고 문서
 
-- [현재_연결된_실데이터_목록.md](C:/Users/SSAFY/Desktop/cat_stock/현재_연결된_실데이터_목록.md)
-- [요구사항_요약.md](C:/Users/SSAFY/Desktop/cat_stock/요구사항_요약.md)
-- [진행계획_및_파일구조.md](C:/Users/SSAFY/Desktop/cat_stock/진행계획_및_파일구조.md)
+- [현재_연결된_실데이터_목록.md](현재_연결된_실데이터_목록.md)
+- [요구사항_요약.md](요구사항_요약.md)
+- [진행계획_및_파일구조.md](진행계획_및_파일구조.md)
