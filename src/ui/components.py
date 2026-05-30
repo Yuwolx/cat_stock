@@ -114,16 +114,20 @@ def inject_app_styles() -> None:
           flex-direction: row !important;
           flex-wrap: nowrap !important;
           align-items: flex-end !important;
-          gap: 14px !important;
+          gap: 28px !important;
           margin-top: 2px !important;
           margin-bottom: 10px !important;
           border-bottom: 1px solid var(--line) !important;
           padding-bottom: 0 !important;
         }
 
+        [data-baseweb="tab-border"] {
+          display: none !important;
+        }
+
         [data-baseweb="tab"] {
           min-height: 30px !important;
-          padding: 0 0 6px !important;
+          padding: 0 0 8px !important;
           border: 0 !important;
           border-radius: 0 !important;
           background: transparent !important;

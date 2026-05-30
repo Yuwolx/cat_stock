@@ -3,6 +3,15 @@ from __future__ import annotations
 from src.utils.text_utils import display_value, format_krw_amount, format_list, section
 
 
+def _format_turnover(value: object) -> str:
+    if value is None:
+        return "연결 예정"
+    try:
+        return f"{int(value):,}"
+    except (ValueError, TypeError):
+        return str(value)
+
+
 def format_stock_report(payload: dict) -> str:
     basics = payload["basics"]
     flows = payload["flows"]
@@ -19,6 +28,17 @@ def format_stock_report(payload: dict) -> str:
         for row in financials
     ]
 
+    reports = payload.get("reports", [])
+    if reports:
+        report_section_parts = [f"■ 증권사 리포트 ({payload['report_date']})"]
+        for r in reports:
+            report_section_parts.append(f"- [{r['date']}] {r['title']} | {r['broker']}")
+            if r.get("summary"):
+                report_section_parts.append(f"  {r['summary']}")
+        report_section = "\n".join(report_section_parts)
+    else:
+        report_section = f"■ 증권사 리포트 ({payload['report_date']})\n- 데이터 없음"
+
     sections = [
         f"[개별 종목 분석 - {basics['name']} - {payload['target_date']}]",
         "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
@@ -28,7 +48,7 @@ def format_stock_report(payload: dict) -> str:
                 (
                     f"현재가 {display_value(basics['price'])} | "
                     f"등락률 {display_value(basics['change_pct'])} | "
-                    f"거래대금 {display_value(basics['turnover_krw_billion'])}억"
+                    f"거래대금 {_format_turnover(basics['turnover_krw_billion'])}억"
                 ),
                 (
                     f"시가총액 {display_value(basics['market_cap'])} | "
@@ -60,7 +80,7 @@ def format_stock_report(payload: dict) -> str:
         section("재무 요약", financial_lines or ["데이터 없음"]),
         section("최근 공시", disclosures["disclosures"] or ["데이터 없음"]),
         section("최근 뉴스", flows["news"] or ["데이터 없음"]),
-        section("증권사 리포트", flows["reports"] or ["데이터 없음"]),
+        report_section,
         section(
             "추가 체크",
             [

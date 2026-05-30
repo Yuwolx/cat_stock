@@ -20,7 +20,13 @@ def _normalize_name(name: str) -> str:
 
 @lru_cache(maxsize=1)
 def _get_listing() -> pd.DataFrame:
-    return fdr.StockListing("KRX")
+    try:
+        df = fdr.StockListing("KRX")
+        if not df.empty:
+            return df
+    except Exception:
+        pass
+    return pd.DataFrame(columns=["Code", "Name"])
 
 
 def _find_stock_row(stock_name: str) -> pd.Series | None:
@@ -35,6 +41,35 @@ def _find_stock_row(stock_name: str) -> pd.Series | None:
     contains = listing.loc[normalized_names.str.contains(normalized_target, na=False, regex=False)]
     if not contains.empty:
         return contains.iloc[0]
+    return None
+
+
+def get_stock_code(stock_name: str) -> str | None:
+    row = _find_stock_row(stock_name)
+    if row is not None:
+        return str(row["Code"]).zfill(6)
+    return _search_stock_code_naver(stock_name)
+
+
+def _search_stock_code_naver(stock_name: str) -> str | None:
+    try:
+        resp = requests.get(
+            "https://ac.stock.naver.com/ac",
+            params={"q": stock_name, "target": "stock,index,marketindicator"},
+            headers=HEADERS,
+            timeout=10,
+        )
+        items = resp.json().get("items", [])
+        for item in items:
+            code = item.get("code", "")
+            name = item.get("name", "")
+            if _normalize_name(name) == _normalize_name(stock_name) and len(code) == 6:
+                return code
+        if items:
+            code = items[0].get("code", "")
+            return code if len(code) == 6 else None
+    except Exception:
+        pass
     return None
 
 
@@ -389,11 +424,6 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
                 f"{stock_name}: 업황 개선 기대감 관련 기사",
                 f"{stock_name}: 증권사 목표가 상향 기사",
             ],
-            "reports": [
-                f"{stock_name}: 매수 / 목표가 95,000원",
-                f"{stock_name}: 중립 / 목표가 82,000원",
-            ],
-            "report_target_prices": ["95,000원", "82,000원"],
         }
 
     row = _find_stock_row(stock_name)
@@ -411,19 +441,8 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         foreign_sum = flow_df["foreign"].sum(min_count=1)
         institution_sum = flow_df["institution"].sum(min_count=1)
 
-    report_rows = [_enrich_report(item) for item in _parse_report_rows(code, limit=4)]
-    report_lines = []
-    target_prices: list[str] = []
-    for item in report_rows:
-        segments = [segment for segment in [item.get("broker"), item.get("opinion"), item.get("target_price"), item.get("date")] if segment]
-        report_lines.append(f"{item['title']} | {' / '.join(segments)}" if segments else item["title"])
-        if item.get("target_price"):
-            target_prices.append(item["target_price"])
-
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
         "news": _parse_news_results(str(row["Name"]), limit=6),
-        "reports": report_lines,
-        "report_target_prices": target_prices,
     }

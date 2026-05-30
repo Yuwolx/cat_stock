@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 from html import escape
 
+from pathlib import Path
+
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -21,9 +23,15 @@ from src.ui.components import (
 
 def render_app() -> None:
     settings = get_settings()
+    icon_path = Path("cat_stock_image.png")
+    try:
+        from PIL import Image
+        page_icon = Image.open(icon_path) if icon_path.exists() else "🐱"
+    except Exception:
+        page_icon = "🐱"
     st.set_page_config(
         page_title=settings.app_title,
-        page_icon="cat_stock_image.png",
+        page_icon=page_icon,
         layout="wide",
     )
     inject_app_styles()
@@ -91,13 +99,21 @@ def _render_stock_page() -> None:
         input_col, _ = st.columns([0.62, 0.38], gap="small")
         with input_col:
             stock_name = st.text_input("종목명", placeholder="예: 삼성전자")
+            report_dates = st.date_input(
+                "리포트 기간",
+                value=(date.today(), date.today()),
+                format="YYYY-MM-DD",
+            )
             if st.button("분석 생성", type="primary", use_container_width=False, key="stock_generate"):
                 name = stock_name.strip()
                 if not name:
                     render_note("종목명을 먼저 입력해주세요.", tone="warn")
                 else:
+                    dates = report_dates if isinstance(report_dates, (list, tuple)) else (report_dates, report_dates)
+                    from_iso = dates[0].isoformat()
+                    to_iso = dates[1].isoformat() if len(dates) > 1 else from_iso
                     with st.spinner("정리하고 있습니다..."):
-                        result = generate_stock_report(name)
+                        result = generate_stock_report(name, report_from=from_iso, report_to=to_iso)
                     st.session_state["stock_result"] = result
 
             with st.expander("연결 데이터"):

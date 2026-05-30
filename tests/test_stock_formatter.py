@@ -4,6 +4,7 @@ from src.formatters.stock_formatter import format_stock_report
 def test_stock_formatter_includes_stock_name() -> None:
     payload = {
         "target_date": "2026-05-29",
+        "report_date": "2026-05-29 ~ 2026-05-29",
         "is_mock_data": True,
         "basics": {
             "name": "삼성전자",
@@ -21,8 +22,8 @@ def test_stock_formatter_includes_stock_name() -> None:
             "foreign_20d": "+1,245주",
             "institution_20d": "-342주",
             "news": ["뉴스"],
-            "reports": ["리포트"],
         },
+        "reports": [],
         "financials": [{"quarter": "2026Q1", "sales": "10", "op_income": "2", "net_income": "1"}],
         "disclosures": {
             "disclosures": ["공시"],
