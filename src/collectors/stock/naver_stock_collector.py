@@ -426,11 +426,14 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
                 f"{stock_name}: 업황 개선 기대감 관련 기사",
                 f"{stock_name}: 증권사 목표가 상향 기사",
             ],
+            "naver_reports": [
+                f"{stock_name}: 매수 / 목표가 95,000원",
+            ],
         }
 
     row = _find_stock_row(stock_name)
     if row is None:
-        return {"foreign_20d": None, "institution_20d": None, "news": [], "reports": [], "report_target_prices": []}
+        return {"foreign_20d": None, "institution_20d": None, "news": [], "naver_reports": []}
 
     code = str(row["Code"]).zfill(6)
     flow_df = _parse_investor_flow_table(code)
@@ -443,8 +446,16 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         foreign_sum = flow_df["foreign"].sum(min_count=1)
         institution_sum = flow_df["institution"].sum(min_count=1)
 
+    report_rows = [_enrich_report(item) for item in _parse_report_rows(code, limit=5)]
+    naver_report_lines = []
+    for item in report_rows:
+        segments = [s for s in [item.get("broker"), item.get("opinion"), item.get("target_price"), item.get("date")] if s]
+        line = f"{item['title']}" + (f" | {' / '.join(segments)}" if segments else "")
+        naver_report_lines.append(line)
+
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
         "news": _parse_news_by_code(code, limit=6),
+        "naver_reports": naver_report_lines,
     }

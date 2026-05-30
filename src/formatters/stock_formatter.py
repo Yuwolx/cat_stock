@@ -80,6 +80,7 @@ def format_stock_report(payload: dict) -> str:
         section("재무 요약", financial_lines or ["데이터 없음"]),
         section("최근 공시", disclosures["disclosures"] or ["데이터 없음"]),
         section("최근 뉴스", flows["news"] or ["데이터 없음"]),
+        section("네이버 리포트", flows.get("naver_reports") or ["데이터 없음"]),
         report_section,
         section(
             "추가 체크",
