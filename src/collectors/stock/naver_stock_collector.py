@@ -264,36 +264,38 @@ def _parse_consensus_from_frgn(code: str) -> dict[str, str | None]:
 
 
 def _parse_news_results(stock_name: str, limit: int = 6) -> list[str]:
-    response = requests.get(
-        "https://search.naver.com/search.naver",
-        params={"where": "news", "query": f"{stock_name} 주식"},
-        headers=HEADERS,
-        timeout=20,
-    )
-    response.raise_for_status()
-    response.encoding = response.apparent_encoding or response.encoding
-    soup = BeautifulSoup(response.text, "html.parser")
+    code = _search_stock_code_naver(stock_name)
+    if code:
+        return _parse_news_by_code(code, limit)
+    return []
 
-    items: list[str] = []
-    seen: set[str] = set()
-    for anchor in soup.select("a[href]"):
-        href = anchor.get("href", "")
-        text = " ".join(anchor.stripped_strings)
-        if not href.startswith("https://"):
-            continue
-        if "search.naver.com" in href or "help.naver.com" in href or "channelPromotion" in href:
-            continue
-        if "n.news.naver.com" in href:
-            continue
-        if len(text) < 14 or len(text) > 90:
-            continue
-        if href in seen:
-            continue
-        seen.add(href)
-        items.append(text)
-        if len(items) >= limit:
-            break
-    return items
+
+def _parse_news_by_code(code: str, limit: int = 6) -> list[str]:
+    try:
+        response = requests.get(
+            f"https://finance.naver.com/item/news_news.naver?code={code}&page=1&clusterId=",
+            headers={**HEADERS, "Referer": f"https://finance.naver.com/item/news.naver?code={code}"},
+            timeout=20,
+        )
+        response.encoding = "euc-kr"
+        soup = BeautifulSoup(response.text, "html.parser")
+        items: list[str] = []
+        for row in soup.select("tr"):
+            title = row.select_one("td.title a")
+            info = row.select_one("td.info")
+            date = row.select_one("td.date")
+            if not title:
+                continue
+            text = title.get_text(strip=True)
+            source = info.get_text(strip=True) if info else ""
+            date_str = date.get_text(strip=True) if date else ""
+            line = f"{text}" + (f" ({source}, {date_str})" if source else "")
+            items.append(line)
+            if len(items) >= limit:
+                break
+        return items
+    except Exception:
+        return []
 
 
 def _parse_report_rows(code: str, limit: int = 5) -> list[dict]:
@@ -444,5 +446,5 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
-        "news": _parse_news_results(str(row["Name"]), limit=6),
+        "news": _parse_news_by_code(code, limit=6),
     }
