@@ -486,8 +486,8 @@ def render_shell_with_toggle(mode: str) -> None:
         .st-key-mode_logo_toggle button::before {{
             content: "";
             display: inline-block;
-            width: 28px;
-            height: 28px;
+            width: 40px;
+            height: 40px;
             background-image: url("data:image/png;base64,{_LOGO_B64}");
             background-size: contain;
             background-repeat: no-repeat;
