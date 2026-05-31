@@ -15,6 +15,8 @@ load_dotenv()
 class Settings:
     app_title: str
     dart_api_key: str
+    kis_app_key: str
+    kis_app_secret: str
     output_dir: Path
 
 
@@ -24,5 +26,7 @@ def get_settings() -> Settings:
     return Settings(
         app_title=os.getenv("APP_TITLE", "cat_stock"),
         dart_api_key=os.getenv("DART_API_KEY", ""),
+        kis_app_key=os.getenv("KIS_APP_KEY", ""),
+        kis_app_secret=os.getenv("KIS_APP_SECRET", ""),
         output_dir=output_dir,
     )
