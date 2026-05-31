@@ -486,14 +486,14 @@ def render_shell_with_toggle(mode: str) -> None:
         .st-key-mode_logo_toggle button::before {{
             content: "";
             display: inline-block;
-            width: 16px;
-            height: 16px;
+            width: 28px;
+            height: 28px;
             background-image: url("data:image/png;base64,{_LOGO_B64}");
             background-size: contain;
             background-repeat: no-repeat;
             vertical-align: middle;
-            margin-right: 5px;
-            border-radius: 3px;
+            margin-right: 8px;
+            border-radius: 6px;
         }}
         """
 
@@ -502,7 +502,7 @@ def render_shell_with_toggle(mode: str) -> None:
         <style>
         /* ── mode logo toggle ── */
         .st-key-mode_logo_toggle {{
-            margin-bottom: 10px !important;
+            margin-bottom: 12px !important;
         }}
         .st-key-mode_logo_toggle button {{
             background: transparent !important;
@@ -514,21 +514,19 @@ def render_shell_with_toggle(mode: str) -> None:
             min-height: 0 !important;
             height: auto !important;
             color: var(--muted, #6f7683) !important;
-            font-size: 10px !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.10em !important;
-            text-transform: uppercase !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.02em !important;
             cursor: pointer !important;
             transition: color 120ms ease !important;
-            font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            font-family: Manrope, Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
             transform: none !important;
             line-height: 1 !important;
         }}
         .st-key-mode_logo_toggle button p {{
-            font-size: 10px !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.10em !important;
-            text-transform: uppercase !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.02em !important;
             color: inherit !important;
             margin: 0 !important;
         }}
