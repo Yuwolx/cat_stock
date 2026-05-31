@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from html import escape
 
@@ -227,32 +228,165 @@ def _render_dashboard_preview(html: str) -> None:
 
 
 def _render_output_box(result_text: str, placeholder: str) -> None:
-    if result_text:
-        import json as _json
-        copy_html = f"""
-        <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-          <button id="cb" onclick="(async()=>{{
-            await navigator.clipboard.writeText({_json.dumps(result_text)});
-            const b=document.getElementById('cb');
-            b.textContent='✓ 복사됨';
-            b.style.background='#0066cc';b.style.color='#fff';b.style.borderColor='#0066cc';
-            setTimeout(()=>{{b.textContent='복사';b.style.background='#fff';b.style.color='#0066cc';b.style.borderColor='rgba(0,102,204,0.22)';}},1400);
-          }})()" style="min-height:30px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,102,204,0.22);background:#fff;color:#0066cc;font-size:12px;font-weight:500;cursor:pointer;transition:all 150ms ease;">복사</button>
-        </div>
-        """
-        components.html(copy_html, height=42)
-        st.text_area(
-            label="",
-            value=result_text,
-            height=370,
-            disabled=False,
-            label_visibility="collapsed",
-        )
-    else:
-        st.markdown(
-            f'<div class="output-placeholder">{escape(placeholder)}</div>',
-            unsafe_allow_html=True,
-        )
+    has_result = bool(result_text)
+    output_json = json.dumps(result_text).replace("</", "<\\/")
+    content_html = (
+        f'<pre id="output-text" class="output-pre">{escape(result_text)}</pre>'
+        if has_result
+        else f'<div id="output-text" class="output-placeholder">{escape(placeholder)}</div>'
+    )
+    disabled_attr = "" if has_result else "disabled"
+    html = f"""
+    <style>
+      :root {{
+        color-scheme: light;
+      }}
+
+      html,
+      body {{
+        margin: 0;
+        padding: 0;
+        background: transparent;
+      }}
+
+      .output-shell {{
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 428px;
+        overflow: hidden;
+        border: 1px solid rgba(17, 19, 24, 0.14);
+        border-radius: 12px;
+        background: #faf7f1;
+      }}
+
+      .output-toolbar {{
+        box-sizing: border-box;
+        flex: 0 0 44px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 8px 12px 4px;
+      }}
+
+      .copy-button {{
+        min-height: 32px;
+        padding: 0 14px;
+        border: 1px solid rgba(0, 102, 204, 0.28);
+        border-radius: 999px;
+        background: #ffffff;
+        color: #0066cc;
+        font: 600 12px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+        cursor: pointer;
+        transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
+      }}
+
+      .copy-button:hover:not(:disabled) {{
+        background: rgba(0, 102, 204, 0.06);
+        border-color: rgba(0, 102, 204, 0.46);
+      }}
+
+      .copy-button:disabled {{
+        opacity: 0.42;
+        cursor: default;
+      }}
+
+      .copy-button.is-copied {{
+        background: #0066cc;
+        border-color: #0066cc;
+        color: #ffffff;
+      }}
+
+      .copy-button.is-failed {{
+        background: #ffffff;
+        border-color: rgba(180, 48, 48, 0.42);
+        color: #b03030;
+      }}
+
+      .output-pre,
+      .output-placeholder {{
+        box-sizing: border-box;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        margin: 0;
+        padding: 12px 14px 16px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+        color: #303743;
+        background: #faf7f1;
+      }}
+
+      .output-pre {{
+        font: 12px/1.62 "SF Mono", "Cascadia Code", ui-monospace, monospace;
+      }}
+
+      .output-placeholder {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #6f7683;
+        font: 12px/1.6 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+      }}
+    </style>
+
+    <div class="output-shell">
+      <div class="output-toolbar">
+        <button id="copy-button" class="copy-button" type="button" {disabled_attr}>복사</button>
+      </div>
+      {content_html}
+    </div>
+
+    <script>
+      const outputText = {output_json};
+      const button = document.getElementById("copy-button");
+
+      async function writeClipboard(text) {{
+        if (navigator.clipboard && window.isSecureContext) {{
+          await navigator.clipboard.writeText(text);
+          return;
+        }}
+
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }}
+
+      function resetButton() {{
+        button.textContent = "복사";
+        button.classList.remove("is-copied", "is-failed");
+      }}
+
+      button.addEventListener("click", async () => {{
+        if (button.disabled) {{
+          return;
+        }}
+
+        try {{
+          await writeClipboard(outputText);
+          button.textContent = "복사됨";
+          button.classList.add("is-copied");
+          button.classList.remove("is-failed");
+        }} catch (error) {{
+          button.textContent = "복사 실패";
+          button.classList.add("is-failed");
+          button.classList.remove("is-copied");
+        }}
+
+        window.setTimeout(resetButton, 1400);
+      }});
+    </script>
+    """
+    components.html(html, height=432, scrolling=False)
 
 
 def _compact_date(date_text: str) -> str:
