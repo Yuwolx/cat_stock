@@ -65,7 +65,10 @@ def _parse_program_summary(soup: BeautifulSoup, href: str) -> dict[str, float | 
 
 
 def _parse_name_table_from_page(url: str, limit: int = 10) -> list[str]:
-    soup = _fetch_soup(url)
+    try:
+        soup = _fetch_soup(url)
+    except Exception:
+        return []
     items: list[str] = []
     selectors = ["table.type_2 tr", "table.type_5 tr"]
     seen_codes: set[str] = set()
@@ -277,20 +280,9 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
 
     snapshot = get_home_market_snapshot(use_mock_data=False)
 
-    new_highs = _merge_unique(
-        _parse_name_table_from_page("https://finance.naver.com/sise/sise_high.naver", limit=10)
-        + _parse_name_table_from_page("https://finance.naver.com/sise/sise_high.naver?sosok=1", limit=10),
-        limit=10,
-    )
-    new_lows = _merge_unique(
-        _parse_name_table_from_page("https://finance.naver.com/sise/sise_low.naver", limit=10)
-        + _parse_name_table_from_page("https://finance.naver.com/sise/sise_low.naver?sosok=1", limit=10),
-        limit=10,
-    )
-
     return {
-        "new_highs": new_highs,
-        "new_lows": new_lows,
+        "new_highs": [],    # sise_high.naver 404 — 대체 수집 경로 탐색 중
+        "new_lows": [],     # sise_low.naver 404 — 대체 수집 경로 탐색 중
         "upper_limit": snapshot.get("upper_limit", []),
-        "after_hours_movers": _parse_after_hours_movers(limit=10),
+        "after_hours_movers": [],  # sise_over_time.naver 404
     }
