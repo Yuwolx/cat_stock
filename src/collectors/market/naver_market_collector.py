@@ -98,6 +98,43 @@ def _merge_unique(items: list[str], limit: int = 10) -> list[str]:
     return merged
 
 
+def get_sector_changes(use_mock_data: bool = True) -> list[dict]:
+    """업종별 등락률 수집 (네이버 증권 업종별 시세)"""
+    if use_mock_data:
+        return [
+            {"name": "반도체", "change_pct": +2.8},
+            {"name": "자동차", "change_pct": +1.1},
+            {"name": "2차전지", "change_pct": -1.4},
+            {"name": "바이오", "change_pct": +0.6},
+            {"name": "은행", "change_pct": +0.3},
+        ]
+
+    try:
+        soup = _fetch_soup("https://finance.naver.com/sise/sise_group.naver")
+        items: list[dict] = []
+        for row in soup.select("table.type_1 tr"):
+            link = row.select_one("a")
+            cells = row.select("td")
+            if not link or len(cells) < 4:
+                continue
+            name = link.get_text(strip=True)
+            if not name:
+                continue
+            # 등락률은 보통 4번째 td (0-indexed: cells[3])
+            rate_text = cells[3].get_text(strip=True)
+            # 부호 감지 후 파싱
+            sign = -1 if any(t in rate_text for t in ("▼", "▽", "-")) else 1
+            rate = _to_number(rate_text)
+            if rate is not None and sign < 0:
+                rate = -abs(rate)
+            items.append({"name": name, "change_pct": rate})
+            if len(items) >= 20:
+                break
+        return items
+    except Exception:
+        return []
+
+
 def get_home_market_snapshot(use_mock_data: bool = True) -> dict:
     if use_mock_data:
         return {
@@ -202,6 +239,33 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
     return items[:20]
 
 
+def _parse_after_hours_movers(limit: int = 10) -> list[str]:
+    """시간외 단일가 급등락 종목 (등락률 포함)"""
+    movers: list[str] = []
+    for sosok in ("0", "1"):
+        try:
+            soup = _fetch_soup(f"https://finance.naver.com/sise/sise_over_time.naver?sosok={sosok}")
+            for row in soup.select("table.type_2 tr"):
+                cells = row.select("td")
+                link = row.select_one('a[href*="/item/main.naver?code="]') or row.select_one("a.tltle")
+                if not link or len(cells) < 3:
+                    continue
+                name = link.get_text(strip=True)
+                change_cell = next(
+                    (c for c in cells if "%" in c.get_text()),
+                    cells[2] if len(cells) > 2 else None,
+                )
+                rate = change_cell.get_text(strip=True) if change_cell else ""
+                movers.append(f"{name} {rate}" if rate else name)
+                if len(movers) >= limit:
+                    break
+        except Exception:
+            pass
+        if len(movers) >= limit:
+            break
+    return movers[:limit]
+
+
 def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
         return {
@@ -212,9 +276,21 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
         }
 
     snapshot = get_home_market_snapshot(use_mock_data=False)
+
+    new_highs = _merge_unique(
+        _parse_name_table_from_page("https://finance.naver.com/sise/sise_high.naver", limit=10)
+        + _parse_name_table_from_page("https://finance.naver.com/sise/sise_high.naver?sosok=1", limit=10),
+        limit=10,
+    )
+    new_lows = _merge_unique(
+        _parse_name_table_from_page("https://finance.naver.com/sise/sise_low.naver", limit=10)
+        + _parse_name_table_from_page("https://finance.naver.com/sise/sise_low.naver?sosok=1", limit=10),
+        limit=10,
+    )
+
     return {
-        "new_highs": [],
-        "new_lows": [],
+        "new_highs": new_highs,
+        "new_lows": new_lows,
         "upper_limit": snapshot.get("upper_limit", []),
-        "after_hours_movers": [],
+        "after_hours_movers": _parse_after_hours_movers(limit=10),
     }

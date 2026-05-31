@@ -10,6 +10,7 @@ def format_market_briefing(payload: dict) -> str:
     derivatives = payload["derivatives"]
     market_events = payload["market_events"]
     leaders = payload["leaders"]
+    sectors = payload.get("sectors", [])
 
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
     mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
@@ -59,6 +60,13 @@ def format_market_briefing(payload: dict) -> str:
             ],
         ),
         section("거래대금 상위", leader_lines or ["데이터 없음"]),
+        section(
+            "업종별 등락",
+            [
+                f"{item['name']} {'+' if (item['change_pct'] or 0) >= 0 else ''}{display_value(item['change_pct'])}%"
+                for item in sectors
+            ] or ["데이터 없음"],
+        ),
         section(
             "외국인/기관 수급",
             [
