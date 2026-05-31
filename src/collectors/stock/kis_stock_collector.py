@@ -21,16 +21,17 @@ def get_stock_investor_flow_krw(
     app_key: str,
     app_secret: str,
     market: str = "J",
+    days: int = 20,
 ) -> dict:
     """
-    당일 투자자별 순매수 금액 (KIS API).
-    market: "J"=KOSPI, "Q"=KOSDAQ (코드가 6자리면 자동 판단 불가 → 기본 J)
-    반환: { foreign_today, institution_today, retail_today }  모두 억 원 문자열
+    최근 N일 투자자별 순매수 금액 누적 (KIS API FHKST01010900).
+    - 단위: 백만 원 → 억 원 변환 (÷100)
+    - 반환: { foreign_20d_krw, institution_20d_krw, foreign_today_krw, institution_today_krw }
     """
     try:
         data = kis_get(
-            path="/uapi/domestic-stock/v1/quotations/investor",
-            tr_id="FHKST01010300",
+            path="/uapi/domestic-stock/v1/quotations/inquire-investor",
+            tr_id="FHKST01010900",
             params={
                 "FID_COND_MRKT_DIV_CODE": market,
                 "FID_INPUT_ISCD": code,
@@ -38,19 +39,40 @@ def get_stock_investor_flow_krw(
             app_key=app_key,
             app_secret=app_secret,
         )
-        output = data.get("output")
-        if not output:
-            return {"foreign_today": None, "institution_today": None, "retail_today": None}
+        rows = data.get("output", [])
+        if not rows:
+            return {"foreign_20d_krw": None, "institution_20d_krw": None,
+                    "foreign_today_krw": None, "institution_today_krw": None}
 
-        # output이 리스트인 경우 첫 항목(당일)
-        row = output[0] if isinstance(output, list) else output
+        # 최신순 정렬 (이미 최신이 앞에 있지만 보장)
+        recent = rows[:days]
+
+        def _sum_billion(field: str) -> str | None:
+            total = 0
+            for r in recent:
+                try:
+                    total += int(r.get(field) or 0)
+                except (ValueError, TypeError):
+                    pass
+            # 백만 원 → 억 원
+            val = round(total / 100, 1)
+            sign = "+" if val >= 0 else ""
+            return f"{sign}{val:,.1f}억"
+
+        def _today_billion(field: str) -> str | None:
+            if not rows:
+                return None
+            return _to_billion(str(int(rows[0].get(field) or 0) * 1_000_000))
+
         return {
-            "foreign_today": _to_billion(row.get("frgn_ntby_amt")),
-            "institution_today": _to_billion(row.get("orgn_ntby_amt")),
-            "retail_today": _to_billion(row.get("prsn_ntby_amt")),
+            "foreign_20d_krw": _sum_billion("frgn_ntby_tr_pbmn"),
+            "institution_20d_krw": _sum_billion("orgn_ntby_tr_pbmn"),
+            "foreign_today_krw": _to_billion(str(int(rows[0].get("frgn_ntby_tr_pbmn") or 0) * 1_000_000)),
+            "institution_today_krw": _to_billion(str(int(rows[0].get("orgn_ntby_tr_pbmn") or 0) * 1_000_000)),
         }
     except Exception:
-        return {"foreign_today": None, "institution_today": None, "retail_today": None}
+        return {"foreign_20d_krw": None, "institution_20d_krw": None,
+                "foreign_today_krw": None, "institution_today_krw": None}
 
 
 def get_short_selling_ratio(

@@ -73,10 +73,12 @@ def format_stock_report(payload: dict) -> str:
         section(
             "수급",
             [
-                f"외국인 당일 순매수 {display_value(kis_flow.get('foreign_today'))} (금액 기준)",
-                f"기관 당일 순매수 {display_value(kis_flow.get('institution_today'))} (금액 기준)",
-                f"외국인 20일 누적 {display_value(flows['foreign_20d'])} (주 수 기준)",
-                f"기관 20일 누적 {display_value(flows['institution_20d'])} (주 수 기준)",
+                f"외국인 20일 누적 순매수 {display_value(kis_flow.get('foreign_20d_krw') or flows['foreign_20d'])} "
+                f"({'금액 기준' if kis_flow.get('foreign_20d_krw') else '주 수 기준'})",
+                f"기관 20일 누적 순매수 {display_value(kis_flow.get('institution_20d_krw') or flows['institution_20d'])} "
+                f"({'금액 기준' if kis_flow.get('institution_20d_krw') else '주 수 기준'})",
+                f"외국인 당일 순매수 {display_value(kis_flow.get('foreign_today_krw'))} (금액 기준)",
+                f"기관 당일 순매수 {display_value(kis_flow.get('institution_today_krw'))} (금액 기준)",
                 f"공매도 잔고 비율 {display_value(short_selling['short_balance_ratio'])}",
             ],
         ),
