@@ -502,7 +502,7 @@ def render_shell_with_toggle(mode: str) -> None:
         <style>
         /* ── mode logo toggle ── */
         .st-key-mode_logo_toggle {{
-            margin-bottom: 12px !important;
+            margin-bottom: 0 !important;
         }}
         .st-key-mode_logo_toggle button {{
             background: transparent !important;
@@ -556,7 +556,7 @@ def render_shell_with_toggle(mode: str) -> None:
     sub_html = f'<p class="cat-shell__sub">{escape(sub)}</p>' if sub else ""
     st.markdown(
         f"""
-        <div class="cat-shell" style="margin-top: -4px;">
+        <div class="cat-shell" style="margin-top: -18px;">
           <h1 class="cat-shell__title">{title_html}</h1>
           {sub_html}
         </div>
