@@ -5,6 +5,10 @@ from src.collectors.stock.dart_stock_collector import (
     get_stock_disclosures,
 )
 from src.collectors.stock.fnguide_report_collector import get_fnguide_reports
+from src.collectors.stock.kis_stock_collector import (
+    get_short_selling_ratio,
+    get_stock_investor_flow_krw,
+)
 from src.collectors.stock.naver_stock_collector import (
     get_stock_basics,
     get_stock_code,
@@ -31,6 +35,20 @@ def generate_stock_report(
     code = get_stock_code(stock_name) if not use_mock_data else None
     reports = get_fnguide_reports(code, from_date, to_date) if code else []
 
+    has_kis = bool(settings.kis_app_key and settings.kis_app_secret)
+    kis_flow = (
+        get_stock_investor_flow_krw(code, settings.kis_app_key, settings.kis_app_secret)
+        if code and has_kis and not use_mock_data
+        else {"foreign_today": None, "institution_today": None, "retail_today": None}
+    )
+    kis_short = (
+        get_short_selling_ratio(code, settings.kis_app_key, settings.kis_app_secret)
+        if code and has_kis and not use_mock_data
+        else None
+    )
+
+    naver_snapshot = get_short_selling_snapshot(stock_name, use_mock_data=use_mock_data)
+
     payload = {
         "target_date": target_date,
         "report_date": f"{report_from or target_date} ~ {report_to or report_from or target_date}",
@@ -47,7 +65,11 @@ def generate_stock_report(
             api_key=settings.dart_api_key,
             use_mock_data=use_mock_data,
         ),
-        "short_selling": get_short_selling_snapshot(stock_name, use_mock_data=use_mock_data),
+        "short_selling": {
+            "short_balance_ratio": kis_short or naver_snapshot.get("short_balance_ratio"),
+            "consensus_target_price": naver_snapshot.get("consensus_target_price"),
+        },
+        "kis_flow": kis_flow,
         "reports": reports,
     }
     text = format_stock_report(payload)
