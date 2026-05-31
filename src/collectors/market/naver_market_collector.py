@@ -99,7 +99,11 @@ def _merge_unique(items: list[str], limit: int = 10) -> list[str]:
 
 
 def get_sector_changes(use_mock_data: bool = True) -> list[dict]:
-    """업종별 등락률 수집 (네이버 증권 업종별 시세)"""
+    """테마/그룹별 등락률 수집 (네이버 sise_group.naver)
+
+    실제 페이지 컬럼 구조 (검증 완료):
+      cells[0] = 테마/그룹명  cells[1] = 전일대비(%)  cells[2~] = 종목 수 등
+    """
     if use_mock_data:
         return [
             {"name": "반도체", "change_pct": +2.8},
@@ -115,18 +119,14 @@ def get_sector_changes(use_mock_data: bool = True) -> list[dict]:
         for row in soup.select("table.type_1 tr"):
             link = row.select_one("a")
             cells = row.select("td")
-            if not link or len(cells) < 4:
+            if not link or len(cells) < 2:
                 continue
             name = link.get_text(strip=True)
             if not name:
                 continue
-            # 등락률은 보통 4번째 td (0-indexed: cells[3])
-            rate_text = cells[3].get_text(strip=True)
-            # 부호 감지 후 파싱
-            sign = -1 if any(t in rate_text for t in ("▼", "▽", "-")) else 1
+            # cells[1] = 전일대비 등락률 (예: "+11.90%", "-2.30%")
+            rate_text = cells[1].get_text(strip=True).replace("%", "").replace("+", "")
             rate = _to_number(rate_text)
-            if rate is not None and sign < 0:
-                rate = -abs(rate)
             items.append({"name": name, "change_pct": rate})
             if len(items) >= 20:
                 break
