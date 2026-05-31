@@ -37,21 +37,126 @@ def render_app() -> None:
         layout="wide",
     )
     inject_app_styles()
+
+    mode = st.session_state.get("mode", "stock")
+
+    # ── 서비스 스위처 헤더 ──────────────────────────────────────────
+    _render_switcher(mode)
+
+    if mode == "stock":
+        _render_stock_mode()
+    else:
+        _render_coin_mode()
+
+
+def _render_switcher(mode: str) -> None:
+    """상단 CAT STOCK / CAT COIN 스위처"""
+    switcher_html = f"""
+    <style>
+      .mode-switcher {{
+        display: inline-flex;
+        gap: 4px;
+        padding: 3px;
+        border-radius: 10px;
+        background: rgba(17,19,24,0.06);
+        margin-bottom: 14px;
+      }}
+      .mode-btn {{
+        padding: 5px 14px;
+        border: 0;
+        border-radius: 7px;
+        font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+        background: transparent;
+        color: rgba(17,19,24,0.42);
+      }}
+      .mode-btn.active {{
+        background: #ffffff;
+        color: #111318;
+        box-shadow: 0 1px 3px rgba(17,19,24,0.10);
+      }}
+      .mode-btn:hover:not(.active) {{
+        color: rgba(17,19,24,0.70);
+      }}
+    </style>
+    <div class="mode-switcher">
+      <button class="mode-btn {'active' if mode == 'stock' else ''}"
+              onclick="window.parent.postMessage({{type:'switcher',mode:'stock'}}, '*')">
+        CAT STOCK
+      </button>
+      <button class="mode-btn {'active' if mode == 'coin' else ''}"
+              onclick="window.parent.postMessage({{type:'switcher',mode:'coin'}}, '*')">
+        CAT COIN
+      </button>
+    </div>
+    """
+    # iframe postMessage는 Streamlit에서 직접 동작 안 하므로 st.button으로 구현
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child button {
+          font-size: 13px !important;
+          font-weight: 700 !important;
+          letter-spacing: -0.02em !important;
+          border-radius: 8px !important;
+          min-height: 32px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    sw_stock, sw_coin, sw_spacer = st.columns([1.1, 1.1, 8], gap="small")
+    with sw_stock:
+        stock_type = "primary" if mode == "stock" else "secondary"
+        if st.button("CAT STOCK", type=stock_type, use_container_width=True, key="sw_stock"):
+            st.session_state["mode"] = "stock"
+            st.rerun()
+    with sw_coin:
+        coin_type = "primary" if mode == "coin" else "secondary"
+        if st.button("CAT COIN", type=coin_type, use_container_width=True, key="sw_coin"):
+            st.session_state["mode"] = "coin"
+            st.rerun()
+
+
+def _render_stock_mode() -> None:
+    """STOCK 모드 — 기존 3개 탭"""
     render_shell(
         "주식 데이터를 정리해드립니다.",
         "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다.",
     )
-
     market_tab, stock_tab, theme_tab = st.tabs(["시황 브리핑", "개별 종목 분석", "테마 공부"])
-
     with market_tab:
         _render_market_page()
-
     with stock_tab:
         _render_stock_page()
-
     with theme_tab:
         _render_theme_page()
+
+
+def _render_coin_mode() -> None:
+    """COIN 모드 — Phase 0 플레이스홀더"""
+    render_shell(
+        "코인 데이터를 정리해드립니다.",
+        "코인 시황, 개별 코인 분석, 섹터 공부 자료를 만들고 바로 복사할 수 있습니다.",
+    )
+    coin_tab, single_tab, sector_tab = st.tabs(["코인 시황", "개별 코인", "섹터 공부"])
+    with coin_tab:
+        _render_coin_placeholder("코인 시황 브리핑", "BTC · ETH · 도미넌스 · 공포탐욕지수 · 업비트 상위 · 김치 프리미엄")
+    with single_tab:
+        _render_coin_placeholder("개별 코인 분석", "가격 · 시총 · 거래량 · CoinGecko 점수 · 주요 이슈")
+    with sector_tab:
+        _render_coin_placeholder("섹터 공부", "섹터별 수익률 · 대표 코인 · 배경")
+
+
+def _render_coin_placeholder(title: str, description: str) -> None:
+    ctrl_col, out_col = st.columns([4, 6], gap="large")
+    with ctrl_col:
+        render_page_intro("Coming Soon", title)
+        render_note(f"개발 중입니다. 곧 {description} 데이터를 제공할 예정입니다.", tone="info")
+    with out_col:
+        _render_output_box("", "코인 데이터 기능을 준비 중입니다.")
 
 
 def _render_market_page() -> None:
@@ -71,10 +176,12 @@ def _render_market_page() -> None:
                 render_list(
                     [
                         "코스피 · 코스닥 지수와 거래대금",
-                        "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해",
+                        "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해 · 심천",
                         "거래대금 상위 종목",
+                        "업종별 등락률",
                         "외국인 · 기관 순매수/순매도 상위",
-                        "프로그램 차익 · 비차익, 상한가 종목, DART 주요 공시",
+                        "52주 신고가 · 신저가 · 상한가 · 시간외 단일가",
+                        "프로그램 차익 · 비차익, DART 주요 공시",
                     ]
                 )
 
@@ -186,12 +293,12 @@ def _render_theme_page() -> None:
                         result = generate_theme_report(name)
                     st.session_state["theme_result"] = result
 
-            with st.expander("현재 상태"):
+            with st.expander("연결 데이터"):
                 render_list(
                     [
-                        "테마 화면은 아직 실데이터 연결 전입니다.",
-                        "지금은 구조와 출력 형식만 준비되어 있습니다.",
-                        "실데이터 연결 후 뉴스 · 공시 · 리포트 · 글로벌 피어가 채워집니다.",
+                        "네이버 테마 관련 종목 목록 (현재가 · 등락률)",
+                        "네이버 뉴스 검색 (테마명 기준 최근 뉴스)",
+                        "글로벌 피어 · 공시 · 리포트 요약은 준비 중",
                     ]
                 )
 

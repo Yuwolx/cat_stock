@@ -9,6 +9,7 @@ from src.collectors.market.krx_collector import (
 )
 from src.collectors.market.naver_market_collector import (
     get_market_event_lists,
+    get_sector_changes,
     get_trading_value_leaders,
 )
 from src.config.settings import get_settings
@@ -24,6 +25,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
         "indices": get_market_indices(target_date, use_mock_data=use_mock_data),
         "global_macro": get_global_macro_snapshot(target_date, use_mock_data=use_mock_data),
         "leaders": get_trading_value_leaders(target_date, use_mock_data=use_mock_data),
+        "sectors": get_sector_changes(use_mock_data=use_mock_data),
         "investor_flows": get_investor_flows(target_date, use_mock_data=use_mock_data),
         "derivatives": get_derivatives_snapshot(target_date, use_mock_data=use_mock_data),
         "market_events": get_market_event_lists(target_date, use_mock_data=use_mock_data),

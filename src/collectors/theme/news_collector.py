@@ -1,5 +1,47 @@
 from __future__ import annotations
 
+import requests
+from bs4 import BeautifulSoup
+
+
+HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+
+def _search_naver_news(query: str, limit: int = 8) -> list[str]:
+    try:
+        response = requests.get(
+            "https://search.naver.com/search.naver",
+            params={"where": "news", "query": query},
+            headers=HEADERS,
+            timeout=20,
+        )
+        response.raise_for_status()
+        response.encoding = response.apparent_encoding or response.encoding
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        items: list[str] = []
+        seen: set[str] = set()
+        for anchor in soup.select("a[href]"):
+            href = anchor.get("href", "")
+            text = " ".join(anchor.stripped_strings)
+            if not href.startswith("https://"):
+                continue
+            if "search.naver.com" in href or "help.naver.com" in href or "channelPromotion" in href:
+                continue
+            if "n.news.naver.com" in href:
+                continue
+            if len(text) < 14 or len(text) > 90:
+                continue
+            if href in seen:
+                continue
+            seen.add(href)
+            items.append(text)
+            if len(items) >= limit:
+                break
+        return items
+    except Exception:
+        return []
+
 
 def get_theme_news(theme_name: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
@@ -13,4 +55,6 @@ def get_theme_news(theme_name: str, use_mock_data: bool = True) -> dict:
                 f"{theme_name}: 밸류체인 재평가 리포트",
             ],
         }
-    return {"news": [], "reports": []}
+
+    news = _search_naver_news(theme_name, limit=8)
+    return {"news": news, "reports": []}

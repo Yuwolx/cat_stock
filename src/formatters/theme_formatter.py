@@ -18,7 +18,6 @@ def format_theme_report(payload: dict) -> str:
 
     sections = [
         f"[테마 공부 - {payload['theme_name']} - {payload['target_date']}]",
-        "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
         section("테마 관련 종목", stock_lines or ["데이터 없음"]),
         section("최근 관련 뉴스", news_bundle["news"] or ["데이터 없음"]),
         section("관련 공시", peer_bundle["disclosures"] or ["데이터 없음"]),
