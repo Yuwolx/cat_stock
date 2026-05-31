@@ -19,6 +19,7 @@ from src.ui.components import (
     render_note,
     render_page_intro,
     render_shell,
+    render_shell_with_toggle,
 )
 from src.ui.dashboard import build_market_dashboard, build_stock_dashboard, build_theme_dashboard
 
@@ -39,9 +40,7 @@ def render_app() -> None:
     inject_app_styles()
 
     mode = st.session_state.get("mode", "stock")
-
-    # ── 서비스 스위처 헤더 ──────────────────────────────────────────
-    _render_switcher(mode)
+    render_shell_with_toggle(mode)
 
     if mode == "stock":
         _render_stock_mode()
@@ -49,83 +48,8 @@ def render_app() -> None:
         _render_coin_mode()
 
 
-def _render_switcher(mode: str) -> None:
-    """상단 CAT STOCK / CAT COIN 스위처"""
-    switcher_html = f"""
-    <style>
-      .mode-switcher {{
-        display: inline-flex;
-        gap: 4px;
-        padding: 3px;
-        border-radius: 10px;
-        background: rgba(17,19,24,0.06);
-        margin-bottom: 14px;
-      }}
-      .mode-btn {{
-        padding: 5px 14px;
-        border: 0;
-        border-radius: 7px;
-        font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
-        letter-spacing: -0.01em;
-        cursor: pointer;
-        transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
-        background: transparent;
-        color: rgba(17,19,24,0.42);
-      }}
-      .mode-btn.active {{
-        background: #ffffff;
-        color: #111318;
-        box-shadow: 0 1px 3px rgba(17,19,24,0.10);
-      }}
-      .mode-btn:hover:not(.active) {{
-        color: rgba(17,19,24,0.70);
-      }}
-    </style>
-    <div class="mode-switcher">
-      <button class="mode-btn {'active' if mode == 'stock' else ''}"
-              onclick="window.parent.postMessage({{type:'switcher',mode:'stock'}}, '*')">
-        CAT STOCK
-      </button>
-      <button class="mode-btn {'active' if mode == 'coin' else ''}"
-              onclick="window.parent.postMessage({{type:'switcher',mode:'coin'}}, '*')">
-        CAT COIN
-      </button>
-    </div>
-    """
-    # iframe postMessage는 Streamlit에서 직접 동작 안 하므로 st.button으로 구현
-    st.markdown(
-        """
-        <style>
-        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child button {
-          font-size: 13px !important;
-          font-weight: 700 !important;
-          letter-spacing: -0.02em !important;
-          border-radius: 8px !important;
-          min-height: 32px !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    sw_stock, sw_coin, sw_spacer = st.columns([1.1, 1.1, 8], gap="small")
-    with sw_stock:
-        stock_type = "primary" if mode == "stock" else "secondary"
-        if st.button("CAT STOCK", type=stock_type, use_container_width=True, key="sw_stock"):
-            st.session_state["mode"] = "stock"
-            st.rerun()
-    with sw_coin:
-        coin_type = "primary" if mode == "coin" else "secondary"
-        if st.button("CAT COIN", type=coin_type, use_container_width=True, key="sw_coin"):
-            st.session_state["mode"] = "coin"
-            st.rerun()
-
-
 def _render_stock_mode() -> None:
     """STOCK 모드 — 기존 3개 탭"""
-    render_shell(
-        "주식 데이터를 정리해드립니다.",
-        "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다.",
-    )
     market_tab, stock_tab, theme_tab = st.tabs(["시황 브리핑", "개별 종목 분석", "테마 공부"])
     with market_tab:
         _render_market_page()
@@ -137,10 +61,6 @@ def _render_stock_mode() -> None:
 
 def _render_coin_mode() -> None:
     """COIN 모드 — Phase 0 플레이스홀더"""
-    render_shell(
-        "코인 데이터를 정리해드립니다.",
-        "코인 시황, 개별 코인 분석, 섹터 공부 자료를 만들고 바로 복사할 수 있습니다.",
-    )
     coin_tab, single_tab, sector_tab = st.tabs(["코인 시황", "개별 코인", "섹터 공부"])
     with coin_tab:
         _render_coin_placeholder("코인 시황 브리핑", "BTC · ETH · 도미넌스 · 공포탐욕지수 · 업비트 상위 · 김치 프리미엄")
@@ -351,16 +271,21 @@ def _render_output_box(result_text: str, placeholder: str) -> None:
 
       html,
       body {{
+        width: 100%;
+        height: 100%;
         margin: 0;
         padding: 0;
-        background: transparent;
+        overflow: hidden;
+        background: #faf7f1;
       }}
 
       .output-shell {{
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        height: 428px;
+        width: 100%;
+        height: 100vh;
+        min-width: 0;
         overflow: hidden;
         border: 1px solid rgba(17, 19, 24, 0.14);
         border-radius: 12px;

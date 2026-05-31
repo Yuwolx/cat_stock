@@ -462,6 +462,111 @@ def render_shell(title: str, sub: str = "") -> None:
     )
 
 
+def render_shell_with_toggle(mode: str) -> None:
+    """eyebrow 자체가 STOCK ↔ COIN 토글 버튼인 shell 헤더.
+
+    st.button key에 Streamlit이 자동으로 붙여주는 .st-key-{key} 클래스를
+    이용해 이 버튼만 eyebrow 텍스트처럼 스타일링한다.
+    """
+    service_label = "CAT STOCK" if mode == "stock" else "CAT COIN"
+    title = (
+        "주식 데이터를 정리해드립니다."
+        if mode == "stock"
+        else "코인 데이터를 정리해드립니다."
+    )
+    sub = (
+        "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다."
+        if mode == "stock"
+        else "코인 시황, 개별 코인 분석, 섹터 공부 자료를 만들고 바로 복사할 수 있습니다."
+    )
+
+    logo_before = ""
+    if _LOGO_B64:
+        logo_before = f"""
+        .st-key-mode_logo_toggle button::before {{
+            content: "";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/png;base64,{_LOGO_B64}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            vertical-align: middle;
+            margin-right: 5px;
+            border-radius: 3px;
+        }}
+        """
+
+    st.markdown(
+        f"""
+        <style>
+        /* ── mode logo toggle ── */
+        .st-key-mode_logo_toggle {{
+            margin-bottom: 10px !important;
+        }}
+        .st-key-mode_logo_toggle button {{
+            background: transparent !important;
+            background-image: none !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+            height: auto !important;
+            color: var(--muted, #6f7683) !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.10em !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            transition: color 120ms ease !important;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            transform: none !important;
+            line-height: 1 !important;
+        }}
+        .st-key-mode_logo_toggle button p {{
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.10em !important;
+            text-transform: uppercase !important;
+            color: inherit !important;
+            margin: 0 !important;
+        }}
+        .st-key-mode_logo_toggle button:hover {{
+            color: var(--ink, #111318) !important;
+            background: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+        }}
+        .st-key-mode_logo_toggle button:active {{
+            transform: none !important;
+            box-shadow: none !important;
+        }}
+        {logo_before}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button(service_label, key="mode_logo_toggle"):
+        st.session_state["mode"] = "coin" if mode == "stock" else "stock"
+        st.rerun()
+
+    title_html = "<br>".join(escape(line) for line in title.splitlines())
+    sub_html = f'<p class="cat-shell__sub">{escape(sub)}</p>' if sub else ""
+    st.markdown(
+        f"""
+        <div class="cat-shell" style="margin-top: -4px;">
+          <h1 class="cat-shell__title">{title_html}</h1>
+          {sub_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_page_intro(eyebrow: str, title: str, copy: str = "") -> None:
     copy_html = f'<p class="cat-section__copy">{escape(copy)}</p>' if copy else ""
     st.markdown(
