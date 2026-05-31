@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": ["Bash", "Read", "Write", "Edit", "WebFetch", "WebSearch", "TodoWrite", "Agent"]
+  },
+  "skipDangerousModePermissionPrompt": true
+}

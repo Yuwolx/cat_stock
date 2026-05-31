@@ -19,6 +19,7 @@ from src.ui.components import (
     render_page_intro,
     render_shell,
 )
+from src.ui.dashboard import build_market_dashboard, build_stock_dashboard, build_theme_dashboard
 
 
 def render_app() -> None:
@@ -78,6 +79,7 @@ def _render_market_page() -> None:
 
             if "market_result" in st.session_state:
                 result = st.session_state["market_result"]
+                dash_html = build_market_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
                     data=result["text"],
@@ -85,10 +87,21 @@ def _render_market_page() -> None:
                     mime="text/plain",
                     use_container_width=False,
                 )
+                st.download_button(
+                    "대시보드 HTML",
+                    data=dash_html,
+                    file_name=f"market_dashboard_{_compact_date(result['payload']['target_date'])}.html",
+                    mime="text/html",
+                    use_container_width=False,
+                )
 
     with out_col:
         result_text = st.session_state.get("market_result", {}).get("text", "")
         _render_output_box(result_text, "기준일을 선택하고 생성 버튼을 누르면 여기에 결과가 나타납니다.")
+
+    if "market_result" in st.session_state:
+        with st.expander("대시보드 미리보기"):
+            _render_dashboard_preview(build_market_dashboard(st.session_state["market_result"]["payload"]))
 
 
 def _render_stock_page() -> None:
@@ -130,6 +143,7 @@ def _render_stock_page() -> None:
 
             if "stock_result" in st.session_state:
                 result = st.session_state["stock_result"]
+                dash_html = build_stock_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
                     data=result["text"],
@@ -137,10 +151,21 @@ def _render_stock_page() -> None:
                     mime="text/plain",
                     use_container_width=False,
                 )
+                st.download_button(
+                    "대시보드 HTML",
+                    data=dash_html,
+                    file_name=f"stock_{result['payload']['basics']['name']}_dashboard.html",
+                    mime="text/html",
+                    use_container_width=False,
+                )
 
     with out_col:
         result_text = st.session_state.get("stock_result", {}).get("text", "")
         _render_output_box(result_text, "종목명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.")
+
+    if "stock_result" in st.session_state:
+        with st.expander("대시보드 미리보기"):
+            _render_dashboard_preview(build_stock_dashboard(st.session_state["stock_result"]["payload"]))
 
 
 def _render_theme_page() -> None:
@@ -171,6 +196,7 @@ def _render_theme_page() -> None:
 
             if "theme_result" in st.session_state:
                 result = st.session_state["theme_result"]
+                dash_html = build_theme_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
                     data=result["text"],
@@ -178,82 +204,55 @@ def _render_theme_page() -> None:
                     mime="text/plain",
                     use_container_width=False,
                 )
+                st.download_button(
+                    "대시보드 HTML",
+                    data=dash_html,
+                    file_name=f"theme_{result['payload']['theme_name']}_dashboard.html",
+                    mime="text/html",
+                    use_container_width=False,
+                )
 
     with out_col:
         result_text = st.session_state.get("theme_result", {}).get("text", "")
         _render_output_box(result_text, "테마명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.")
 
+    if "theme_result" in st.session_state:
+        with st.expander("대시보드 미리보기"):
+            _render_dashboard_preview(build_theme_dashboard(st.session_state["theme_result"]["payload"]))
+
+
+def _render_dashboard_preview(html: str) -> None:
+    st.markdown("**대시보드 미리보기**", unsafe_allow_html=False)
+    components.html(html, height=900, scrolling=True)
+
 
 def _render_output_box(result_text: str, placeholder: str) -> None:
-    has_result = bool(result_text)
-    escaped_text = escape(result_text) if has_result else ""
-    escaped_placeholder = escape(placeholder)
-    button_state = "" if has_result else "disabled"
-    button_style = (
-        "opacity:1;cursor:pointer;"
-        if has_result
-        else "opacity:0.42;cursor:default;"
-    )
-    content_html = (
-        f"""<pre id="output-text" style="margin:0; padding:12px 14px 14px 14px; height:320px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; color:#303743; background:#faf7f1;">{escaped_text}</pre>"""
-        if has_result
-        else f"""<div id="output-text" style="height:320px; padding:12px 14px 14px 14px; display:flex; align-items:center; justify-content:center; text-align:center; font:12px/1.6 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:#6f7683; background:#faf7f1;">{escaped_placeholder}</div>"""
-    )
-    html = f"""
-    <div style="padding-bottom:8px;">
-    <div style="border:1px solid rgba(17,19,24,0.14); border-radius:12px; background:#faf7f1; overflow:hidden;">
-      <div style="display:flex; justify-content:flex-end; align-items:center; padding:10px 12px 0 12px;">
-        <button
-          id="copy-btn"
-          style="
-            min-height:32px;
-            padding:0 14px;
-            border-radius:999px;
-            border:1px solid rgba(0,102,204,0.22);
-            background:#ffffff;
-            color:#0066cc;
-            font-size:12px;
-            font-weight:500;
-            letter-spacing:-0.01em;
-            {button_style}
-          "
-          {button_state}
-          onclick="copyOutput()"
-        >
-          복사
-        </button>
-      </div>
-      {content_html}
-    </div>
-    </div>
-    <script>
-      async function copyOutput() {{
-        const button = document.getElementById('copy-btn');
-        if (button.disabled) {{
-          return;
-        }}
-        const text = document.getElementById('output-text').innerText;
-        try {{
-          await navigator.clipboard.writeText(text);
-          const original = button.innerText;
-          button.innerText = '복사됨';
-          button.style.background = '#0066cc';
-          button.style.color = '#ffffff';
-          button.style.borderColor = '#0066cc';
-          setTimeout(() => {{
-            button.innerText = original;
-            button.style.background = '#ffffff';
-            button.style.color = '#0066cc';
-            button.style.borderColor = 'rgba(0,102,204,0.22)';
-          }}, 1200);
-        }} catch (e) {{
-          button.innerText = '실패';
-          setTimeout(() => {{ button.innerText = '복사'; }}, 1200);
-        }}
-      }}
-    </script>
-    """
-    components.html(html, height=390)
+    if result_text:
+        import json as _json
+        copy_html = f"""
+        <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+          <button id="cb" onclick="(async()=>{{
+            await navigator.clipboard.writeText({_json.dumps(result_text)});
+            const b=document.getElementById('cb');
+            b.textContent='✓ 복사됨';
+            b.style.background='#0066cc';b.style.color='#fff';b.style.borderColor='#0066cc';
+            setTimeout(()=>{{b.textContent='복사';b.style.background='#fff';b.style.color='#0066cc';b.style.borderColor='rgba(0,102,204,0.22)';}},1400);
+          }})()" style="min-height:30px;padding:0 14px;border-radius:999px;border:1px solid rgba(0,102,204,0.22);background:#fff;color:#0066cc;font-size:12px;font-weight:500;cursor:pointer;transition:all 150ms ease;">복사</button>
+        </div>
+        """
+        components.html(copy_html, height=42)
+        st.text_area(
+            label="",
+            value=result_text,
+            height=370,
+            disabled=False,
+            label_visibility="collapsed",
+        )
+    else:
+        st.markdown(
+            f'<div class="output-placeholder">{escape(placeholder)}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def _compact_date(date_text: str) -> str:
