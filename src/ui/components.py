@@ -377,6 +377,40 @@ def inject_app_styles() -> None:
           font-size: 11px !important;
         }
 
+        /* 출력 텍스트 박스 */
+        .stTextArea textarea {
+          font: 11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace !important;
+          color: #303743 !important;
+          background: #faf7f1 !important;
+          border: 1px solid rgba(17,19,24,0.14) !important;
+          border-radius: 12px !important;
+          resize: none !important;
+          box-shadow: none !important;
+        }
+        .stTextArea textarea:focus {
+          box-shadow: none !important;
+          border-color: rgba(17,19,24,0.14) !important;
+        }
+        .stTextArea [data-baseweb="textarea"] {
+          background: transparent !important;
+          border: none !important;
+        }
+
+        /* 결과 없을 때 플레이스홀더 */
+        .output-placeholder {
+          height: 420px;
+          border: 1px solid rgba(17,19,24,0.14);
+          border-radius: 12px;
+          background: #faf7f1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          color: #6f7683;
+          font-size: 12px;
+          line-height: 1.6;
+        }
+
         details {
           background: transparent !important;
           border: 0 !important;
