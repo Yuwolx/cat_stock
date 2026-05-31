@@ -72,8 +72,8 @@ def format_stock_report(payload: dict) -> str:
         section(
             "수급",
             [
-                f"외국인 최근 20일 누적 순매수 {display_value(flows['foreign_20d'])}",
-                f"기관 최근 20일 누적 순매수 {display_value(flows['institution_20d'])}",
+                f"외국인 최근 20일 누적 순매수 {display_value(flows['foreign_20d'])} (주 수 기준)",
+                f"기관 최근 20일 누적 순매수 {display_value(flows['institution_20d'])} (주 수 기준)",
                 f"공매도 잔고 비율 {display_value(short_selling['short_balance_ratio'])}",
             ],
         ),

@@ -107,6 +107,7 @@ def _render_market_page() -> None:
 
             if "market_result" in st.session_state:
                 result = st.session_state["market_result"]
+                _render_missing_data_warnings(result["payload"], "market")
                 dash_html = build_market_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
@@ -171,6 +172,7 @@ def _render_stock_page() -> None:
 
             if "stock_result" in st.session_state:
                 result = st.session_state["stock_result"]
+                _render_missing_data_warnings(result["payload"], "stock")
                 dash_html = build_stock_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
@@ -224,6 +226,7 @@ def _render_theme_page() -> None:
 
             if "theme_result" in st.session_state:
                 result = st.session_state["theme_result"]
+                _render_missing_data_warnings(result["payload"], "theme")
                 dash_html = build_theme_dashboard(result["payload"])
                 st.download_button(
                     "TXT 다운로드",
@@ -247,6 +250,45 @@ def _render_theme_page() -> None:
     if "theme_result" in st.session_state:
         with st.expander("대시보드 미리보기"):
             _render_dashboard_preview(build_theme_dashboard(st.session_state["theme_result"]["payload"]))
+
+
+def _render_missing_data_warnings(payload: dict, mode: str) -> None:
+    """수집 실패 항목을 경고로 표시"""
+    missing: list[str] = []
+
+    if mode == "market":
+        inv = payload.get("investor_flows", {})
+        if not inv.get("foreign_top_buy") and not inv.get("institution_top_buy"):
+            missing.append("외국인/기관 수급 상위 종목")
+        if not payload.get("disclosures"):
+            missing.append("DART 공시 (API 키 확인 필요)")
+        macro = payload.get("global_macro", {})
+        if all(v is None for v in macro.values()):
+            missing.append("글로벌 매크로")
+        if not payload.get("sectors"):
+            missing.append("테마/그룹 등락")
+
+    elif mode == "stock":
+        basics = payload.get("basics", {})
+        if not basics.get("price"):
+            missing.append("기본 시세 (종목명 확인 필요)")
+        flows = payload.get("flows", {})
+        if not flows.get("foreign_20d") and not flows.get("institution_20d"):
+            missing.append("외국인/기관 수급")
+        disc = payload.get("disclosures", {})
+        if not disc.get("disclosures"):
+            missing.append("DART 공시 (API 키 확인 필요)")
+        if not payload.get("financials"):
+            missing.append("재무 요약 (API 키 확인 필요)")
+
+    elif mode == "theme":
+        if not payload.get("stocks"):
+            missing.append("테마 관련 종목 (테마명 재확인)")
+        if not payload.get("news_bundle", {}).get("news"):
+            missing.append("관련 뉴스")
+
+    if missing:
+        render_note("수집 실패 항목: " + " · ".join(missing), tone="warn")
 
 
 def _render_dashboard_preview(html: str) -> None:

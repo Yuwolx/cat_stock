@@ -61,7 +61,7 @@ def format_market_briefing(payload: dict) -> str:
         ),
         section("거래대금 상위", leader_lines or ["데이터 없음"]),
         section(
-            "업종별 등락",
+            "테마/그룹 등락",
             [
                 f"{item['name']} {'+' if (item['change_pct'] or 0) >= 0 else ''}{display_value(item['change_pct'])}%"
                 for item in sectors

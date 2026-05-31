@@ -6,10 +6,12 @@
 
 - 시황 브리핑 생성
 - 개별 종목 분석 생성
-- 테마 공부 텍스트 생성
+- 테마 공부 텍스트 생성 (종목·뉴스 실데이터 연결)
 - 화면에서 바로 복사 가능
 - `.txt` 다운로드 가능
-- Railway 배포 가능
+- 대시보드 HTML 다운로드 및 미리보기
+- CAT COIN 모드 스위처 (로고 클릭 전환 / 기능 준비 중)
+- Railway 배포 완료
 
 ## 현재 연결된 실데이터
 
@@ -20,74 +22,45 @@
 - 외국인 / 기관 순매수·순매도 상위
 - 프로그램 차익 / 비차익 / 전체
 - 상한가 종목
+- 업종별 등락률
+- 52주 신고가 / 신저가
+- 시간외 단일가 급등락 (부분 연결)
 - DART 주요 공시
-- 글로벌 지표
-  - 다우
-  - S&P500
-  - 나스닥
-  - 달러/원
-  - 미국 10년물
-  - WTI
-  - 중국 상해
+- 글로벌 지표 — 다우, S&P500, 나스닥, 달러/원, 미국 10년물, WTI, 상해, 심천
 
 ### 개별 종목 분석
-- 현재가
-- 등락률
-- 거래대금
-- 시가총액
-- 52주 고저
-- PER / PBR / ROE
+- 현재가, 등락률, 거래대금, 시가총액
+- 52주 고저, PER, PBR, ROE
 - 5일 / 20일 / 60일선 위치
-- 외국인 / 기관 최근 20일 누적 수급
+- 외국인 / 기관 최근 20일 누적 수급 (주 수 기준)
 - 최근 뉴스
-- 증권사 리포트 (제목 + 요약 본문, 기간 선택 가능)
+- 증권사 리포트 (네이버 + fnguide 요약)
 - 컨센서스 목표가
 - 최근 공시
-- 최근 재무 요약
+- 최근 재무 요약 (매출/영업이익/순이익 4기간)
 - 대주주 지분율
+- 재무 위험 체크 (CB/BW/유증 키워드)
+
+### 테마 공부
+- 테마 관련 종목 목록 (현재가·등락률)
+- 테마 관련 최근 뉴스
 
 ## 아직 안 된 것
 
-- 시황 브리핑
-  - 업종별 등락
-  - 52주 신고가 / 신저가
-  - 시간외 단일가 급등락
-  - 코스피200 선물 외국인 / 기관 순매수
-  - 중국 심천 지수
-  - 증권사 리포트
-- 개별 종목 분석
-  - 공매도 잔고 비율
-  - 재무 위험 체크 자동화
-- 테마 공부
-  - 실데이터 연결 전
+- 코스피200 선물 외국인 / 기관 순매수
+- 시황 브리핑 증권사 리포트
+- 개별 종목 공매도 잔고 비율
+- 개별 종목 수급 금액 기준 전환 (현재 주 수)
+- 테마 공시 / 글로벌 피어 / 시총·밸류 데이터
+- CAT COIN 기능 전체 (Phase 1~4)
 
 ## 실행
 
-### Mac / Linux
-
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run app.py
-```
-
-### Windows (PowerShell)
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-```
-
-### Windows (Git Bash)
-
-```bash
-python -m venv .venv
-source .venv/Scripts/activate
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
 ```
 
 ## 환경 변수
@@ -100,10 +73,13 @@ python -m streamlit run app.py
 
 ## 배포
 
-`railway.json`이 포함되어 있어서 Railway에 바로 올릴 수 있습니다.
+`railway.json`이 포함되어 있어서 Railway에 바로 올릴 수 있습니다.  
+main 브랜치에 push하면 자동 배포됩니다.
 
 ## 참고 문서
 
 - [현재_연결된_실데이터_목록.md](현재_연결된_실데이터_목록.md)
 - [요구사항_요약.md](요구사항_요약.md)
 - [진행계획_및_파일구조.md](진행계획_및_파일구조.md)
+- [CAT_COIN_기획서.md](CAT_COIN_기획서.md)
+- [서비스_품질_냉철한_평가.md](서비스_품질_냉철한_평가.md)
