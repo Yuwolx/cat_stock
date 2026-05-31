@@ -242,30 +242,34 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
     return items[:20]
 
 
-def _parse_after_hours_movers(limit: int = 10) -> list[str]:
-    """시간외 단일가 급등락 종목 (등락률 포함)"""
+def _parse_rise_fall_page(url: str, limit: int = 10) -> list[str]:
+    """상승/하락 종목 페이지에서 종목명 + 등락률 파싱"""
+    items: list[str] = []
+    try:
+        soup = _fetch_soup(url)
+        for row in soup.select("table.type_2 tr"):
+            link = row.select_one('a[href*="/item/main.naver?code="]') or row.select_one("a.tltle")
+            cells = row.select("td")
+            if not link or len(cells) < 5:
+                continue
+            name = link.get_text(strip=True)
+            rate = cells[4].get_text(strip=True)
+            items.append(f"{name} {rate}" if rate else name)
+            if len(items) >= limit:
+                break
+    except Exception:
+        pass
+    return items
+
+
+def _parse_nxt_movers(limit: int = 10) -> list[str]:
+    """시간외 단일가(NXT) 급등락 종목 — nxt_sise_rise/fall.naver"""
     movers: list[str] = []
-    for sosok in ("0", "1"):
-        try:
-            soup = _fetch_soup(f"https://finance.naver.com/sise/sise_over_time.naver?sosok={sosok}")
-            for row in soup.select("table.type_2 tr"):
-                cells = row.select("td")
-                link = row.select_one('a[href*="/item/main.naver?code="]') or row.select_one("a.tltle")
-                if not link or len(cells) < 3:
-                    continue
-                name = link.get_text(strip=True)
-                change_cell = next(
-                    (c for c in cells if "%" in c.get_text()),
-                    cells[2] if len(cells) > 2 else None,
-                )
-                rate = change_cell.get_text(strip=True) if change_cell else ""
-                movers.append(f"{name} {rate}" if rate else name)
-                if len(movers) >= limit:
-                    break
-        except Exception:
-            pass
-        if len(movers) >= limit:
-            break
+    for url in (
+        "https://finance.naver.com/sise/nxt_sise_rise.naver",
+        "https://finance.naver.com/sise/nxt_sise_fall.naver",
+    ):
+        movers.extend(_parse_rise_fall_page(url, limit=limit // 2 + 1))
     return movers[:limit]
 
 
@@ -280,9 +284,22 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
 
     snapshot = get_home_market_snapshot(use_mock_data=False)
 
+    # 52주 신고가/신저가 URL(sise_high/low.naver)은 네이버에서 폐기됨
+    # 당일 상승/하락 상위 종목으로 대체 (sise_rise/fall.naver)
+    daily_highs = _merge_unique(
+        _parse_rise_fall_page("https://finance.naver.com/sise/sise_rise.naver?sosok=0", limit=5)
+        + _parse_rise_fall_page("https://finance.naver.com/sise/sise_rise.naver?sosok=1", limit=5),
+        limit=10,
+    )
+    daily_lows = _merge_unique(
+        _parse_rise_fall_page("https://finance.naver.com/sise/sise_fall.naver?sosok=0", limit=5)
+        + _parse_rise_fall_page("https://finance.naver.com/sise/sise_fall.naver?sosok=1", limit=5),
+        limit=10,
+    )
+
     return {
-        "new_highs": [],    # sise_high.naver 404 — 대체 수집 경로 탐색 중
-        "new_lows": [],     # sise_low.naver 404 — 대체 수집 경로 탐색 중
+        "new_highs": daily_highs,
+        "new_lows": daily_lows,
         "upper_limit": snapshot.get("upper_limit", []),
-        "after_hours_movers": [],  # sise_over_time.naver 404
+        "after_hours_movers": _parse_nxt_movers(limit=10),
     }

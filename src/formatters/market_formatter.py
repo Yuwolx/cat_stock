@@ -121,8 +121,8 @@ def format_market_briefing(payload: dict) -> str:
         section(
             "시장 이벤트",
             [
-                f"52주 신고가 {format_list(market_events['new_highs'])}",
-                f"52주 신저가 {format_list(market_events['new_lows'])}",
+                f"당일 상승 상위 {format_list(market_events['new_highs'])}",
+                f"당일 하락 상위 {format_list(market_events['new_lows'])}",
                 f"상한가 {format_list(market_events['upper_limit'])}",
                 f"시간외 단일가 급등락 {format_list(market_events['after_hours_movers'])}",
             ],
