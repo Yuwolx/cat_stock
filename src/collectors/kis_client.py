@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import json
 import time
+from pathlib import Path
 
 import requests
 
 BASE_URL = "https://openapi.koreainvestment.com:9443"
 
-# 프로세스 수명 동안 토큰 캐싱 (24시간 유효, 5분 여유)
-_cache: dict = {}
+# 메모리 캐시 (동일 프로세스 내)
+_mem_cache: dict = {}
+
+# 파일 캐시 경로 — output/ 아래에 저장 (.gitignore에 이미 포함)
+_TOKEN_FILE = Path(__file__).parent.parent.parent / "output" / ".kis_token_cache.json"
 
 
 def _fetch_token(app_key: str, app_secret: str) -> tuple[str, float]:
@@ -27,13 +32,51 @@ def _fetch_token(app_key: str, app_secret: str) -> tuple[str, float]:
     return token, expires_at
 
 
+def _load_file_cache(cache_key: str) -> dict | None:
+    try:
+        if _TOKEN_FILE.exists():
+            data = json.loads(_TOKEN_FILE.read_text())
+            entry = data.get(cache_key)
+            if entry and entry.get("expires_at", 0) > time.time():
+                return entry
+    except Exception:
+        pass
+    return None
+
+
+def _save_file_cache(cache_key: str, token: str, expires_at: float) -> None:
+    try:
+        _TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        existing: dict = {}
+        if _TOKEN_FILE.exists():
+            try:
+                existing = json.loads(_TOKEN_FILE.read_text())
+            except Exception:
+                pass
+        existing[cache_key] = {"token": token, "expires_at": expires_at}
+        _TOKEN_FILE.write_text(json.dumps(existing))
+    except Exception:
+        pass
+
+
 def get_token(app_key: str, app_secret: str) -> str:
     cache_key = app_key[:8]
-    entry = _cache.get(cache_key)
+
+    # 1. 메모리 캐시
+    entry = _mem_cache.get(cache_key)
     if entry and entry["expires_at"] > time.time():
         return entry["token"]
+
+    # 2. 파일 캐시 (프로세스 재시작 후에도 유지)
+    file_entry = _load_file_cache(cache_key)
+    if file_entry:
+        _mem_cache[cache_key] = file_entry
+        return file_entry["token"]
+
+    # 3. 신규 발급
     token, expires_at = _fetch_token(app_key, app_secret)
-    _cache[cache_key] = {"token": token, "expires_at": expires_at}
+    _mem_cache[cache_key] = {"token": token, "expires_at": expires_at}
+    _save_file_cache(cache_key, token, expires_at)
     return token
 
 
