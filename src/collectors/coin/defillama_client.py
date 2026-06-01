@@ -141,6 +141,20 @@ def find_protocol_for_coin(coin_id: str, symbol: str = "", name: str = "", use_m
         return None
 
     selected = sorted(candidates, key=lambda row: row.get("tvl") or 0, reverse=True)[0]
+    selected_slug = str(selected.get("slug") or "").lower()
+
+    fees_24h: float | None = None
+    fees_7d: float | None = None
+    try:
+        fees_data = _get_fees_live()
+        for p in fees_data.get("protocols", []):
+            if str(p.get("slug") or "").lower() == selected_slug:
+                fees_24h = _parse_usd(p.get("total24h"))
+                fees_7d = _parse_usd(p.get("total7d"))
+                break
+    except Exception:
+        pass
+
     return {
         "name": selected.get("name"),
         "slug": selected.get("slug"),
@@ -150,6 +164,8 @@ def find_protocol_for_coin(coin_id: str, symbol: str = "", name: str = "", use_m
         "tvl": _parse_usd(selected.get("tvl")),
         "change_1d": selected.get("change_1d"),
         "change_7d": selected.get("change_7d"),
+        "fees_24h": fees_24h,
+        "fees_7d": fees_7d,
         "url": selected.get("url"),
         "description": selected.get("description"),
     }

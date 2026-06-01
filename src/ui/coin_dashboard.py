@@ -396,7 +396,7 @@ def build_coin_market_dashboard(payload: dict) -> str:
       }}
       .coin-chart-grid {{
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
       }}
       .coin-chart-card {{
@@ -597,10 +597,11 @@ def build_coin_market_dashboard(payload: dict) -> str:
       </div>
 
       <div class="coin-panel">
-        <h3 class="coin-panel__title">BTC / ETH 30일 흐름</h3>
+        <h3 class="coin-panel__title">BTC / ETH / 도미넌스 30일 흐름</h3>
         <div class="coin-panel__body coin-chart-grid">
           {_chart_card("BTC 가격", charts.get("bitcoin") or {})}
           {_chart_card("ETH 가격", charts.get("ethereum") or {})}
+          {_chart_card("BTC 도미넌스 (근사)", charts.get("dominance") or {}, value_label=f"{float(global_market.get('btc_dominance') or 0):.1f}%" if global_market.get('btc_dominance') else "-")}
         </div>
       </div>
 
@@ -803,12 +804,19 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         links.append(f'<span>@{escape(project["twitter"])}</span>')
 
     if defi_protocol:
+        fees_items = ""
+        if defi_protocol.get("fees_24h") is not None:
+            fees_items = (
+                _detail_item("24h 수수료", _fmt_usd(defi_protocol.get("fees_24h")), "프로토콜 수수료 수입")
+                + _detail_item("7d 수수료", _fmt_usd(defi_protocol.get("fees_7d")), "7일 누적")
+            )
         defi_body = f"""
         <div class="coin-detail-upbit">
           {_detail_item("프로토콜", str(defi_protocol.get("name") or "-"), str(defi_protocol.get("category") or ""))}
           {_detail_item("TVL", _fmt_usd(defi_protocol.get("tvl")), "DefiLlama 기준")}
           {_detail_item("24h TVL", _fmt_pct(defi_protocol.get("change_1d")), "단기 예치금 변화")}
           {_detail_item("7d TVL", _fmt_pct(defi_protocol.get("change_7d")), "주간 예치금 변화")}
+          {fees_items}
         </div>
         """
     else:
@@ -1123,9 +1131,10 @@ def build_coin_detail_dashboard(payload: dict) -> str:
       </div>
 
       <div class="coin-detail-panel">
-        <h3 class="coin-detail-panel__title">90일 가격 흐름</h3>
-        <div class="coin-detail-chart">
-          {_chart_card("가격", price_chart)}
+        <h3 class="coin-detail-panel__title">90일 가격 / 거래량 흐름</h3>
+        <div class="coin-detail-chart" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+          {_chart_card("가격 (90일)", price_chart, series_key="prices")}
+          {_chart_card("거래량 (90일)", price_chart, series_key="total_volumes")}
         </div>
       </div>
 

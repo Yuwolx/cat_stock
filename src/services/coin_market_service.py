@@ -144,6 +144,21 @@ def generate_coin_market_report(use_mock_data: bool = False) -> dict:
         "bitcoin": _future_result(futures, "btc_chart", {"prices": [], "market_caps": [], "total_volumes": []}),
         "ethereum": _future_result(futures, "eth_chart", {"prices": [], "market_caps": [], "total_volumes": []}),
     }
+
+    # BTC 도미넌스 근사 추이: BTC market cap 시계열 / 마지막 시점 BTC mcap * 현재 도미넌스
+    btc_mcap_series = (charts.get("bitcoin") or {}).get("market_caps") or []
+    current_dominance = float((global_market or {}).get("btc_dominance") or 0)
+    last_btc_mcap = _latest_series_value(btc_mcap_series)
+    if btc_mcap_series and current_dominance and last_btc_mcap:
+        dom_series = []
+        for row in btc_mcap_series:
+            if isinstance(row, (list, tuple)) and len(row) >= 2:
+                try:
+                    dom_series.append([row[0], (float(row[1]) / last_btc_mcap) * current_dominance])
+                except (TypeError, ValueError, ZeroDivisionError):
+                    pass
+        if dom_series:
+            charts["dominance"] = {"prices": dom_series}
     stablecoins = _future_result(futures, "stablecoins", {})
     top_protocols = _future_result(futures, "top_protocols", [])
     fees = _future_result(futures, "fees", {})
