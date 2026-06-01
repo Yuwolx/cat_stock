@@ -396,7 +396,7 @@ def build_coin_market_dashboard(payload: dict) -> str:
       }}
       .coin-chart-grid {{
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }}
       .coin-chart-card {{
@@ -597,11 +597,10 @@ def build_coin_market_dashboard(payload: dict) -> str:
       </div>
 
       <div class="coin-panel">
-        <h3 class="coin-panel__title">BTC / ETH / 도미넌스 30일 흐름</h3>
+        <h3 class="coin-panel__title">BTC / ETH 30일 흐름</h3>
         <div class="coin-panel__body coin-chart-grid">
           {_chart_card("BTC 가격", charts.get("bitcoin") or {})}
           {_chart_card("ETH 가격", charts.get("ethereum") or {})}
-          {_chart_card("BTC 도미넌스 (근사)", charts.get("dominance") or {}, value_label=f"{float(global_market.get('btc_dominance') or 0):.1f}%" if global_market.get('btc_dominance') else "-")}
         </div>
       </div>
 
@@ -907,6 +906,9 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         gap: 8px;
       }}
       .coin-detail-chart {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
         padding: 10px;
       }}
       .coin-chart-card {{
@@ -1111,6 +1113,7 @@ def build_coin_detail_dashboard(payload: dict) -> str:
       @media(max-width: 980px) {{
         .coin-detail-head,
         .coin-detail-grid,
+        .coin-detail-chart,
         .coin-detail-upbit {{
           grid-template-columns: 1fr;
         }}
@@ -1132,7 +1135,7 @@ def build_coin_detail_dashboard(payload: dict) -> str:
 
       <div class="coin-detail-panel">
         <h3 class="coin-detail-panel__title">90일 가격 / 거래량 흐름</h3>
-        <div class="coin-detail-chart" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+        <div class="coin-detail-chart">
           {_chart_card("가격 (90일)", price_chart, series_key="prices")}
           {_chart_card("거래량 (90일)", price_chart, series_key="total_volumes")}
         </div>

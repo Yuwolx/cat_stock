@@ -146,7 +146,7 @@ def find_protocol_for_coin(coin_id: str, symbol: str = "", name: str = "", use_m
     fees_24h: float | None = None
     fees_7d: float | None = None
     try:
-        fees_data = _get_fees_live()
+        fees_data = get_fees_overview(limit=2000, use_mock_data=use_mock_data)
         for p in fees_data.get("protocols", []):
             if str(p.get("slug") or "").lower() == selected_slug:
                 fees_24h = _parse_usd(p.get("total24h"))
@@ -178,8 +178,8 @@ def get_fees_overview(limit: int = 8, use_mock_data: bool = False) -> dict:
             "total7d": 290_000_000,
             "change_1d": 4.2,
             "protocols": [
-                {"name": "Uniswap", "category": "Dexes", "total24h": 5_800_000, "total7d": 40_000_000},
-                {"name": "Aave", "category": "Lending", "total24h": 2_100_000, "total7d": 15_000_000},
+                {"name": "Uniswap", "slug": "uniswap", "category": "Dexes", "total24h": 5_800_000, "total7d": 40_000_000},
+                {"name": "Aave", "slug": "aave", "category": "Lending", "total24h": 2_100_000, "total7d": 15_000_000},
             ],
         }
 
