@@ -73,6 +73,16 @@ def inject_app_styles() -> None:
           display: none !important;
         }
 
+        iframe[title="st.iframe"],
+        iframe.stIFrame {
+          background: transparent !important;
+          color-scheme: light !important;
+        }
+
+        [data-testid="stElementContainer"]:has(> iframe[title="st.iframe"]) {
+          background: transparent !important;
+        }
+
         .block-container {
           max-width: 1520px;
           padding-top: 22px;
@@ -424,6 +434,341 @@ def inject_app_styles() -> None:
           line-height: 1.6;
         }
 
+        .cat-output-shell {
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          height: 432px;
+          min-width: 0;
+          overflow: hidden;
+          border: 1px solid rgba(17, 19, 24, 0.14);
+          border-radius: 12px;
+          background: #faf7f1;
+        }
+
+        .cat-output-toolbar {
+          box-sizing: border-box;
+          flex: 0 0 44px;
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          padding: 8px 12px 4px;
+        }
+
+        .cat-copy-button {
+          min-height: 32px;
+          padding: 0 14px;
+          border: 1px solid rgba(0, 102, 204, 0.28);
+          border-radius: 999px;
+          background: #ffffff;
+          color: #0066cc;
+          font: 600 12px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+          cursor: pointer;
+          transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
+        }
+
+        .cat-copy-button:hover:not(:disabled) {
+          background: rgba(0, 102, 204, 0.06);
+          border-color: rgba(0, 102, 204, 0.46);
+        }
+
+        .cat-copy-button:disabled {
+          opacity: 0.42;
+          cursor: default;
+        }
+
+        .cat-copy-button.is-copied {
+          background: #0066cc;
+          border-color: #0066cc;
+          color: #ffffff;
+        }
+
+        .cat-copy-button.is-failed {
+          background: #ffffff;
+          border-color: rgba(180, 48, 48, 0.42);
+          color: #b03030;
+        }
+
+        .cat-output-pre,
+        .cat-output-placeholder {
+          box-sizing: border-box;
+          flex: 1 1 auto;
+          min-height: 0;
+          height: auto;
+          margin: 0;
+          padding: 12px 14px 16px;
+          overflow: auto;
+          white-space: pre-wrap;
+          word-break: keep-all;
+          overflow-wrap: anywhere;
+          color: #303743;
+          background: #faf7f1;
+        }
+
+        .cat-output-pre {
+          font: 12px/1.62 "SF Mono", "Cascadia Code", ui-monospace, monospace;
+        }
+
+        .cat-output-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          color: #6f7683;
+          font: 12px/1.6 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+        }
+
+        .cat-output-copy-source {
+          position: fixed;
+          left: -9999px;
+          top: 0;
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .coin-guide {
+          margin-top: 2px;
+        }
+
+        .coin-guide__hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+          gap: 14px;
+          align-items: stretch;
+          margin-bottom: 12px;
+        }
+
+        .coin-guide__panel,
+        .coin-guide-card,
+        .coin-guide-step,
+        .coin-guide-signal {
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.62);
+        }
+
+        .coin-guide__panel {
+          padding: 18px 18px 16px;
+        }
+
+        .coin-guide__eyebrow {
+          margin: 0 0 8px;
+          color: var(--muted);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0;
+          text-transform: uppercase;
+        }
+
+        .coin-guide__title {
+          margin: 0;
+          color: var(--ink);
+          font-family: Manrope, Inter, sans-serif;
+          font-size: clamp(21px, 2.2vw, 30px);
+          line-height: 1.12;
+          font-weight: 800;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__lead {
+          margin: 10px 0 0;
+          color: var(--ink-soft);
+          font-size: 13px;
+          line-height: 1.65;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__rules {
+          display: grid;
+          gap: 8px;
+          height: 100%;
+        }
+
+        .coin-guide__rule {
+          display: grid;
+          grid-template-columns: 74px 1fr;
+          gap: 10px;
+          align-items: center;
+          padding: 12px 14px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.62);
+        }
+
+        .coin-guide__rule strong {
+          color: var(--ink);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide__rule span {
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.5;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__section {
+          margin-top: 16px;
+        }
+
+        .coin-guide__section-title {
+          margin: 0 0 10px;
+          color: var(--ink);
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide__flow {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .coin-guide-step {
+          min-height: 132px;
+          padding: 13px 12px;
+        }
+
+        .coin-guide-step__num {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          margin-bottom: 10px;
+          border-radius: 999px;
+          background: rgba(139, 151, 232, 0.16);
+          color: #5868ce;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .coin-guide-step__title {
+          margin: 0 0 6px;
+          color: var(--ink);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide-step__copy {
+          margin: 0;
+          color: var(--muted);
+          font-size: 11px;
+          line-height: 1.48;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__cards {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .coin-guide-card {
+          min-height: 122px;
+          padding: 12px;
+        }
+
+        .coin-guide-card__chip {
+          display: inline-flex;
+          align-items: center;
+          height: 20px;
+          margin-bottom: 8px;
+          padding: 0 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide-card__chip--core {
+          background: rgba(139, 151, 232, 0.16);
+          color: #5868ce;
+        }
+
+        .coin-guide-card__chip--flow {
+          background: rgba(93, 177, 128, 0.14);
+          color: #2f7a55;
+        }
+
+        .coin-guide-card__chip--risk {
+          background: rgba(224, 82, 82, 0.11);
+          color: #aa3838;
+        }
+
+        .coin-guide-card__chip--learn {
+          background: rgba(220, 149, 67, 0.15);
+          color: #8a5a1f;
+        }
+
+        .coin-guide-card__name {
+          margin: 0 0 5px;
+          color: var(--ink);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide-card__desc {
+          margin: 0;
+          color: var(--muted);
+          font-size: 11px;
+          line-height: 1.48;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__signals {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .coin-guide-signal {
+          padding: 13px 14px;
+        }
+
+        .coin-guide-signal__label {
+          margin: 0 0 6px;
+          color: var(--ink);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+
+        .coin-guide-signal__text {
+          margin: 0;
+          color: var(--muted);
+          font-size: 11px;
+          line-height: 1.5;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
+        .coin-guide__footer {
+          margin-top: 12px;
+          padding: 11px 14px;
+          border-radius: 8px;
+          border: 1px solid rgba(220, 149, 67, 0.24);
+          background: rgba(220, 149, 67, 0.09);
+          color: #755124;
+          font-size: 11px;
+          line-height: 1.5;
+          letter-spacing: 0;
+          word-break: keep-all;
+        }
+
         details {
           background: transparent !important;
           border: 0 !important;
@@ -449,6 +794,18 @@ def inject_app_styles() -> None:
           .block-container {
             padding-left: 18px;
             padding-right: 18px;
+          }
+
+          .coin-guide__hero,
+          .coin-guide__flow,
+          .coin-guide__cards,
+          .coin-guide__signals {
+            grid-template-columns: 1fr;
+          }
+
+          .coin-guide-step,
+          .coin-guide-card {
+            min-height: auto;
           }
         }
         </style>
@@ -485,12 +842,12 @@ def render_shell_with_toggle(mode: str) -> None:
     title = (
         "주식 데이터를 정리해드립니다."
         if mode == "stock"
-        else "코인 데이터를 정리해드립니다."
+        else "코인 시장을 공부합니다."
     )
     sub = (
         "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다."
         if mode == "stock"
-        else "코인 시황, 개별 코인 분석, 섹터 공부 자료를 만들고 바로 복사할 수 있습니다."
+        else "시장 온도, 섹터 흐름, 개별 코인 구조를 대시보드로 공부합니다."
     )
 
     logo_before = ""
