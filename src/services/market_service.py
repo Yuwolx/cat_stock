@@ -15,6 +15,7 @@ from src.collectors.market.naver_market_collector import (
 )
 from src.config.settings import get_settings
 from src.formatters.market_formatter import format_market_briefing
+from src.services.column_service import generate_market_column
 from src.utils.file_utils import save_output_text
 
 
@@ -47,6 +48,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
             use_mock_data=use_mock_data,
         ),
     }
+    payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)
     path = save_output_text("market_briefing", target_date, text)
     return {"text": text, "path": path, "payload": payload}
