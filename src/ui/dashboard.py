@@ -504,7 +504,7 @@ def build_market_dashboard(payload: dict) -> str:
         except Exception:
             leader_tvr.append(0)
 
-    vol_layout = dict(**_PLOTLY_LAYOUT, height=260, margin=dict(l=0, r=60, t=8, b=0))
+    vol_layout = dict(**_PLOTLY_LAYOUT, height=260)
     vol_fig = go.Figure(layout=vol_layout)
     if leader_names:
         vol_fig.add_trace(go.Bar(
