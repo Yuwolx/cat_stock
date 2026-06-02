@@ -340,8 +340,7 @@ def build_stock_dashboard(payload: dict) -> str:
     fin_sales = [_parse_fin_amount(r.get("sales")) for r in financials]
     fin_op = [_parse_fin_amount(r.get("op_income")) for r in financials]
     fin_net = [_parse_fin_amount(r.get("net_income")) for r in financials]
-    fin_layout = dict(**_PLOTLY_LAYOUT, height=220, barmode="group",
-                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    fin_layout = dict(**_PLOTLY_LAYOUT, height=220, barmode="group")
     fin_fig = go.Figure(layout=fin_layout)
     if any(v is not None for v in fin_sales):
         fin_fig.add_trace(go.Bar(name="매출", x=fin_quarters, y=fin_sales, marker_color="rgba(26,26,26,0.15)", width=0.25))
@@ -357,7 +356,7 @@ def build_stock_dashboard(payload: dict) -> str:
     inst_raw = kis_flow.get("institution_20d_krw") or flows.get("institution_20d")
     foreign_num = _parse_flow_num(foreign_raw) or 0
     inst_num = _parse_flow_num(inst_raw) or 0
-    flow_layout = dict(**_PLOTLY_LAYOUT, height=200, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    flow_layout = dict(**_PLOTLY_LAYOUT, height=200)
     flow_fig = go.Figure(layout=flow_layout)
     flow_vals = [foreign_num, inst_num]
     flow_colors = ["#cc2200" if v >= 0 else "#006633" for v in flow_vals]
@@ -505,7 +504,7 @@ def build_market_dashboard(payload: dict) -> str:
         except Exception:
             leader_tvr.append(0)
 
-    vol_layout = dict(**_PLOTLY_LAYOUT, height=260, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=60, t=8, b=0))
+    vol_layout = dict(**_PLOTLY_LAYOUT, height=260, margin=dict(l=0, r=60, t=8, b=0))
     vol_fig = go.Figure(layout=vol_layout)
     if leader_names:
         vol_fig.add_trace(go.Bar(
@@ -526,7 +525,7 @@ def build_market_dashboard(payload: dict) -> str:
             flow_nums.append(float(str(v).replace(",", "")) if v not in (None, "—") else 0)
         except Exception:
             flow_nums.append(0)
-    sup_layout = dict(**_PLOTLY_LAYOUT, height=220, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    sup_layout = dict(**_PLOTLY_LAYOUT, height=220)
     sup_fig = go.Figure(layout=sup_layout)
     sup_fig.add_trace(go.Bar(
         x=["외국인", "기관", "개인"], y=flow_nums,
