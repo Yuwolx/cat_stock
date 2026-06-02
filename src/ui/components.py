@@ -434,60 +434,103 @@ def inject_app_styles() -> None:
           line-height: 1.6;
         }
 
+        /* ── 출력 박스 ── */
         .cat-output-shell {
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           width: 100%;
-          height: 432px;
+          height: 460px;
           min-width: 0;
           overflow: hidden;
           border: 1px solid rgba(17, 19, 24, 0.14);
           border-radius: 12px;
-          background: #faf7f1;
+          background: transparent;
         }
 
-        .cat-output-toolbar {
+        /* 터미널 헤더 바 */
+        .cat-output-header {
           box-sizing: border-box;
-          flex: 0 0 44px;
+          flex: 0 0 40px;
           display: flex;
-          justify-content: flex-end;
           align-items: center;
-          padding: 8px 12px 4px;
+          gap: 10px;
+          padding: 0 14px;
+          background: #16161e;
+          border-radius: 12px 12px 0 0;
+        }
+
+        .cat-output-dots {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        .cat-dot {
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
+          display: block;
+        }
+
+        .cat-dot--r { background: #ff5f57; }
+        .cat-dot--y { background: #ffbd2e; }
+        .cat-dot--g { background: #28c840; }
+
+        .cat-output-label {
+          flex: 1;
+          color: rgba(255, 255, 255, 0.28);
+          font: 600 9px/1 "SF Mono", "Cascadia Code", ui-monospace, monospace;
+          letter-spacing: 0.10em;
+          text-transform: uppercase;
         }
 
         .cat-copy-button {
-          min-height: 32px;
-          padding: 0 14px;
-          border: 1px solid rgba(0, 102, 204, 0.28);
+          flex-shrink: 0;
+          min-height: 26px;
+          padding: 0 12px;
+          border: 1px solid rgba(255, 255, 255, 0.20);
           border-radius: 999px;
-          background: #ffffff;
-          color: #0066cc;
-          font: 600 12px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+          background: transparent;
+          color: rgba(255, 255, 255, 0.55);
+          font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
           cursor: pointer;
           transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
         }
 
         .cat-copy-button:hover:not(:disabled) {
-          background: rgba(0, 102, 204, 0.06);
-          border-color: rgba(0, 102, 204, 0.46);
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.38);
+          color: rgba(255, 255, 255, 0.85);
         }
 
         .cat-copy-button:disabled {
-          opacity: 0.42;
+          opacity: 0.30;
           cursor: default;
         }
 
         .cat-copy-button.is-copied {
-          background: #0066cc;
-          border-color: #0066cc;
-          color: #ffffff;
+          background: rgba(40, 200, 64, 0.18);
+          border-color: #28c840;
+          color: #28c840;
         }
 
         .cat-copy-button.is-failed {
-          background: #ffffff;
-          border-color: rgba(180, 48, 48, 0.42);
-          color: #b03030;
+          background: transparent;
+          border-color: rgba(255, 95, 87, 0.5);
+          color: #ff5f57;
+        }
+
+        /* 출력 콘텐츠 영역 */
+        .cat-output-body {
+          box-sizing: border-box;
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          background: #faf7f1;
         }
 
         .cat-output-pre,
@@ -497,7 +540,7 @@ def inject_app_styles() -> None:
           min-height: 0;
           height: auto;
           margin: 0;
-          padding: 12px 14px 16px;
+          padding: 14px 16px 18px;
           overflow: auto;
           white-space: pre-wrap;
           word-break: keep-all;
@@ -527,6 +570,18 @@ def inject_app_styles() -> None:
           height: 1px;
           opacity: 0;
           pointer-events: none;
+        }
+
+        /* 왼쪽 컨트롤 패널 섹션 라벨 */
+        .cat-ctrl-section {
+          margin: 20px 0 12px;
+          padding-top: 16px;
+          border-top: 1px solid rgba(17, 19, 24, 0.09);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #6f7683;
         }
 
         .coin-guide {
@@ -952,6 +1007,15 @@ def render_page_intro(eyebrow: str, title: str, copy: str = "") -> None:
 def render_list(items: list[str]) -> None:
     list_html = "".join(f"<li>{escape(item)}</li>" for item in items)
     st.markdown(f'<ul class="cat-list">{list_html}</ul>', unsafe_allow_html=True)
+
+
+def render_ctrl_section(label: str) -> None:
+    """왼쪽 컨트롤 패널 내 섹션 구분 라벨"""
+    from html import escape as _escape
+    st.markdown(
+        f'<p class="cat-ctrl-section">{_escape(label)}</p>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_note(message: str, tone: str = "info") -> None:

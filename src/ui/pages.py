@@ -19,6 +19,7 @@ from src.services.stock_service import generate_stock_report
 from src.services.theme_service import generate_theme_report
 from src.ui.components import (
     inject_app_styles,
+    render_ctrl_section,
     render_list,
     render_note,
     render_page_intro,
@@ -455,45 +456,44 @@ def _render_market_page() -> None:
 
     with ctrl_col:
         render_page_intro("Market Briefing", "오늘 시황을 한 번에 정리합니다")
-        input_col, _ = st.columns([0.62, 0.38], gap="small")
-        with input_col:
-            target_date = st.date_input("기준일", value=date.today(), format="YYYY-MM-DD")
-            if st.button("브리핑 생성", type="primary", use_container_width=False, key="market_generate"):
-                with st.spinner("정리하고 있습니다..."):
-                    result = generate_market_briefing(target_date.isoformat())
-                st.session_state["market_result"] = result
+        render_ctrl_section("분석 설정")
+        target_date = st.date_input("기준일", value=date.today(), format="YYYY-MM-DD")
+        if st.button("브리핑 생성 →", type="primary", use_container_width=True, key="market_generate"):
+            with st.spinner("정리하고 있습니다..."):
+                result = generate_market_briefing(target_date.isoformat())
+            st.session_state["market_result"] = result
 
-            with st.expander("연결 데이터"):
-                render_list(
-                    [
-                        "코스피 · 코스닥 지수와 거래대금",
-                        "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해 · 심천",
-                        "거래대금 상위 종목",
-                        "업종별 등락률",
-                        "외국인 · 기관 순매수/순매도 상위",
-                        "52주 신고가 · 신저가 · 상한가 · 시간외 단일가",
-                        "프로그램 차익 · 비차익, DART 주요 공시",
-                    ]
-                )
+        with st.expander("연결 데이터"):
+            render_list(
+                [
+                    "코스피 · 코스닥 지수와 거래대금",
+                    "다우 · S&P500 · 나스닥 · 달러원 · 미국 10년물 · WTI · 상해 · 심천",
+                    "거래대금 상위 종목",
+                    "업종별 등락률",
+                    "외국인 · 기관 순매수/순매도 상위",
+                    "52주 신고가 · 신저가 · 상한가 · 시간외 단일가",
+                    "프로그램 차익 · 비차익, DART 주요 공시",
+                ]
+            )
 
-            if "market_result" in st.session_state:
-                result = st.session_state["market_result"]
-                _render_missing_data_warnings(result["payload"], "market")
-                dash_html = build_market_dashboard(result["payload"])
-                st.download_button(
-                    "TXT 다운로드",
-                    data=result["text"],
-                    file_name=f"market_briefing_{_compact_date(result['payload']['target_date'])}.txt",
-                    mime="text/plain",
-                    use_container_width=False,
-                )
-                st.download_button(
-                    "대시보드 HTML",
-                    data=dash_html,
-                    file_name=f"market_dashboard_{_compact_date(result['payload']['target_date'])}.html",
-                    mime="text/html",
-                    use_container_width=False,
-                )
+        if "market_result" in st.session_state:
+            result = st.session_state["market_result"]
+            _render_missing_data_warnings(result["payload"], "market")
+            dash_html = build_market_dashboard(result["payload"])
+            st.download_button(
+                "TXT 다운로드",
+                data=result["text"],
+                file_name=f"market_briefing_{_compact_date(result['payload']['target_date'])}.txt",
+                mime="text/plain",
+                use_container_width=False,
+            )
+            st.download_button(
+                "대시보드 HTML",
+                data=dash_html,
+                file_name=f"market_dashboard_{_compact_date(result['payload']['target_date'])}.html",
+                mime="text/html",
+                use_container_width=False,
+            )
 
     with out_col:
         result_text = st.session_state.get("market_result", {}).get("text", "")
@@ -509,56 +509,55 @@ def _render_stock_page() -> None:
 
     with ctrl_col:
         render_page_intro("Single Stock", "종목 하나를 빠르게 분석합니다")
-        input_col, _ = st.columns([0.62, 0.38], gap="small")
-        with input_col:
-            stock_name = st.text_input("종목명", placeholder="예: 삼성전자")
-            report_dates = st.date_input(
-                "리포트 기간",
-                value=(date.today(), date.today()),
-                format="YYYY-MM-DD",
+        render_ctrl_section("분석 설정")
+        stock_name = st.text_input("종목명", placeholder="예: 삼성전자")
+        report_dates = st.date_input(
+            "리포트 기간",
+            value=(date.today(), date.today()),
+            format="YYYY-MM-DD",
+        )
+        if st.button("분석 생성 →", type="primary", use_container_width=True, key="stock_generate"):
+            name = stock_name.strip()
+            if not name:
+                render_note("종목명을 먼저 입력해주세요.", tone="warn")
+            else:
+                dates = report_dates if isinstance(report_dates, (list, tuple)) else (report_dates, report_dates)
+                from_iso = dates[0].isoformat()
+                to_iso = dates[1].isoformat() if len(dates) > 1 else from_iso
+                with st.spinner("정리하고 있습니다..."):
+                    result = generate_stock_report(name, report_from=from_iso, report_to=to_iso)
+                st.session_state["stock_result"] = result
+
+        with st.expander("연결 데이터"):
+            render_list(
+                [
+                    "현재가 · 등락률 · 거래대금 · 시가총액",
+                    "52주 고저 · PER · PBR · ROE",
+                    "이동평균선 위치",
+                    "외국인 · 기관 최근 20일 누적 수급",
+                    "DART 공시 · 최근 재무 요약 · 대주주 지분율",
+                    "최근 뉴스 헤드라인 · 원문 링크 · 증권사 리포트 · 컨센서스 목표가",
+                ]
             )
-            if st.button("분석 생성", type="primary", use_container_width=False, key="stock_generate"):
-                name = stock_name.strip()
-                if not name:
-                    render_note("종목명을 먼저 입력해주세요.", tone="warn")
-                else:
-                    dates = report_dates if isinstance(report_dates, (list, tuple)) else (report_dates, report_dates)
-                    from_iso = dates[0].isoformat()
-                    to_iso = dates[1].isoformat() if len(dates) > 1 else from_iso
-                    with st.spinner("정리하고 있습니다..."):
-                        result = generate_stock_report(name, report_from=from_iso, report_to=to_iso)
-                    st.session_state["stock_result"] = result
 
-            with st.expander("연결 데이터"):
-                render_list(
-                    [
-                        "현재가 · 등락률 · 거래대금 · 시가총액",
-                        "52주 고저 · PER · PBR · ROE",
-                        "이동평균선 위치",
-                        "외국인 · 기관 최근 20일 누적 수급",
-                        "DART 공시 · 최근 재무 요약 · 대주주 지분율",
-                        "최근 뉴스 헤드라인 · 원문 링크 · 증권사 리포트 · 컨센서스 목표가",
-                    ]
-                )
-
-            if "stock_result" in st.session_state:
-                result = st.session_state["stock_result"]
-                _render_missing_data_warnings(result["payload"], "stock")
-                dash_html = build_stock_dashboard(result["payload"])
-                st.download_button(
-                    "TXT 다운로드",
-                    data=result["text"],
-                    file_name=f"stock_{result['payload']['basics']['name']}.txt",
-                    mime="text/plain",
-                    use_container_width=False,
-                )
-                st.download_button(
-                    "대시보드 HTML",
-                    data=dash_html,
-                    file_name=f"stock_{result['payload']['basics']['name']}_dashboard.html",
-                    mime="text/html",
-                    use_container_width=False,
-                )
+        if "stock_result" in st.session_state:
+            result = st.session_state["stock_result"]
+            _render_missing_data_warnings(result["payload"], "stock")
+            dash_html = build_stock_dashboard(result["payload"])
+            st.download_button(
+                "TXT 다운로드",
+                data=result["text"],
+                file_name=f"stock_{result['payload']['basics']['name']}.txt",
+                mime="text/plain",
+                use_container_width=False,
+            )
+            st.download_button(
+                "대시보드 HTML",
+                data=dash_html,
+                file_name=f"stock_{result['payload']['basics']['name']}_dashboard.html",
+                mime="text/html",
+                use_container_width=False,
+            )
 
     with out_col:
         result_text = st.session_state.get("stock_result", {}).get("text", "")
@@ -574,45 +573,44 @@ def _render_theme_page() -> None:
 
     with ctrl_col:
         render_page_intro("Theme Study", "테마 공부 자료를 정리합니다")
-        input_col, _ = st.columns([0.62, 0.38], gap="small")
-        with input_col:
-            theme_name = st.text_input("테마명", placeholder="예: HBM, 2차전지, 원전")
-            if st.button("자료 생성", type="primary", use_container_width=False, key="theme_generate"):
-                name = theme_name.strip()
-                if not name:
-                    render_note("테마명을 먼저 입력해주세요.", tone="warn")
-                else:
-                    with st.spinner("정리하고 있습니다..."):
-                        result = generate_theme_report(name)
-                    st.session_state["theme_result"] = result
+        render_ctrl_section("분석 설정")
+        theme_name = st.text_input("테마명", placeholder="예: HBM, 2차전지, 원전")
+        if st.button("자료 생성 →", type="primary", use_container_width=True, key="theme_generate"):
+            name = theme_name.strip()
+            if not name:
+                render_note("테마명을 먼저 입력해주세요.", tone="warn")
+            else:
+                with st.spinner("정리하고 있습니다..."):
+                    result = generate_theme_report(name)
+                st.session_state["theme_result"] = result
 
-            with st.expander("연결 데이터"):
-                render_list(
-                    [
-                        "네이버 테마 관련 종목 목록 (현재가 · 등락률)",
-                        "네이버 뉴스 검색 (테마명 기준 최근 뉴스)",
-                        "글로벌 피어 · 공시 · 리포트 요약은 준비 중",
-                    ]
-                )
+        with st.expander("연결 데이터"):
+            render_list(
+                [
+                    "네이버 테마 관련 종목 목록 (현재가 · 등락률)",
+                    "네이버 뉴스 검색 (테마명 기준 최근 뉴스)",
+                    "글로벌 피어 · 공시 · 리포트 요약은 준비 중",
+                ]
+            )
 
-            if "theme_result" in st.session_state:
-                result = st.session_state["theme_result"]
-                _render_missing_data_warnings(result["payload"], "theme")
-                dash_html = build_theme_dashboard(result["payload"])
-                st.download_button(
-                    "TXT 다운로드",
-                    data=result["text"],
-                    file_name=f"theme_{result['payload']['theme_name']}.txt",
-                    mime="text/plain",
-                    use_container_width=False,
-                )
-                st.download_button(
-                    "대시보드 HTML",
-                    data=dash_html,
-                    file_name=f"theme_{result['payload']['theme_name']}_dashboard.html",
-                    mime="text/html",
-                    use_container_width=False,
-                )
+        if "theme_result" in st.session_state:
+            result = st.session_state["theme_result"]
+            _render_missing_data_warnings(result["payload"], "theme")
+            dash_html = build_theme_dashboard(result["payload"])
+            st.download_button(
+                "TXT 다운로드",
+                data=result["text"],
+                file_name=f"theme_{result['payload']['theme_name']}.txt",
+                mime="text/plain",
+                use_container_width=False,
+            )
+            st.download_button(
+                "대시보드 HTML",
+                data=dash_html,
+                file_name=f"theme_{result['payload']['theme_name']}_dashboard.html",
+                mime="text/html",
+                use_container_width=False,
+            )
 
     with out_col:
         result_text = st.session_state.get("theme_result", {}).get("text", "")
@@ -667,10 +665,22 @@ def _render_dashboard_preview(html: str) -> None:
     components.html(html, height=900, scrolling=True)
 
 
+_OUTPUT_LABELS: dict[str, str] = {
+    "market": "MARKET BRIEFING",
+    "stock": "STOCK ANALYSIS",
+    "theme": "THEME STUDY",
+    "coin_market": "COIN MARKET",
+    "coin_detail": "COIN ANALYSIS",
+    "coin_sector": "SECTOR STUDY",
+    "coin_note": "STUDY NOTE",
+}
+
+
 def _render_output_box(result_text: str, placeholder: str, box_key: str) -> None:
     has_result = bool(result_text)
     box_seed = f"{box_key}|{placeholder}"
     box_id = "cat-output-" + hashlib.sha1(box_seed.encode("utf-8")).hexdigest()[:12]
+    label = _OUTPUT_LABELS.get(box_key, "ANALYSIS OUTPUT")
     content_html = (
         f'<pre class="cat-output-pre">{escape(result_text)}</pre>'
         if has_result
@@ -680,10 +690,18 @@ def _render_output_box(result_text: str, placeholder: str, box_key: str) -> None
     st.html(
         f"""
         <div id="{box_id}" class="cat-output-shell">
-          <div class="cat-output-toolbar">
+          <div class="cat-output-header">
+            <div class="cat-output-dots">
+              <span class="cat-dot cat-dot--r"></span>
+              <span class="cat-dot cat-dot--y"></span>
+              <span class="cat-dot cat-dot--g"></span>
+            </div>
+            <span class="cat-output-label">{escape(label)}</span>
             <button class="cat-copy-button" type="button" data-cat-copy-target="{box_id}" {disabled_attr}>복사</button>
           </div>
-          {content_html}
+          <div class="cat-output-body">
+            {content_html}
+          </div>
           <textarea id="{box_id}-copy-source" class="cat-output-copy-source" readonly>{escape(result_text)}</textarea>
         </div>
         """
