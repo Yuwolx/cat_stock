@@ -53,6 +53,14 @@ body{background:#fdfbf7;font-family:-apple-system,BlinkMacSystemFont,'Inter',sys
 .chart-ttl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6f7683;margin-bottom:10px;}
 .tbl-card{background:#fff;border:1px solid rgba(17,19,24,0.09);border-radius:12px;padding:20px;margin-bottom:16px;}
 .sec-ttl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6f7683;margin-bottom:12px;}
+.news-section{margin-bottom:20px;}
+.news-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+.news-card{display:flex;flex-direction:column;min-height:132px;background:#fff;border:1px solid rgba(17,19,24,0.09);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;}
+.news-card:hover{border-color:rgba(111,140,241,.35);box-shadow:0 10px 26px rgba(17,19,24,.06);}
+.news-meta{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6f7683;margin-bottom:9px;}
+.news-title{font-size:14px;font-weight:700;line-height:1.45;color:#111318;word-break:keep-all;overflow-wrap:break-word;}
+.news-action{margin-top:auto;padding-top:12px;font-size:11px;font-weight:700;color:#6f8cf1;}
+.news-empty{background:#fff;border:1px solid rgba(17,19,24,0.09);border-radius:12px;padding:16px 18px;color:#b0b8c1;font-size:12px;}
 table{width:100%;border-collapse:collapse;}
 th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6f7683;text-align:left;padding:0 8px 8px 0;border-bottom:1px solid rgba(17,19,24,0.09);}
 td{font-size:12px;color:#303743;padding:8px 8px 8px 0;border-bottom:1px solid rgba(17,19,24,0.05);vertical-align:top;line-height:1.5;}
@@ -123,6 +131,31 @@ def _opinion_tag(text: str) -> str:
     return ""
 
 
+def _news_cards_html(news_items: list[dict], fallback_news: list[str]) -> str:
+    if not news_items and fallback_news:
+        news_items = [{"title": line, "source": "", "date": "", "url": ""} for line in fallback_news]
+
+    if not news_items:
+        return '<div class="news-empty">데이터 없음</div>'
+
+    cards = []
+    for item in news_items:
+        title = escape(str(item.get("title") or "제목 없음"))
+        meta = " · ".join(str(part) for part in [item.get("source"), item.get("date")] if part)
+        meta_html = f'<div class="news-meta">{escape(meta)}</div>' if meta else ""
+        url = str(item.get("url") or "")
+        inner = f"{meta_html}<div class=\"news-title\">{title}</div>"
+        if url:
+            cards.append(
+                f'<a class="news-card" href="{escape(url)}" target="_blank" rel="noopener noreferrer">'
+                f'{inner}<div class="news-action">원문</div></a>'
+            )
+        else:
+            cards.append(f'<div class="news-card">{inner}</div>')
+
+    return f'<div class="news-grid">{"".join(cards)}</div>'
+
+
 def _fig_html(fig: go.Figure, first: bool = False) -> str:
     return fig.to_html(
         include_plotlyjs=first,
@@ -166,6 +199,7 @@ def build_stock_dashboard(payload: dict) -> str:
     reports = payload.get("reports", [])
     naver_reports = flows.get("naver_reports", [])
     news = flows.get("news", [])
+    news_items = flows.get("news_items", [])
 
     name = basics.get("name", "")
     parts = []
@@ -261,11 +295,11 @@ def build_stock_dashboard(payload: dict) -> str:
 </div>""")
 
     # ── 최근 뉴스 ────────────────────────────────────────────────
-    news_rows = "".join(f"<tr><td>{escape(n)}</td></tr>" for n in news) if news else '<tr><td class="empty">데이터 없음</td></tr>'
+    news_cards = _news_cards_html(news_items, news)
     parts.append(f"""
-<div class="tbl-card">
+<div class="news-section">
   <div class="sec-ttl">최근 뉴스</div>
-  <table><thead><tr><th>제목</th></tr></thead><tbody>{news_rows}</tbody></table>
+  {news_cards}
 </div>""")
 
     # ── 네이버 리포트 ────────────────────────────────────────────

@@ -12,13 +12,29 @@ import requests
 
 BASE_URL = "https://opendart.fss.or.kr/api"
 TIMEOUT_SECONDS = 20
+DART_API_KEY_LENGTH = 40
 
 
 def _normalize_name(value: str) -> str:
     return re.sub(r"\s+", "", value or "").upper()
 
 
+def _validate_api_key(api_key: str) -> str:
+    key = (api_key or "").strip()
+    if not key:
+        raise RuntimeError("DART_API_KEY가 비어 있습니다.")
+    if len(key) != DART_API_KEY_LENGTH or not key.isalnum():
+        raise RuntimeError(
+            "DART_API_KEY는 OpenDART에서 발급받은 40자리 인증키만 입력해야 합니다. "
+            ".env에 URL, 파라미터, 중복된 'DART_API_KEY='가 들어가지 않았는지 확인하세요."
+        )
+    return key
+
+
 def _safe_get_json(endpoint: str, params: dict) -> dict:
+    if "crtfc_key" in params:
+        params = {**params, "crtfc_key": _validate_api_key(params["crtfc_key"])}
+
     response = requests.get(
         f"{BASE_URL}/{endpoint}",
         params=params,
@@ -37,6 +53,7 @@ def _safe_get_json(endpoint: str, params: dict) -> dict:
 
 @lru_cache(maxsize=4)
 def get_corp_code_index(api_key: str) -> list[dict]:
+    api_key = _validate_api_key(api_key)
     response = requests.get(
         f"{BASE_URL}/corpCode.xml",
         params={"crtfc_key": api_key},

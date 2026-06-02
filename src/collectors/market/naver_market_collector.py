@@ -242,23 +242,56 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
     return items[:20]
 
 
+def _stock_code_from_href(href: str) -> str | None:
+    match = re.search(r"code=(\d{6})", href or "")
+    return match.group(1) if match else None
+
+
+def _with_page(url: str, page: int) -> str:
+    if page <= 1:
+        return url
+    separator = "&" if "?" in url else "?"
+    return f"{url}{separator}page={page}"
+
+
+def _parse_rise_fall_rows(url: str, market: str | None = None) -> list[dict]:
+    rows: list[dict] = []
+    try:
+        soup = _fetch_soup(url)
+    except Exception:
+        return rows
+
+    for row in soup.select("table.type_2 tr"):
+        link = row.select_one('a[href*="/item/main.naver?code="]') or row.select_one("a.tltle")
+        cells = [cell.get_text(" ", strip=True) for cell in row.select("td")]
+        if not link or len(cells) < 5:
+            continue
+
+        href = link.get("href", "")
+        change_pct_text = cells[4]
+        rows.append(
+            {
+                "name": link.get_text(strip=True),
+                "code": _stock_code_from_href(href),
+                "market": market,
+                "price": cells[2] if len(cells) > 2 else None,
+                "change_text": cells[3] if len(cells) > 3 else None,
+                "change_pct": _to_number(change_pct_text),
+                "change_pct_text": change_pct_text,
+            }
+        )
+
+    return rows
+
+
 def _parse_rise_fall_page(url: str, limit: int = 10) -> list[str]:
     """상승/하락 종목 페이지에서 종목명 + 등락률 파싱"""
     items: list[str] = []
-    try:
-        soup = _fetch_soup(url)
-        for row in soup.select("table.type_2 tr"):
-            link = row.select_one('a[href*="/item/main.naver?code="]') or row.select_one("a.tltle")
-            cells = row.select("td")
-            if not link or len(cells) < 5:
-                continue
-            name = link.get_text(strip=True)
-            rate = cells[4].get_text(strip=True)
-            items.append(f"{name} {rate}" if rate else name)
-            if len(items) >= limit:
-                break
-    except Exception:
-        pass
+    for item in _parse_rise_fall_rows(url):
+        rate = item.get("change_pct_text")
+        items.append(f"{item['name']} {rate}" if rate else item["name"])
+        if len(items) >= limit:
+            break
     return items
 
 
@@ -273,6 +306,75 @@ def _parse_nxt_movers(limit: int = 10) -> list[str]:
     return movers[:limit]
 
 
+def get_rising_stocks_over_threshold(
+    threshold_pct: float = 5.0,
+    limit: int = 30,
+    max_pages: int = 3,
+    use_mock_data: bool = True,
+) -> list[dict]:
+    if use_mock_data:
+        return [
+            {
+                "name": "LG헬로비전",
+                "code": "037560",
+                "market": "KOSPI",
+                "price": "2,860",
+                "change_pct": 30.0,
+                "change_pct_text": "+30.00%",
+            },
+            {
+                "name": "로보스타",
+                "code": "090360",
+                "market": "KOSDAQ",
+                "price": "122,200",
+                "change_pct": 30.0,
+                "change_pct_text": "+30.00%",
+            },
+            {
+                "name": "LG씨엔에스",
+                "code": "064400",
+                "market": "KOSPI",
+                "price": "143,700",
+                "change_pct": 26.27,
+                "change_pct_text": "+26.27%",
+            },
+        ][:limit]
+
+    items: list[dict] = []
+    seen: set[str] = set()
+    market_urls = [
+        ("KOSPI", "https://finance.naver.com/sise/sise_rise.naver?sosok=0"),
+        ("KOSDAQ", "https://finance.naver.com/sise/sise_rise.naver?sosok=1"),
+    ]
+
+    for market, url in market_urls:
+        for page in range(1, max_pages + 1):
+            page_rows = _parse_rise_fall_rows(_with_page(url, page), market=market)
+            if not page_rows:
+                break
+
+            reached_below_threshold = False
+            for row in page_rows:
+                change_pct = row.get("change_pct")
+                if change_pct is None:
+                    continue
+                if change_pct < threshold_pct:
+                    reached_below_threshold = True
+                    continue
+
+                key = row.get("code") or row["name"]
+                if key in seen:
+                    continue
+                seen.add(key)
+                items.append(row)
+
+            if reached_below_threshold:
+                break
+
+    items.sort(key=lambda item: item.get("change_pct") or 0, reverse=True)
+    return items[:limit]
+
+
 def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
         return {
@@ -280,6 +382,7 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
             "new_lows": ["에코프로", "에코프로비엠"],
             "upper_limit": ["녹십자홀딩스2우"],
             "after_hours_movers": ["하나머티리얼즈 +4.8%", "ISC -3.2%"],
+            "rising_over_5pct": get_rising_stocks_over_threshold(use_mock_data=True),
         }
 
     snapshot = get_home_market_snapshot(use_mock_data=False)
@@ -302,4 +405,5 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
         "new_lows": daily_lows,
         "upper_limit": snapshot.get("upper_limit", []),
         "after_hours_movers": _parse_nxt_movers(limit=10),
+        "rising_over_5pct": get_rising_stocks_over_threshold(use_mock_data=False),
     }

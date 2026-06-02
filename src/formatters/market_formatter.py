@@ -3,6 +3,26 @@ from __future__ import annotations
 from src.utils.text_utils import display_value, format_list, section
 
 
+def _format_rising_stock(item: object) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+
+    name = item.get("name") or "종목명 없음"
+    market = item.get("market")
+    price = display_value(item.get("price"))
+    change_pct = item.get("change_pct")
+    if change_pct is None:
+        change_text = display_value(item.get("change_pct_text"))
+    else:
+        try:
+            change_text = f"{float(change_pct):+.2f}%"
+        except (TypeError, ValueError):
+            change_text = display_value(change_pct)
+
+    market_text = f"({market}) " if market else ""
+    return f"{market_text}{name} | 현재가 {price} | 등락률 {change_text}"
+
+
 def format_market_briefing(payload: dict) -> str:
     indices = payload["indices"]
     global_macro = payload["global_macro"]
@@ -11,6 +31,7 @@ def format_market_briefing(payload: dict) -> str:
     market_events = payload["market_events"]
     leaders = payload["leaders"]
     sectors = payload.get("sectors", [])
+    rising_over_5pct = market_events.get("rising_over_5pct", [])
 
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
     mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
@@ -122,6 +143,7 @@ def format_market_briefing(payload: dict) -> str:
             "시장 이벤트",
             [
                 f"당일 상승 상위 {format_list(market_events['new_highs'])}",
+                f"5% 이상 상승 종목 {format_list([_format_rising_stock(item) for item in rising_over_5pct])}",
                 f"당일 하락 상위 {format_list(market_events['new_lows'])}",
                 f"상한가 {format_list(market_events['upper_limit'])}",
                 f"시간외 단일가 급등락 {format_list(market_events['after_hours_movers'])}",

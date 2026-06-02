@@ -125,7 +125,15 @@ def get_stock_disclosures(
             "risk_flags": ["CB 없음", "BW 없음", "최근 유상증자 없음", "부채비율 추가 확인 필요"],
         }
 
-    corp = find_corp_by_name(stock_name, api_key)
+    try:
+        corp = find_corp_by_name(stock_name, api_key)
+    except Exception as exc:
+        return {
+            "disclosures": [f"DART 조회 실패: {exc}"],
+            "major_shareholder_ratio": None,
+            "risk_flags": [],
+        }
+
     if not corp:
         return {
             "disclosures": ["DART에서 종목명을 찾지 못했습니다."],
@@ -175,7 +183,11 @@ def get_financial_summary(stock_name: str, api_key: str = "", use_mock_data: boo
             {"quarter": "2026Q1", "sales": "19.8조", "op_income": "2.3조", "net_income": "1.8조"},
         ]
 
-    corp = find_corp_by_name(stock_name, api_key)
+    try:
+        corp = find_corp_by_name(stock_name, api_key)
+    except Exception:
+        return []
+
     if not corp:
         return []
 

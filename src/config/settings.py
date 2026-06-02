@@ -25,8 +25,8 @@ def get_settings() -> Settings:
     output_dir = Path(os.getenv("OUTPUT_DIR", "output")).resolve()
     return Settings(
         app_title=os.getenv("APP_TITLE", "cat_stock"),
-        dart_api_key=os.getenv("DART_API_KEY", ""),
-        kis_app_key=os.getenv("KIS_APP_KEY", ""),
-        kis_app_secret=os.getenv("KIS_APP_SECRET", ""),
+        dart_api_key=os.getenv("DART_API_KEY", "").strip(),
+        kis_app_key=os.getenv("KIS_APP_KEY", "").strip(),
+        kis_app_secret=os.getenv("KIS_APP_SECRET", "").strip(),
         output_dir=output_dir,
     )

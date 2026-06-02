@@ -4,6 +4,7 @@ import re
 from datetime import date, timedelta
 from functools import lru_cache
 from io import StringIO
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import FinanceDataReader as fdr
 import pandas as pd
@@ -12,6 +13,7 @@ from bs4 import BeautifulSoup
 
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
 
 
 def _normalize_name(name: str) -> str:
@@ -263,39 +265,88 @@ def _parse_consensus_from_frgn(code: str) -> dict[str, str | None]:
     return {"target_price": None, "opinion": None, "year_high_low": None}
 
 
-def _parse_news_results(stock_name: str, limit: int = 6) -> list[str]:
-    code = _search_stock_code_naver(stock_name)
-    if code:
-        return _parse_news_by_code(code, limit)
-    return []
+def _news_url_from_href(href: str) -> str | None:
+    if not href:
+        return None
+
+    absolute_url = urljoin(NAVER_FINANCE_BASE_URL, href)
+    query = parse_qs(urlparse(absolute_url).query)
+    office_id = (query.get("office_id") or [""])[0]
+    article_id = (query.get("article_id") or [""])[0]
+    if office_id and article_id:
+        return f"https://n.news.naver.com/mnews/article/{office_id}/{article_id}"
+    return absolute_url
+
+
+def _format_news_item(item: dict) -> str:
+    title = item.get("title") or ""
+    meta = ", ".join(part for part in [item.get("source"), item.get("date")] if part)
+    return f"{title} ({meta})" if meta else title
+
+
+def _parse_news_items(soup: BeautifulSoup, limit: int = 6) -> list[dict]:
+    items: list[dict] = []
+    seen: set[str] = set()
+    for row in soup.select("tr"):
+        title = row.select_one("td.title a")
+        if not title:
+            continue
+
+        text = title.get_text(" ", strip=True)
+        if not text or text in seen:
+            continue
+
+        info = row.select_one("td.info")
+        date_cell = row.select_one("td.date")
+        source = info.get_text(" ", strip=True) if info else ""
+        date_str = date_cell.get_text(" ", strip=True) if date_cell else ""
+        items.append(
+            {
+                "title": text,
+                "source": source,
+                "date": date_str,
+                "url": _news_url_from_href(title.get("href", "")),
+            }
+        )
+        seen.add(text)
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _parse_news_rows(soup: BeautifulSoup, limit: int = 6) -> list[str]:
+    return [_format_news_item(item) for item in _parse_news_items(soup, limit)]
+
+
+def _fetch_news_soup_by_code(code: str) -> BeautifulSoup:
+    response = requests.get(
+        f"{NAVER_FINANCE_BASE_URL}/item/news_news.naver?code={code}&page=1&clusterId=",
+        headers={**HEADERS, "Referer": f"{NAVER_FINANCE_BASE_URL}/item/news.naver?code={code}"},
+        timeout=20,
+    )
+    response.encoding = "euc-kr"
+    return BeautifulSoup(response.text, "html.parser")
 
 
 def _parse_news_by_code(code: str, limit: int = 6) -> list[str]:
     try:
-        response = requests.get(
-            f"https://finance.naver.com/item/news_news.naver?code={code}&page=1&clusterId=",
-            headers={**HEADERS, "Referer": f"https://finance.naver.com/item/news.naver?code={code}"},
-            timeout=20,
-        )
-        response.encoding = "euc-kr"
-        soup = BeautifulSoup(response.text, "html.parser")
-        items: list[str] = []
-        for row in soup.select("tr"):
-            title = row.select_one("td.title a")
-            info = row.select_one("td.info")
-            date = row.select_one("td.date")
-            if not title:
-                continue
-            text = title.get_text(strip=True)
-            source = info.get_text(strip=True) if info else ""
-            date_str = date.get_text(strip=True) if date else ""
-            line = f"{text}" + (f" ({source}, {date_str})" if source else "")
-            items.append(line)
-            if len(items) >= limit:
-                break
-        return items
+        return _parse_news_rows(_fetch_news_soup_by_code(code), limit)
     except Exception:
         return []
+
+
+def _parse_news_items_by_code(code: str, limit: int = 6) -> list[dict]:
+    try:
+        return _parse_news_items(_fetch_news_soup_by_code(code), limit)
+    except Exception:
+        return []
+
+
+def _parse_news_results(stock_name: str, limit: int = 6) -> list[str]:
+    code = get_stock_code(stock_name)
+    if code:
+        return _parse_news_by_code(code, limit)
+    return []
 
 
 def _parse_report_rows(code: str, limit: int = 5) -> list[dict]:
@@ -419,13 +470,25 @@ def get_stock_basics(stock_name: str, use_mock_data: bool = True) -> dict:
 
 def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
+        news_items = [
+            {
+                "title": f"{stock_name}: 업황 개선 기대감 관련 기사",
+                "source": "샘플뉴스",
+                "date": "2026.06.01",
+                "url": "https://finance.naver.com",
+            },
+            {
+                "title": f"{stock_name}: 증권사 목표가 상향 기사",
+                "source": "샘플경제",
+                "date": "2026.06.01",
+                "url": "https://finance.naver.com",
+            },
+        ]
         return {
             "foreign_20d": "+1,245,000주",
             "institution_20d": "-342,000주",
-            "news": [
-                f"{stock_name}: 업황 개선 기대감 관련 기사",
-                f"{stock_name}: 증권사 목표가 상향 기사",
-            ],
+            "news": [_format_news_item(item) for item in news_items],
+            "news_items": news_items,
             "naver_reports": [
                 f"{stock_name}: 매수 / 목표가 95,000원",
             ],
@@ -433,7 +496,7 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
 
     row = _find_stock_row(stock_name)
     if row is None:
-        return {"foreign_20d": None, "institution_20d": None, "news": [], "naver_reports": []}
+        return {"foreign_20d": None, "institution_20d": None, "news": [], "news_items": [], "naver_reports": []}
 
     code = str(row["Code"]).zfill(6)
     flow_df = _parse_investor_flow_table(code)
@@ -453,9 +516,11 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         line = f"{item['title']}" + (f" | {' / '.join(segments)}" if segments else "")
         naver_report_lines.append(line)
 
+    news_items = _parse_news_items_by_code(code, limit=6)
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
-        "news": _parse_news_by_code(code, limit=6),
+        "news": [_format_news_item(item) for item in news_items],
+        "news_items": news_items,
         "naver_reports": naver_report_lines,
     }
