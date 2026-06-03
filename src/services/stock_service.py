@@ -17,6 +17,7 @@ from src.collectors.stock.naver_stock_collector import (
 from src.collectors.stock.short_selling_collector import get_short_selling_snapshot
 from src.config.settings import get_settings
 from src.formatters.stock_formatter import format_stock_report
+from src.services.column_service import generate_stock_column
 from src.utils.date_utils import today_kst_string
 from src.utils.file_utils import save_output_text
 
@@ -72,6 +73,7 @@ def generate_stock_report(
         "kis_flow": kis_flow,
         "reports": reports,
     }
+    payload["column"] = generate_stock_column(payload)
     text = format_stock_report(payload)
     path = save_output_text(f"stock_{stock_name}", target_date, text)
     return {"text": text, "path": path, "payload": payload}
