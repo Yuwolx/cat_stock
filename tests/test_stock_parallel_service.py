@@ -176,7 +176,11 @@ def test_stock_parallel_payload_matches_sequential_result_and_primes_kis(monkeyp
         "flows": flows,
         "financials": financials,
         "disclosures": disclosures,
-        "short_selling": {"short_balance_ratio": "2.00%", "consensus_target_price": "90,000원"},
+        "short_selling": {
+            "short_balance_ratio": "1.00%",
+            "short_sale_volume_ratio": "2.00%",
+            "consensus_target_price": "90,000원",
+        },
         "kis_flow": kis_flow,
         "reports": reports,
         "column": column,

@@ -80,34 +80,41 @@ def get_short_selling_ratio(
     app_key: str,
     app_secret: str,
 ) -> str | None:
-    """공매도 잔고 비율 (KIS API 대차잔고 기준)"""
+    """공매도 거래량 비중 (KIS 국내주식 공매도 일별추이).
+
+    KIS 공식 샘플 기준:
+    - [국내주식] 시세분석 > 국내주식 공매도 일별추이[국내주식-134]
+    - path: /uapi/domestic-stock/v1/quotations/daily-short-sale
+    - tr_id: FHPST04830000
+
+    개별 종목의 "공매도 잔고 비율"을 검증된 필드로 제공하는 엔드포인트는 확인되지 않아
+    잔고 비율처럼 가공하지 않는다.
+    """
     try:
         data = kis_get(
-            path="/uapi/domestic-stock/v1/quotations/short-sale",
-            tr_id="HHKDB669100C0",
+            path="/uapi/domestic-stock/v1/quotations/daily-short-sale",
+            tr_id="FHPST04830000",
             params={
                 "FID_COND_MRKT_DIV_CODE": "J",
                 "FID_INPUT_ISCD": code,
                 "FID_INPUT_DATE_1": "",
                 "FID_INPUT_DATE_2": "",
-                "FID_PERIOD_DIV_CODE": "D",
             },
             app_key=app_key,
             app_secret=app_secret,
         )
-        output = data.get("output")
-        if not output:
+        rows = data.get("output2") or []
+        if not rows:
             return None
-        row = output[0] if isinstance(output, list) else output
 
-        # 대차잔고비율 또는 공매도비율 필드 탐색
-        for field in ("ssts_rto", "short_sale_rto", "loan_bal_rto", "stln_rto"):
-            val = row.get(field)
-            if val and val not in ("", "0", "0.00"):
-                try:
-                    return f"{float(val):.2f}%"
-                except ValueError:
-                    pass
+        row = rows[0] if isinstance(rows, list) else rows
+        val = row.get("ssts_vol_rlim") if isinstance(row, dict) else None
+        if val in (None, ""):
+            return None
+        try:
+            return f"{float(str(val).replace(',', '')):.2f}%"
+        except ValueError:
+            return None
         return None
     except Exception:
         return None

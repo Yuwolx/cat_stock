@@ -68,7 +68,7 @@ def _empty_kis_flow() -> dict:
 
 
 def _empty_short_selling() -> dict:
-    return {"short_balance_ratio": None, "consensus_target_price": None}
+    return {"short_balance_ratio": None, "short_sale_volume_ratio": None, "consensus_target_price": None}
 
 
 def _prime_kis_token(app_key: str, app_secret: str) -> None:
@@ -135,7 +135,7 @@ def generate_stock_report(
 
     reports = future_result(futures, "reports", []) if code else []
     kis_flow = future_result(futures, "kis_flow", _empty_kis_flow()) if should_use_kis else _empty_kis_flow()
-    kis_short = future_result(futures, "kis_short", None) if should_use_kis else None
+    kis_short_sale_volume_ratio = future_result(futures, "kis_short", None) if should_use_kis else None
     naver_snapshot = future_result(futures, "naver_snapshot", _empty_short_selling())
 
     payload = {
@@ -147,7 +147,8 @@ def generate_stock_report(
         "financials": future_result(futures, "financials", []),
         "disclosures": future_result(futures, "disclosures", _empty_disclosures()),
         "short_selling": {
-            "short_balance_ratio": kis_short or naver_snapshot.get("short_balance_ratio"),
+            "short_balance_ratio": naver_snapshot.get("short_balance_ratio"),
+            "short_sale_volume_ratio": kis_short_sale_volume_ratio,
             "consensus_target_price": naver_snapshot.get("consensus_target_price"),
         },
         "kis_flow": kis_flow,
