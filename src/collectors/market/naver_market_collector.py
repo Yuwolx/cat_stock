@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -9,6 +10,11 @@ from bs4 import BeautifulSoup
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
+logger = logging.getLogger(__name__)
+
+
+def _warn_empty_parser(name: str, url: str) -> None:
+    logger.warning("Naver parser returned 0 rows: %s (%s)", name, url)
 
 
 def _fetch_soup(url: str, encoding: str | None = None) -> BeautifulSoup:
@@ -161,9 +167,14 @@ def get_market_news(use_mock_data: bool = True, limit: int = 12) -> list[dict]:
         ][:limit]
 
     try:
-        soup = _fetch_soup(f"{NAVER_FINANCE_BASE_URL}/news/mainnews.naver", encoding="euc-kr")
-        return _parse_market_news_items(soup, limit=limit)
-    except Exception:
+        url = f"{NAVER_FINANCE_BASE_URL}/news/mainnews.naver"
+        soup = _fetch_soup(url, encoding="euc-kr")
+        items = _parse_market_news_items(soup, limit=limit)
+        if not items:
+            _warn_empty_parser("market_news", url)
+        return items
+    except Exception as exc:
+        logger.warning("Naver parser failed: market_news (%s)", exc)
         return []
 
 
@@ -183,7 +194,8 @@ def get_sector_changes(use_mock_data: bool = True) -> list[dict]:
         ]
 
     try:
-        soup = _fetch_soup("https://finance.naver.com/sise/sise_group.naver")
+        url = "https://finance.naver.com/sise/sise_group.naver"
+        soup = _fetch_soup(url)
         items: list[dict] = []
         for row in soup.select("table.type_1 tr"):
             link = row.select_one("a")
@@ -199,8 +211,11 @@ def get_sector_changes(use_mock_data: bool = True) -> list[dict]:
             items.append({"name": name, "change_pct": rate})
             if len(items) >= 20:
                 break
+        if not items:
+            _warn_empty_parser("sector_changes", url)
         return items
-    except Exception:
+    except Exception as exc:
+        logger.warning("Naver parser failed: sector_changes (%s)", exc)
         return []
 
 
@@ -283,7 +298,8 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
             {"name": "현대차", "price": "241,500", "change_pct": 0.84, "turnover_krw_billion": 983},
         ]
 
-    soup = _fetch_soup("https://finance.naver.com/sise/sise_quant.naver")
+    url = "https://finance.naver.com/sise/sise_quant.naver"
+    soup = _fetch_soup(url)
     items: list[dict] = []
     for row in soup.select("table.type_2 tr"):
         cells = [cell.get_text(" ", strip=True) for cell in row.select("td")]
@@ -305,7 +321,10 @@ def get_trading_value_leaders(target_date: str, use_mock_data: bool = True) -> l
         )
 
     items.sort(key=lambda item: item["turnover_krw_billion"], reverse=True)
-    return items[:20]
+    result = items[:20]
+    if not result:
+        _warn_empty_parser("trading_value_leaders", url)
+    return result
 
 
 def _stock_code_from_href(href: str) -> str | None:
@@ -500,6 +519,10 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
         limit=20,
         descending=False,
     )
+    if not daily_highs:
+        _warn_empty_parser("daily_rise_rankings", "https://finance.naver.com/sise/sise_rise.naver")
+    if not daily_lows:
+        _warn_empty_parser("daily_fall_rankings", "https://finance.naver.com/sise/sise_fall.naver")
 
     return {
         "new_highs": daily_highs,

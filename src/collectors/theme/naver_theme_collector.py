@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from urllib.parse import urljoin
 
@@ -9,6 +10,7 @@ from bs4 import BeautifulSoup
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
+logger = logging.getLogger(__name__)
 
 
 def _fetch_soup(url: str) -> BeautifulSoup:
@@ -32,7 +34,11 @@ def _find_theme_no(theme_name: str) -> str | None:
     normalized_target = _normalize(theme_name)
     best_no: str | None = None
 
-    for link in soup.select('a[href*="sise_group_detail.naver"][href*="type=theme"], a[href*="theme_detail.naver"]'):
+    theme_links = soup.select('a[href*="sise_group_detail.naver"][href*="type=theme"], a[href*="theme_detail.naver"]')
+    if not theme_links:
+        logger.warning("Naver parser returned 0 rows: theme_list (%s)", "https://finance.naver.com/sise/theme.naver")
+
+    for link in theme_links:
         name = link.get_text(strip=True)
         href = link.get("href", "")
         match = re.search(r"(?:themeNo|no)=(\d+)", href)
@@ -128,6 +134,11 @@ def _parse_theme_detail(theme_no: str) -> list[dict]:
         if len(stocks) >= 20:
             break
 
+    if not stocks:
+        logger.warning(
+            "Naver parser returned 0 rows: theme_detail (%s)",
+            f"{NAVER_FINANCE_BASE_URL}/sise/sise_group_detail.naver?type=theme&no={theme_no}",
+        )
     return stocks
 
 

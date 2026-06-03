@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from bs4 import BeautifulSoup
 
 from src.collectors.market import naver_market_collector as collector
@@ -138,3 +140,13 @@ def test_market_news_url_from_href_falls_back_to_finance_url() -> None:
     assert collector._market_news_url_from_href("/news/news_read.naver?mode=mainnews") == (
         "https://finance.naver.com/news/news_read.naver?mode=mainnews"
     )
+
+
+def test_get_market_news_logs_empty_parser(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(collector, "_fetch_soup", lambda url, encoding=None: BeautifulSoup("<html></html>", "html.parser"))
+
+    with caplog.at_level(logging.WARNING):
+        result = collector.get_market_news(use_mock_data=False)
+
+    assert result == []
+    assert "market_news" in caplog.text

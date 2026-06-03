@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 import requests
 from bs4 import BeautifulSoup
 
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+logger = logging.getLogger(__name__)
 
 
 def _search_naver_news(query: str, limit: int = 8) -> list[str]:
@@ -38,8 +41,11 @@ def _search_naver_news(query: str, limit: int = 8) -> list[str]:
             items.append(text)
             if len(items) >= limit:
                 break
+        if not items:
+            logger.warning("Naver parser returned 0 rows: theme_news (%s)", query)
         return items
-    except Exception:
+    except Exception as exc:
+        logger.warning("Naver parser failed: theme_news (%s)", exc)
         return []
 
 

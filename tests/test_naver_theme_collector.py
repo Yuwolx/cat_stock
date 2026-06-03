@@ -1,3 +1,5 @@
+import logging
+
 from bs4 import BeautifulSoup
 
 from src.collectors.theme import naver_theme_collector as collector
@@ -57,3 +59,13 @@ def test_parse_theme_detail_enriches_market_cap_per_pbr(monkeypatch) -> None:
             "pbr": "1.42",
         }
     ]
+
+
+def test_find_theme_no_logs_when_theme_links_disappear(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(collector, "_fetch_soup", lambda url: BeautifulSoup("<html></html>", "html.parser"))
+
+    with caplog.at_level(logging.WARNING):
+        result = collector._find_theme_no("인터넷 대표주")
+
+    assert result is None
+    assert "theme_list" in caplog.text
