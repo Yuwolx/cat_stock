@@ -18,6 +18,24 @@ def test_market_missing_data_warning_does_not_include_disclosures(monkeypatch) -
     assert "DART 공시" not in messages[0]
 
 
+def test_market_missing_data_warning_uses_collector_status(monkeypatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(pages, "render_note", lambda message, tone="info": messages.append(message))
+
+    pages._render_missing_data_warnings(
+        {
+            "collector_status": {
+                "global_macro": {"status": "empty", "error": None},
+                "sectors": {"status": "error", "error": "selector failed"},
+                "news_items": {"status": "ok", "error": None},
+            }
+        },
+        "market",
+    )
+
+    assert messages == ["수집 실패 항목: 글로벌 매크로 빈 결과 · 테마/그룹 등락 오류"]
+
+
 def test_stock_missing_data_warning_keeps_disclosures(monkeypatch) -> None:
     messages: list[str] = []
     monkeypatch.setattr(pages, "render_note", lambda message, tone="info": messages.append(message))

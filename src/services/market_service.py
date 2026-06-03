@@ -19,7 +19,6 @@ from src.collectors.market.naver_market_collector import (
 from src.config.settings import get_settings
 from src.formatters.market_formatter import format_market_briefing
 from src.services.column_service import generate_market_column
-from src.utils.concurrency import future_result
 from src.utils.file_utils import save_output_text
 
 
@@ -77,6 +76,29 @@ def _prime_kis_token(app_key: str, app_secret: str) -> None:
         pass
 
 
+def _is_empty_data(value: object) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, (list, tuple, set)):
+        return len(value) == 0
+    if isinstance(value, dict):
+        if not value:
+            return True
+        return all(_is_empty_data(item) for item in value.values())
+    return False
+
+
+def _resolve_collector(futures: dict[str, object], key: str, default: object) -> tuple[object, dict]:
+    try:
+        data = futures[key].result()
+    except Exception as exc:
+        return default, {"status": "error", "error": str(exc)}
+
+    if _is_empty_data(data):
+        return data, {"status": "empty", "error": None}
+    return data, {"status": "ok", "error": None}
+
+
 def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> dict:
     settings = get_settings()
     has_kis = bool(settings.kis_app_key and settings.kis_app_secret)
@@ -95,7 +117,19 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
             "news_items": executor.submit(get_market_news, use_mock_data=use_mock_data),
         }
 
-    derivatives = future_result(futures, "derivatives", _empty_derivatives())
+    collector_status: dict[str, dict] = {}
+    indices, collector_status["indices"] = _resolve_collector(futures, "indices", _empty_indices())
+    global_macro, collector_status["global_macro"] = _resolve_collector(futures, "global_macro", {})
+    leaders, collector_status["leaders"] = _resolve_collector(futures, "leaders", [])
+    sectors, collector_status["sectors"] = _resolve_collector(futures, "sectors", [])
+    investor_flows, collector_status["investor_flows"] = _resolve_collector(
+        futures,
+        "investor_flows",
+        _empty_investor_flows(),
+    )
+    derivatives, collector_status["derivatives"] = _resolve_collector(futures, "derivatives", _empty_derivatives())
+    market_events, collector_status["market_events"] = _resolve_collector(futures, "market_events", _empty_market_events())
+    news_items, collector_status["news_items"] = _resolve_collector(futures, "news_items", [])
 
     # KIS API 선물 수급 — 성공 시 네이버 기반 None 값 덮어씀
     if has_kis and not use_mock_data:
@@ -112,14 +146,15 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     payload = {
         "target_date": target_date,
         "is_mock_data": use_mock_data,
-        "indices": future_result(futures, "indices", _empty_indices()),
-        "global_macro": future_result(futures, "global_macro", {}),
-        "leaders": future_result(futures, "leaders", []),
-        "sectors": future_result(futures, "sectors", []),
-        "investor_flows": future_result(futures, "investor_flows", _empty_investor_flows()),
+        "indices": indices,
+        "global_macro": global_macro,
+        "leaders": leaders,
+        "sectors": sectors,
+        "investor_flows": investor_flows,
         "derivatives": derivatives,
-        "market_events": future_result(futures, "market_events", _empty_market_events()),
-        "news_items": future_result(futures, "news_items", []),
+        "market_events": market_events,
+        "news_items": news_items,
+        "collector_status": collector_status,
     }
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)

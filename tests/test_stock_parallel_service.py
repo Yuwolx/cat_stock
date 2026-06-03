@@ -44,6 +44,16 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
         "derivatives": derivatives,
         "market_events": events,
         "news_items": news_items,
+        "collector_status": {
+            "indices": {"status": "ok", "error": None},
+            "global_macro": {"status": "ok", "error": None},
+            "leaders": {"status": "ok", "error": None},
+            "sectors": {"status": "ok", "error": None},
+            "investor_flows": {"status": "ok", "error": None},
+            "derivatives": {"status": "ok", "error": None},
+            "market_events": {"status": "ok", "error": None},
+            "news_items": {"status": "ok", "error": None},
+        },
         "column": column,
     }
     assert "disclosures" not in result["payload"]
@@ -74,6 +84,8 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
 
     assert payload["leaders"] == [{"name": "A"}]
     assert payload["sectors"] == []
+    assert payload["collector_status"]["sectors"]["status"] == "error"
+    assert "sector failed" in payload["collector_status"]["sectors"]["error"]
 
 
 def test_market_parallel_primes_kis_and_applies_overlay_after_derivatives(monkeypatch) -> None:
