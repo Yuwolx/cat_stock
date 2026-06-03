@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
 
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
 
 
-def _fetch_soup(url: str) -> BeautifulSoup:
+def _fetch_soup(url: str, encoding: str | None = None) -> BeautifulSoup:
     response = requests.get(url, headers=HEADERS, timeout=20)
-    response.encoding = response.apparent_encoding or response.encoding
+    response.encoding = encoding or response.apparent_encoding or response.encoding
     response.raise_for_status()
     return BeautifulSoup(response.text, "html.parser")
 
@@ -99,6 +101,70 @@ def _merge_unique(items: list[str], limit: int = 10) -> list[str]:
         if len(merged) >= limit:
             break
     return merged
+
+
+def _market_news_url_from_href(href: str) -> str | None:
+    if not href:
+        return None
+
+    absolute_url = urljoin(NAVER_FINANCE_BASE_URL, href)
+    query = parse_qs(urlparse(absolute_url).query)
+    office_id = (query.get("office_id") or [""])[0]
+    article_id = (query.get("article_id") or [""])[0]
+    if office_id and article_id:
+        return f"https://n.news.naver.com/mnews/article/{office_id}/{article_id}"
+    return absolute_url
+
+
+def _parse_market_news_items(soup: BeautifulSoup, limit: int = 12) -> list[dict]:
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    for link in soup.select(".articleSubject a"):
+        title = link.get_text(" ", strip=True)
+        if not title:
+            continue
+
+        url = _market_news_url_from_href(link.get("href", ""))
+        key = url or title
+        if key in seen:
+            continue
+
+        wrapper = link.find_parent("dl")
+        summary = wrapper.select_one(".articleSummary") if wrapper else None
+        source = summary.select_one(".press").get_text(" ", strip=True) if summary and summary.select_one(".press") else ""
+        date_text = summary.select_one(".wdate").get_text(" ", strip=True) if summary and summary.select_one(".wdate") else ""
+
+        items.append({"title": title, "url": url or "", "source": source, "date": date_text})
+        seen.add(key)
+        if len(items) >= limit:
+            break
+
+    return items
+
+
+def get_market_news(use_mock_data: bool = True, limit: int = 12) -> list[dict]:
+    if use_mock_data:
+        return [
+            {
+                "title": "코스피 강세 속 반도체주 거래대금 증가",
+                "url": "https://n.news.naver.com/mnews/article/000/0000000001",
+                "source": "샘플경제",
+                "date": "2026-06-03 09:00:00",
+            },
+            {
+                "title": "원달러 환율 안정에 외국인 수급 개선",
+                "url": "https://n.news.naver.com/mnews/article/000/0000000002",
+                "source": "샘플뉴스",
+                "date": "2026-06-03 10:00:00",
+            },
+        ][:limit]
+
+    try:
+        soup = _fetch_soup(f"{NAVER_FINANCE_BASE_URL}/news/mainnews.naver", encoding="euc-kr")
+        return _parse_market_news_items(soup, limit=limit)
+    except Exception:
+        return []
 
 
 def get_sector_changes(use_mock_data: bool = True) -> list[dict]:

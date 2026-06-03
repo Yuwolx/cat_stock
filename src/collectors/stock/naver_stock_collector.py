@@ -281,7 +281,9 @@ def _news_url_from_href(href: str) -> str | None:
 def _format_news_item(item: dict) -> str:
     title = item.get("title") or ""
     meta = ", ".join(part for part in [item.get("source"), item.get("date")] if part)
-    return f"{title} ({meta})" if meta else title
+    title_line = f"{title} ({meta})" if meta else title
+    url = item.get("url")
+    return f"{title_line}\n  링크: {url}" if url else title_line
 
 
 def _parse_news_items(soup: BeautifulSoup, limit: int = 6) -> list[dict]:
@@ -495,10 +497,10 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         }
 
     row = _find_stock_row(stock_name)
-    if row is None:
+    code = str(row["Code"]).zfill(6) if row is not None else get_stock_code(stock_name)
+    if not code:
         return {"foreign_20d": None, "institution_20d": None, "news": [], "news_items": [], "naver_reports": []}
 
-    code = str(row["Code"]).zfill(6)
     flow_df = _parse_investor_flow_table(code)
     foreign_sum = None
     institution_sum = None

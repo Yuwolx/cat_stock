@@ -23,6 +23,17 @@ def _format_rising_stock(item: object) -> str:
     return f"{market_text}{name} | 현재가 {price} | 등락률 {change_text}"
 
 
+def _format_news_item(item: object) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+
+    title = item.get("title") or "제목 없음"
+    meta = ", ".join(str(part) for part in [item.get("source"), item.get("date")] if part)
+    title_line = f"{title} ({meta})" if meta else title
+    url = item.get("url")
+    return f"{title_line}\n  링크: {url}" if url else title_line
+
+
 def format_market_briefing(payload: dict) -> str:
     indices = payload["indices"]
     global_macro = payload["global_macro"]
@@ -32,6 +43,7 @@ def format_market_briefing(payload: dict) -> str:
     leaders = payload["leaders"]
     sectors = payload.get("sectors", [])
     rising_over_5pct = market_events.get("rising_over_5pct", [])
+    news_items = payload.get("news_items", [])
 
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
     mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
@@ -149,6 +161,7 @@ def format_market_briefing(payload: dict) -> str:
                 f"시간외 단일가 급등락 {format_list(market_events['after_hours_movers'])}",
             ],
         ),
+        section("주요 뉴스", [_format_news_item(item) for item in news_items] or ["데이터 없음"]),
     ]
 
     chunks = [header]

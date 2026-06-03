@@ -12,6 +12,7 @@ from src.collectors.market.krx_collector import (
 )
 from src.collectors.market.naver_market_collector import (
     get_market_event_lists,
+    get_market_news,
     get_sector_changes,
     get_trading_value_leaders,
 )
@@ -80,7 +81,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     if has_kis and not use_mock_data:
         _prime_kis_token(settings.kis_app_key, settings.kis_app_secret)
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=9) as executor:
         futures = {
             "indices": executor.submit(get_market_indices, target_date, use_mock_data=use_mock_data),
             "global_macro": executor.submit(get_global_macro_snapshot, target_date, use_mock_data=use_mock_data),
@@ -89,6 +90,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
             "investor_flows": executor.submit(get_investor_flows, target_date, use_mock_data=use_mock_data),
             "derivatives": executor.submit(get_derivatives_snapshot, target_date, use_mock_data=use_mock_data),
             "market_events": executor.submit(get_market_event_lists, target_date, use_mock_data=use_mock_data),
+            "news_items": executor.submit(get_market_news, use_mock_data=use_mock_data),
         }
 
     derivatives = future_result(futures, "derivatives", _empty_derivatives())
@@ -111,6 +113,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
         "investor_flows": future_result(futures, "investor_flows", _empty_investor_flows()),
         "derivatives": derivatives,
         "market_events": future_result(futures, "market_events", _empty_market_events()),
+        "news_items": future_result(futures, "news_items", []),
     }
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)

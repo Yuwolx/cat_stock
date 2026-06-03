@@ -50,6 +50,14 @@ def test_market_formatter_includes_sections() -> None:
                 {"name": "테스트종목", "market": "KOSPI", "price": "12,300", "change_pct": 6.03}
             ],
         },
+        "news_items": [
+            {
+                "title": "코스피 강세 지속",
+                "url": "https://n.news.naver.com/mnews/article/018/0006296662",
+                "source": "이데일리",
+                "date": "2026-06-03 17:15:09",
+            }
+        ],
     }
 
     result = format_market_briefing(payload)
@@ -61,3 +69,6 @@ def test_market_formatter_includes_sections() -> None:
     assert "코스피 수급 외국인 90억" in result
     assert "프로그램 코스닥 차익 2억" in result
     assert "5% 이상 상승 종목 (KOSPI) 테스트종목 | 현재가 12,300 | 등락률 +6.03%" in result
+    assert "■ 주요 뉴스" in result
+    assert "코스피 강세 지속 (이데일리, 2026-06-03 17:15:09)" in result
+    assert "  링크: https://n.news.naver.com/mnews/article/018/0006296662" in result

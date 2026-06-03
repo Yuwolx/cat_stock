@@ -481,6 +481,7 @@ def build_market_dashboard(payload: dict) -> str:
     leaders = payload.get("leaders", [])
     sectors = payload.get("sectors", [])
     events = payload.get("market_events", {})
+    news_items = payload.get("news_items", [])
     column = payload.get("column")
     date_str = payload.get("target_date", "")
     is_first = True
@@ -637,6 +638,8 @@ def build_market_dashboard(payload: dict) -> str:
   {main_col}
   {sidebar}
 </div>
+<div class="rule"><div class="rule-line"></div><div class="rule-title">LATEST NEWS</div><div class="rule-line"></div></div>
+{_news_grid3_html(news_items, [])}
 """
 
     return _dispatch_wrap(

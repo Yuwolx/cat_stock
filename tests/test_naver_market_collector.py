@@ -99,3 +99,42 @@ def test_get_market_event_lists_collects_rankings_with_page_two(monkeypatch) -> 
     assert len(result["new_lows"]) == 20
     assert any("sise_rise.naver?sosok=0&page=2" in url for url in called_urls)
     assert any("sise_fall.naver?sosok=0&page=2" in url for url in called_urls)
+
+
+def test_parse_market_news_items_includes_title_url_source_and_date() -> None:
+    html = """
+    <ul class="newsList">
+      <li class="block1">
+        <dl>
+          <dd class="articleSubject">
+            <a href="/news/news_read.naver?article_id=0006296662&office_id=018&mode=mainnews">
+              코스피 강세 지속
+            </a>
+          </dd>
+          <dd class="articleSummary">
+            요약은 쓰지 않는다.
+            <span class="press">이데일리</span>
+            <span class="bar">|</span>
+            <span class="wdate">2026-06-03 17:15:09</span>
+          </dd>
+        </dl>
+      </li>
+    </ul>
+    """
+
+    result = collector._parse_market_news_items(BeautifulSoup(html, "html.parser"), limit=12)
+
+    assert result == [
+        {
+            "title": "코스피 강세 지속",
+            "url": "https://n.news.naver.com/mnews/article/018/0006296662",
+            "source": "이데일리",
+            "date": "2026-06-03 17:15:09",
+        }
+    ]
+
+
+def test_market_news_url_from_href_falls_back_to_finance_url() -> None:
+    assert collector._market_news_url_from_href("/news/news_read.naver?mode=mainnews") == (
+        "https://finance.naver.com/news/news_read.naver?mode=mainnews"
+    )
