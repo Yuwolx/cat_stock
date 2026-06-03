@@ -28,6 +28,7 @@ def format_coin_detail_report(payload: dict) -> str:
     defi_protocol = payload.get("defi_protocol", {})
     futures = payload.get("futures", {})
     risk_flags = payload.get("risk_flags", [])
+    futures_label = futures.get("contract_label") or "Binance USD-M"
 
     chunks = [
         f"[개별 코인 공부 - {_display(basics.get('name'))} - {payload.get('target_datetime', '-')}]",
@@ -101,7 +102,7 @@ def format_coin_detail_report(payload: dict) -> str:
             "파생상품",
             [
                 (
-                    f"{_display(futures.get('symbol'))} | 펀딩비 {_fmt_pct(futures.get('latest_funding_rate_pct'))} | "
+                    f"{_display(futures.get('symbol'))} ({futures_label}) | 펀딩비 {_fmt_pct(futures.get('latest_funding_rate_pct'))} | "
                     f"연율 환산 {_fmt_pct(futures.get('annualized_funding_pct'))} | "
                     f"OI 변화 {_fmt_pct(futures.get('open_interest_change_24h_pct'))} | {_display(futures.get('warning'))}"
                     if futures.get("is_available")

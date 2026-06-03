@@ -824,9 +824,10 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         """
 
     if futures.get("is_available"):
+        futures_label = str(futures.get("contract_label") or "Binance USD-M")
         futures_body = f"""
         <div class="coin-detail-upbit">
-          {_detail_item("마켓", str(futures.get("symbol") or "-"), "Binance USD-M")}
+          {_detail_item("마켓", str(futures.get("symbol") or "-"), futures_label)}
           {_detail_item("최근 펀딩비", _fmt_pct(futures.get("latest_funding_rate_pct")), "양수면 롱이 숏에게 비용 지불")}
           {_detail_item("연율 환산", _fmt_pct(futures.get("annualized_funding_pct")), "최근 평균 펀딩비 단순 환산")}
           {_detail_item("OI 변화", _fmt_pct(futures.get("open_interest_change_24h_pct")), "24시간 미결제약정 변화")}
