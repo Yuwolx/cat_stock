@@ -270,6 +270,7 @@ def _render_coin_market_page() -> None:
 
         if "coin_market_result" in st.session_state:
             result = st.session_state["coin_market_result"]
+            _render_data_warnings(result["payload"])
             st.download_button(
                 "학습 노트 TXT",
                 data=result["text"],
@@ -336,6 +337,7 @@ def _render_coin_detail_page() -> None:
 
         if "coin_detail_result" in st.session_state:
             result = st.session_state["coin_detail_result"]
+            _render_data_warnings(result["payload"])
             st.download_button(
                 "학습 노트 TXT",
                 data=result["text"],
@@ -379,6 +381,7 @@ def _render_coin_sector_page() -> None:
 
         if "coin_sector_result" in st.session_state:
             result = st.session_state["coin_sector_result"]
+            _render_data_warnings(result["payload"])
             st.download_button(
                 "학습 노트 TXT",
                 data=result["text"],
@@ -676,6 +679,12 @@ def _render_missing_data_warnings(payload: dict, mode: str) -> None:
 
     if missing:
         render_note("수집 실패 항목: " + " · ".join(missing), tone="warn")
+
+
+def _render_data_warnings(payload: dict) -> None:
+    warnings = payload.get("data_warnings") or []
+    if warnings:
+        render_note("데이터 경고: " + " · ".join(str(item) for item in warnings), tone="warn")
 
 
 def _render_dashboard_preview(html: str) -> None:

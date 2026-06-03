@@ -6,10 +6,12 @@ from datetime import datetime
 
 from src.collectors.coin.alternative_client import get_fear_greed_index
 from src.collectors.coin.coingecko_client import (
+    get_coingecko_status,
     get_category_markets,
     get_coin_market_chart,
     get_coin_markets,
     get_global_market_snapshot,
+    reset_coingecko_status,
 )
 from src.collectors.coin.defillama_client import (
     get_fees_overview,
@@ -113,6 +115,7 @@ def _market_regime(payload: dict) -> dict:
 
 
 def generate_coin_market_report(use_mock_data: bool = False) -> dict:
+    reset_coingecko_status()
     target_date = today_kst_string()
     target_datetime = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
 
@@ -178,6 +181,11 @@ def generate_coin_market_report(use_mock_data: bool = False) -> dict:
         "usdkrw": macro.get("usdkrw"),
         "kimchi_premium_pct": kimchi_premium_pct,
     }
+    coingecko_status = get_coingecko_status()
+    payload["source_status"] = {"coingecko": coingecko_status}
+    payload["data_warnings"] = (
+        ["CoinGecko rate limit으로 일부 데이터가 비었을 수 있습니다."] if coingecko_status.get("rate_limited") else []
+    )
     payload["regime"] = _market_regime(payload)
 
     text = format_coin_market_briefing(payload)

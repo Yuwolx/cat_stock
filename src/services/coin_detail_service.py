@@ -5,7 +5,13 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from src.collectors.coin.binance_futures_client import get_futures_risk
-from src.collectors.coin.coingecko_client import get_coin_detail, get_coin_market_chart, search_coins
+from src.collectors.coin.coingecko_client import (
+    get_coingecko_status,
+    get_coin_detail,
+    get_coin_market_chart,
+    reset_coingecko_status,
+    search_coins,
+)
 from src.collectors.coin.defillama_client import find_protocol_for_coin
 from src.collectors.coin.upbit_client import get_daily_candles, get_krw_market_for_symbol, get_tickers
 from src.collectors.market.global_collector import get_global_macro_snapshot
@@ -212,6 +218,7 @@ def resolve_coin_id(query: str, use_mock_data: bool = False) -> dict:
 
 
 def generate_coin_detail_report(query: str, use_mock_data: bool = False) -> dict:
+    reset_coingecko_status()
     target_date = today_kst_string()
     target_datetime = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
     resolved = resolve_coin_id(query, use_mock_data=use_mock_data)
@@ -338,6 +345,11 @@ def generate_coin_detail_report(query: str, use_mock_data: bool = False) -> dict
         "developer": detail.get("developer_data") or {},
         "usdkrw": macro.get("usdkrw"),
     }
+    coingecko_status = get_coingecko_status()
+    payload["source_status"] = {"coingecko": coingecko_status}
+    payload["data_warnings"] = (
+        ["CoinGecko rate limit으로 일부 데이터가 비었을 수 있습니다."] if coingecko_status.get("rate_limited") else []
+    )
 
     text = format_coin_detail_report(payload)
     path = save_output_text(f"coin_{payload['basics']['id']}", target_date, text)

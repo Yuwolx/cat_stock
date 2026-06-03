@@ -12,25 +12,56 @@ HEADERS = {
     "accept": "application/json",
     "user-agent": "cat-stock/1.0",
 }
+_STATUS = {"rate_limited": False, "error": None}
+
+
+class CoinGeckoRateLimitError(RuntimeError):
+    pass
+
+
+def reset_coingecko_status() -> None:
+    _STATUS["rate_limited"] = False
+    _STATUS["error"] = None
+
+
+def get_coingecko_status() -> dict:
+    return dict(_STATUS)
+
+
+def _mark_error(error: str, *, rate_limited: bool = False) -> None:
+    if rate_limited:
+        _STATUS["rate_limited"] = True
+    _STATUS["error"] = error
 
 
 def _get_json(path: str, params: dict[str, Any] | None = None) -> Any:
     last_error: Exception | None = None
-    for attempt in range(2):
+    for attempt in range(3):
         try:
             response = requests.get(f"{BASE_URL}{path}", params=params, headers=HEADERS, timeout=6)
-            if response.status_code in {408, 429, 500, 502, 503, 504} and attempt < 1:
+            if response.status_code == 429:
+                _mark_error("CoinGecko rate limit", rate_limited=True)
+                if attempt < 2:
+                    retry_after = response.headers.get("retry-after")
+                    wait_seconds = min(float(retry_after), 3.0) if retry_after and retry_after.replace(".", "", 1).isdigit() else 1.0
+                    time.sleep(wait_seconds)
+                    continue
+                raise CoinGeckoRateLimitError("CoinGecko rate limit")
+            if response.status_code in {408, 500, 502, 503, 504} and attempt < 2:
                 retry_after = response.headers.get("retry-after")
-                wait_seconds = min(float(retry_after), 2.0) if retry_after and retry_after.isdigit() else 0.8
+                wait_seconds = min(float(retry_after), 2.0) if retry_after and retry_after.replace(".", "", 1).isdigit() else 0.8
                 time.sleep(wait_seconds)
                 continue
             response.raise_for_status()
             return response.json()
         except Exception as exc:
             last_error = exc
-            if attempt < 1:
+            if isinstance(exc, CoinGeckoRateLimitError):
+                raise
+            if attempt < 2:
                 time.sleep(0.5)
                 continue
+            _mark_error(str(exc))
             raise
     if last_error:
         raise last_error

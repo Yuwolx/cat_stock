@@ -4,7 +4,12 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from src.collectors.coin.coingecko_client import get_category_markets, get_coin_markets
+from src.collectors.coin.coingecko_client import (
+    get_category_markets,
+    get_coingecko_status,
+    get_coin_markets,
+    reset_coingecko_status,
+)
 from src.collectors.coin.defillama_client import get_fees_overview, get_stablecoin_snapshot, get_top_protocols
 from src.formatters.coin_sector_formatter import format_coin_sector_report
 from src.utils.date_utils import KST, today_kst_string
@@ -127,6 +132,7 @@ def _future_result(futures: dict[str, object], key: str, default: object) -> obj
 
 
 def generate_coin_sector_report(use_mock_data: bool = False) -> dict:
+    reset_coingecko_status()
     target_date = today_kst_string()
     target_datetime = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
     categories = get_category_markets(limit=16, use_mock_data=use_mock_data)
@@ -180,6 +186,11 @@ def generate_coin_sector_report(use_mock_data: bool = False) -> dict:
         "fees": fees,
         "stablecoins": stablecoins,
     }
+    coingecko_status = get_coingecko_status()
+    payload["source_status"] = {"coingecko": coingecko_status}
+    payload["data_warnings"] = (
+        ["CoinGecko rate limit으로 일부 데이터가 비었을 수 있습니다."] if coingecko_status.get("rate_limited") else []
+    )
     text = format_coin_sector_report(payload)
     path = save_output_text("coin_sector", target_date, text)
     return {"text": text, "path": path, "payload": payload}

@@ -51,3 +51,12 @@ def test_stock_missing_data_warning_keeps_disclosures(monkeypatch) -> None:
     )
 
     assert messages == ["수집 실패 항목: DART 공시 (API 키 확인 필요)"]
+
+
+def test_render_data_warnings(monkeypatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(pages, "render_note", lambda message, tone="info": messages.append(message))
+
+    pages._render_data_warnings({"data_warnings": ["CoinGecko rate limit"]})
+
+    assert messages == ["데이터 경고: CoinGecko rate limit"]
