@@ -5,25 +5,45 @@ from src.utils.logger import get_logger
 
 
 LOGGER = get_logger(__name__)
+OPENAI_COLUMN_MODEL = "gpt-4o-mini"
 
 
-def _call_claude(prompt: str, max_tokens: int = 600) -> dict:
-    api_key = get_settings().anthropic_api_key
+def _extract_response_text(response: object) -> str | None:
+    output_text = getattr(response, "output_text", None)
+    if output_text:
+        return str(output_text).strip()
+
+    output = getattr(response, "output", None) or []
+    chunks: list[str] = []
+    for item in output:
+        for content in getattr(item, "content", []) or []:
+            text = getattr(content, "text", None)
+            if text:
+                chunks.append(str(text))
+    joined = "".join(chunks).strip()
+    return joined or None
+
+
+def _call_gpt(prompt: str, max_tokens: int = 600) -> dict:
+    api_key = get_settings().openai_api_key
     if not api_key:
         return {"text": None, "reason": "missing_api_key"}
     try:
-        import anthropic
+        from openai import OpenAI
     except ImportError:
         return {"text": None, "reason": "package_missing"}
 
     try:
-        client = anthropic.Anthropic(api_key=api_key, timeout=20.0)
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
+        client = OpenAI(api_key=api_key, timeout=20.0)
+        response = client.responses.create(
+            model=OPENAI_COLUMN_MODEL,
+            input=prompt,
+            max_output_tokens=max_tokens,
         )
-        return {"text": msg.content[0].text.strip(), "reason": "ok"}
+        text = _extract_response_text(response)
+        if not text:
+            return {"text": None, "reason": "api_error"}
+        return {"text": text, "reason": "ok"}
     except Exception as exc:
         LOGGER.warning("AI column generation failed: %s", exc)
         return {"text": None, "reason": "api_error"}
@@ -102,7 +122,7 @@ def generate_stock_column(payload: dict) -> dict:
 - 투자 권유 없이 시장 구조 분석 관점
 - 마지막 문장은 전망 또는 주목 포인트로 마무리"""
 
-    result = _call_claude(prompt, max_tokens=700)
+    result = _call_gpt(prompt, max_tokens=700)
     text = result.get("text")
     if not text:
         return _unavailable_column(str(result.get("reason") or "unknown"))
@@ -157,7 +177,7 @@ def generate_market_column(payload: dict) -> dict:
 - 글로벌 → 국내 연결고리, 수급 주체 행동, 주목할 섹터 순서
 - 투자 권유 없이 시장 해석 관점"""
 
-    result = _call_claude(prompt, max_tokens=700)
+    result = _call_gpt(prompt, max_tokens=700)
     text = result.get("text")
     if not text:
         return _unavailable_column(str(result.get("reason") or "unknown"))

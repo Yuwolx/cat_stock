@@ -10,7 +10,7 @@
 - 화면에서 바로 복사 가능
 - `.txt` 다운로드 가능
 - 대시보드 HTML 다운로드 및 미리보기
-- AI 칼럼 생성 (Anthropic API 키가 있을 때)
+- AI 칼럼 생성 (OpenAI API 키가 있을 때)
 - CAT COIN 모드 스위처 (로고 클릭 전환 / 공부용 대시보드)
 - Railway 배포 완료
 
@@ -72,7 +72,7 @@ streamlit run app.py
 - `DART_API_KEY`
 - `KIS_APP_KEY`
 - `KIS_APP_SECRET`
-- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY`
 - `OUTPUT_DIR`
 - `APP_TITLE`
 

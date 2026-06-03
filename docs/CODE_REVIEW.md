@@ -53,7 +53,7 @@
 - `src/services/market_service.py`
 - `src/services/stock_service.py`
 
-현재 `generate_market_column()`과 `generate_stock_column()`은 Anthropic API가 없거나 실패하면 `None`을 반환합니다. UI는 칼럼이 없는 상태만 알 수 있고, 왜 없는지는 알 수 없습니다.
+현재 `generate_market_column()`과 `generate_stock_column()`은 OpenAI API가 없거나 실패하면 칼럼을 만들 수 없습니다. UI는 실패 이유를 구조화해서 계속 보여줘야 합니다.
 
 문제:
 
@@ -70,7 +70,7 @@
 - `{"is_available": false, "reason": "missing_api_key"}` 같은 구조화된 결과 반환
 - UI에서 "AI 칼럼 생성 안 됨: API 키 없음"처럼 표시
 - `column_service` 단위 테스트 추가
-- Anthropic 호출 타임아웃/최대 재시도 정책 명시
+- OpenAI 호출 타임아웃/최대 재시도 정책 명시
 
 ### 2. 서비스 레이어에 수집 실패 메타데이터가 없음
 
@@ -155,7 +155,7 @@
 - `DART_API_KEY`
 - `KIS_APP_KEY`
 - `KIS_APP_SECRET`
-- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY`
 
 README와 데이터 흐름 가이드에는 현재 반영되어 있습니다. 새 외부 API 키나 선택 기능을 추가할 때 이 목록도 같이 갱신해야 합니다.
 

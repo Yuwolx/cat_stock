@@ -17,7 +17,7 @@ class Settings:
     dart_api_key: str
     kis_app_key: str
     kis_app_secret: str
-    anthropic_api_key: str
+    openai_api_key: str
     output_dir: Path
 
 
@@ -29,6 +29,6 @@ def get_settings() -> Settings:
         dart_api_key=os.getenv("DART_API_KEY", "").strip(),
         kis_app_key=os.getenv("KIS_APP_KEY", "").strip(),
         kis_app_secret=os.getenv("KIS_APP_SECRET", "").strip(),
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
+        openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         output_dir=output_dir,
     )

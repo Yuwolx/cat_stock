@@ -190,10 +190,10 @@ def _ticker_item(name: str, value: str, cls: str = "") -> str:
 
 
 def _column_html(column: dict | None, date_str: str) -> str:
-    fallback = "ANTHROPIC_API_KEY를 설정하면 AI 분석 칼럼이 여기에 생성됩니다."
+    fallback = "OPENAI_API_KEY를 설정하면 AI 분석 칼럼이 여기에 생성됩니다."
     reason_messages = {
-        "missing_api_key": "AI 칼럼: ANTHROPIC_API_KEY가 설정되지 않았습니다.",
-        "package_missing": "AI 칼럼: anthropic 패키지가 설치되지 않았습니다.",
+        "missing_api_key": "AI 칼럼: OPENAI_API_KEY가 설정되지 않았습니다.",
+        "package_missing": "AI 칼럼: openai 패키지가 설치되지 않았습니다.",
         "api_error": "AI 칼럼: 생성 중 오류가 발생했습니다.",
     }
     if not column or not column.get("is_available"):

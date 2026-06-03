@@ -6,7 +6,7 @@
 
 ## 문제
 
-`column_service.py`의 `_call_claude`, `generate_stock_column`, `generate_market_column`이
+`column_service.py`의 LLM 호출부, `generate_stock_column`, `generate_market_column`이
 실패 시 모두 `None`을 반환한다. 키 없음 / 패키지 없음 / API 오류가 구분되지 않아
 UI는 "왜 칼럼이 없는지" 표시하지 못한다.
 
@@ -14,18 +14,18 @@ UI는 "왜 칼럼이 없는지" 표시하지 못한다.
 
 ### 1. column_service.py
 
-`_call_claude(prompt, max_tokens)` 반환을 `dict`로 변경:
+LLM 호출부 반환을 `dict`로 변경:
 
 ```
 {"text": str | None, "reason": "ok" | "missing_api_key" | "package_missing" | "api_error"}
 ```
 
 - 키 없음 → `{"text": None, "reason": "missing_api_key"}`
-- `import anthropic` 실패 → `package_missing`
+- `import openai` 실패 → `package_missing`
 - API 호출 예외 → `api_error` (예외 메시지는 로깅만, 사용자 노출 X)
 - 성공 → `{"text": ..., "reason": "ok"}`
 
-Anthropic 클라이언트에 타임아웃 명시: `anthropic.Anthropic(api_key=..., timeout=20.0)`.
+OpenAI 클라이언트에 타임아웃 명시.
 
 `generate_stock_column` / `generate_market_column` 반환을 **항상 dict**로:
 
@@ -40,8 +40,8 @@ Anthropic 클라이언트에 타임아웃 명시: `anthropic.Anthropic(api_key=.
 
 `column` dict의 `is_available`/`reason`을 보고 분기. reason별 한국어 안내:
 
-- `missing_api_key`: "AI 칼럼: ANTHROPIC_API_KEY가 설정되지 않았습니다."
-- `package_missing`: "AI 칼럼: anthropic 패키지가 설치되지 않았습니다."
+- `missing_api_key`: "AI 칼럼: OPENAI_API_KEY가 설정되지 않았습니다."
+- `package_missing`: "AI 칼럼: openai 패키지가 설치되지 않았습니다."
 - `api_error`: "AI 칼럼: 생성 중 오류가 발생했습니다."
 - 그 외/None: 기존 기본 안내
 

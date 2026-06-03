@@ -8,4 +8,4 @@ pytest==8.3.5
 finance-datareader==0.9.96
 pykrx==1.0.51
 html5lib==1.1
-anthropic>=0.40.0
+openai>=1.100.0
