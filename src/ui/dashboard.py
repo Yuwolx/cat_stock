@@ -5,6 +5,8 @@ from html import escape
 
 import plotly.graph_objects as go
 
+from src.ui.dashboard_styles import DISPATCH_CSS
+
 
 # ── 색상 팔레트 (앱과 동일 계열) ──────────────────────────
 _BG = "#faf7f1"
@@ -26,117 +28,6 @@ _PLOTLY_LAYOUT = dict(
     xaxis=dict(showgrid=False, zeroline=False, color=_MUTED, tickfont=dict(size=10)),
     yaxis=dict(showgrid=True, gridcolor=_LINE, zeroline=False, color=_MUTED, tickfont=dict(size=10)),
 )
-
-# ── 신문 스타일 CSS ─────────────────────────────────────────
-_CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',serif;color:#1a1a1a;padding:28px 20px 72px;}
-.dispatch{max-width:1080px;margin:0 auto;}
-
-/* ── MASTHEAD ── */
-.masthead-meta{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;border-top:2.5px solid #1a1a1a;border-bottom:1px solid #1a1a1a;padding:6px 0;margin-bottom:6px;}
-.masthead-name{font-family:'Playfair Display',Georgia,serif;font-size:clamp(32px,5vw,56px);font-weight:900;letter-spacing:-.02em;text-transform:uppercase;text-align:center;line-height:1;margin:4px 0 6px;}
-.masthead-sub{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid #1a1a1a;border-bottom:3px solid #1a1a1a;padding:5px 0;margin-bottom:0;}
-
-/* ── TICKER BAR ── */
-.ticker-bar{display:flex;background:#1a1a1a;color:#f4f0e6;margin-bottom:18px;overflow:hidden;}
-.ticker-item{flex:1;padding:9px 14px;border-right:1px solid rgba(255,255,255,.08);}
-.ticker-item:last-child{border-right:0;}
-.t-name{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.55;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
-.t-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;letter-spacing:-.01em;}
-.t-val.up{color:#ff6b6b;}.t-val.dn{color:#51cf66;}.t-val.na{color:rgba(244,240,230,.4);}
-
-/* ── MAIN GRID ── */
-.main-grid{display:grid;grid-template-columns:1fr 260px;gap:24px;margin-bottom:0;}
-.main-col{}
-
-/* ── COLUMN SECTION ── */
-.section-tag{display:inline-block;background:#1a1a1a;color:#f4f0e6;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;margin-bottom:10px;}
-.column-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(20px,2.4vw,26px);font-weight:700;line-height:1.22;letter-spacing:-.01em;word-break:keep-all;margin-bottom:9px;}
-.byline{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;letter-spacing:.03em;border-bottom:1px solid #aaa;padding-bottom:10px;margin-bottom:12px;}
-.col-body{font-size:16px;line-height:1.74;color:#222;}
-.col-body p{margin-bottom:10px;}
-.drop-cap::first-letter{float:left;font-family:'Playfair Display',serif;font-size:62px;line-height:.76;margin-right:7px;margin-top:5px;font-weight:700;}
-.no-col{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#999;font-style:italic;padding:10px 0 16px;border-bottom:1px solid #ccc;margin-bottom:14px;}
-
-/* ── RULE DIVIDERS ── */
-.rule{display:flex;align-items:center;gap:12px;margin:20px 0 12px;}
-.rule-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;text-transform:uppercase;white-space:nowrap;letter-spacing:.02em;}
-.rule-line{flex:1;height:1px;background:#1a1a1a;}
-.rule-thin{border-top:1px solid #ccc;margin:16px 0;}
-
-/* ── CHART SECTIONS ── */
-.chart-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:#666;border-top:1px solid #ccc;padding-top:10px;margin-bottom:8px;margin-top:18px;}
-
-/* ── SIDEBAR ── */
-.sidebar{border-left:1px solid #ccc;padding-left:18px;}
-.sb-section{margin-bottom:22px;}
-.sb-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #1a1a1a;padding-bottom:4px;margin-bottom:10px;}
-.metric-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.07);}
-.metric-row:last-child{border-bottom:0;}
-.m-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;letter-spacing:.02em;}
-.m-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:-.01em;}
-.m-val.up{color:#cc2200;}.m-val.dn{color:#006633;}
-
-/* ── REPORT ROWS ── */
-.rpt-row{padding:7px 0;border-bottom:1px solid rgba(0,0,0,.07);}
-.rpt-row:last-child{border-bottom:0;}
-.rpt-broker{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
-.rpt-title{font-size:12px;font-weight:600;line-height:1.42;word-break:keep-all;margin-bottom:2px;}
-.rpt-title a{color:#1a1a1a;text-decoration:none;}
-.rpt-title a:hover{text-decoration:underline;color:#cc2200;}
-.rpt-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888;}
-.rpt-meta.up{color:#cc2200;}
-
-/* ── TAGS ── */
-.tag{display:inline-block;padding:1px 6px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;border:1px solid;}
-.tag-buy{border-color:#cc2200;color:#cc2200;}
-.tag-hold{border-color:#cc7700;color:#cc7700;}
-.tag-sell{border-color:#006633;color:#006633;}
-
-/* ── NEWS GRID ── */
-.news-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid #ccc;margin-bottom:20px;}
-.news-cell{padding:11px 14px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;}
-.news-cell:nth-child(3n){border-right:0;}
-.news-cell:nth-last-child(-n+3){border-bottom:0;}
-.nc-source{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-.nc-title{font-size:13px;font-weight:600;line-height:1.45;word-break:keep-all;}
-.nc-title a{color:#1a1a1a;text-decoration:none;}
-.nc-title a:hover{text-decoration:underline;color:#cc2200;}
-.news-empty{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#aaa;padding:12px 0;}
-
-/* ── DISCLOSURE / TABLE ── */
-.disc-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-.disc-table td{font-size:12px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.07);color:#333;line-height:1.5;}
-.disc-table tr:last-child td{border-bottom:0;}
-.disc-empty{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#aaa;padding:8px 0;}
-
-/* ── GLOBAL MINI GRID ── */
-.global-mini{display:grid;grid-template-columns:1fr 1fr;gap:0;}
-.gm-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.07);}
-.gm-row:last-child{border-bottom:0;}
-.gm-name{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;}
-.gm-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}
-.gm-val.up{color:#cc2200;}.gm-val.dn{color:#006633;}
-
-/* ── FLOW TOP TABLE ── */
-.flow2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
-.flow-col{}
-.flow-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:6px;}
-.flow-item{font-size:13px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06);}
-.flow-item.buy::before{content:"▲ ";color:#cc2200;font-size:10px;}
-.flow-item.sell::before{content:"▼ ";color:#006633;font-size:10px;}
-
-/* ── MA BADGES ── */
-.ma-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid #ccc;font-size:11px;font-family:'IBM Plex Mono',monospace;}
-.dot{width:7px;height:7px;border-radius:50%;}
-.dot-up{background:#cc2200;}.dot-near{background:#cc7700;}.dot-dn{background:#006633;}
-
-@media(max-width:768px){.main-grid{grid-template-columns:1fr;}.sidebar{border-left:0;padding-left:0;border-top:2px solid #1a1a1a;padding-top:16px;}.news-grid3{grid-template-columns:repeat(2,1fr);}.global-mini{grid-template-columns:1fr;}.flow2{grid-template-columns:1fr;}.ticker-bar{flex-wrap:wrap;}}
-"""
-
 
 # ── 헬퍼 ─────────────────────────────────────────────────────
 
@@ -268,7 +159,7 @@ def _dispatch_wrap(page_title: str, masthead_name: str, masthead_sub: str, date_
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{escape(page_title)} · CAT STOCK DISPATCH</title>
-<style>{_CSS}</style>
+<style>{DISPATCH_CSS}</style>
 </head>
 <body>
 <div class="dispatch">
