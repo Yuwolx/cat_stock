@@ -28,3 +28,32 @@ def test_coin_sector_formatter_includes_heatmap_and_playbook() -> None:
     assert "■ 섹터 히트맵" in result
     assert "■ 대표 코인" in result
     assert "■ 섹터별 공부 포인트" in result
+
+
+def test_coin_sector_formatter_marks_missing_values_plainly() -> None:
+    payload = {
+        "target_datetime": "2026-05-31 18:30 KST",
+        "categories": [{"name": None, "market_cap_change_24h": None, "market_cap": None, "volume_24h": None}],
+        "representative_coins": [
+            {
+                "sector": None,
+                "name": None,
+                "symbol": None,
+                "market_cap_rank": None,
+                "current_price": None,
+                "price_change_percentage_24h": None,
+            }
+        ],
+        "strongest_sector": {},
+        "weakest_sector": {},
+        "playbooks": [{"name": None, "watch": None, "risk": None}],
+        "top_protocols": [{"name": None, "category": None, "tvl": None, "change_1d": None}],
+        "fees": {"protocols": [{"name": None, "total24h": None, "total7d": None}]},
+        "stablecoins": {"total_circulating_usd": None, "change_7d_pct": None},
+    }
+
+    result = format_coin_sector_report(payload)
+
+    assert "연결 예정" not in result
+    assert "None" not in result
+    assert "— | 24h —" in result

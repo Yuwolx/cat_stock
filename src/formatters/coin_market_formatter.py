@@ -3,9 +3,16 @@ from __future__ import annotations
 from src.utils.text_utils import display_value, section
 
 
+EMPTY_VALUE = "—"
+
+
+def _display(value: object) -> str:
+    return display_value(value, EMPTY_VALUE)
+
+
 def _fmt_pct(value: object) -> str:
     if value is None:
-        return "연결 예정"
+        return EMPTY_VALUE
     try:
         return f"{float(value):+.2f}%"
     except (TypeError, ValueError):
@@ -14,7 +21,7 @@ def _fmt_pct(value: object) -> str:
 
 def _fmt_usd(value: object) -> str:
     if value is None:
-        return "연결 예정"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -32,7 +39,7 @@ def _fmt_usd(value: object) -> str:
 
 def _fmt_krw(value: object) -> str:
     if value is None:
-        return "연결 예정"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -91,7 +98,7 @@ def format_coin_market_briefing(payload: dict) -> str:
     protocol_lines = [
         (
             f"{item.get('name')} | TVL {_fmt_usd(item.get('tvl'))} | "
-            f"24h {_fmt_pct(item.get('change_1d'))} | 카테고리 {display_value(item.get('category'))}"
+            f"24h {_fmt_pct(item.get('change_1d'))} | 카테고리 {_display(item.get('category'))}"
         )
         for item in protocols[:6]
     ]
@@ -109,13 +116,13 @@ def format_coin_market_briefing(payload: dict) -> str:
         section(
             "시장 온도",
             [
-                f"시장 국면 {display_value(regime.get('label'))} - {display_value(regime.get('message'))}",
+                f"시장 국면 {_display(regime.get('label'))} - {_display(regime.get('message'))}",
                 f"총 코인 시총 {_fmt_usd(global_market.get('total_market_cap_usd'))}",
                 f"24h 거래대금 {_fmt_usd(global_market.get('total_volume_usd'))}",
                 f"전체 시총 24h 변화 {_fmt_pct(global_market.get('market_cap_change_24h_pct'))}",
                 f"BTC 도미넌스 {_fmt_pct(global_market.get('btc_dominance'))}",
                 f"ETH 도미넌스 {_fmt_pct(global_market.get('eth_dominance'))}",
-                f"ETH/BTC 비율 {display_value(payload.get('eth_btc_ratio'))}",
+                f"ETH/BTC 비율 {_display(payload.get('eth_btc_ratio'))}",
             ],
         ),
         section(
@@ -136,9 +143,9 @@ def format_coin_market_briefing(payload: dict) -> str:
         section(
             "심리 / 한국 수급",
             [
-                f"공포탐욕지수 {display_value(fear_greed.get('value'))} ({display_value(fear_greed.get('classification'))})",
+                f"공포탐욕지수 {_display(fear_greed.get('value'))} ({_display(fear_greed.get('classification'))})",
                 f"김치 프리미엄 {_fmt_pct(payload.get('kimchi_premium_pct'))}",
-                f"USD/KRW {display_value(payload.get('usdkrw'))}",
+                f"USD/KRW {_display(payload.get('usdkrw'))}",
                 f"스테이블코인 시총 {_fmt_usd(stablecoins.get('total_circulating_usd'))} | 7d {_fmt_pct(stablecoins.get('change_7d_pct'))}",
             ],
         ),

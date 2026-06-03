@@ -21,3 +21,24 @@ def test_coin_study_note_formatter_includes_hypothesis_and_invalidating_conditio
     assert "■ 오늘 본 코인" in result
     assert "상승/하락 원인 가설: 대출 수요 회복" in result
     assert "반증 조건: TVL 감소와 수수료 둔화" in result
+
+
+def test_coin_study_note_formatter_marks_empty_inputs_plainly() -> None:
+    payload = {
+        "target_datetime": "2026-05-31 21:00 KST",
+        "regime": "",
+        "market_reason": None,
+        "sector": "",
+        "sector_reason": None,
+        "coin": "",
+        "hypothesis": None,
+        "invalidating_condition": "",
+        "next_metric": None,
+        "next_source": "",
+    }
+
+    result = format_coin_study_note(payload)
+
+    assert "연결 예정" not in result
+    assert "국면: —" in result
+    assert "자료: —" in result

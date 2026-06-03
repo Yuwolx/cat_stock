@@ -36,3 +36,33 @@ def test_coin_detail_formatter_includes_risk_and_learning_sections() -> None:
     assert "■ 리스크 체크" in result
     assert "■ 공부 질문" in result
     assert "김치 프리미엄 +1.80%" in result
+
+
+def test_coin_detail_formatter_marks_missing_values_plainly() -> None:
+    payload = {
+        "target_datetime": "2026-05-31 18:00 KST",
+        "basics": {"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC", "market_cap_rank": None},
+        "market": {
+            "current_price_usd": None,
+            "change_24h_pct": None,
+            "change_7d_pct": None,
+            "change_30d_pct": None,
+            "market_cap_usd": None,
+            "fdv_usd": None,
+            "volume_usd": None,
+            "ath_usd": None,
+            "ath_change_pct": None,
+        },
+        "supply": {"circulating_supply": None, "total_supply": None, "max_supply": None},
+        "upbit": {"is_listed": False, "kimchi_premium_pct": None, "warning": None},
+        "risk": {"fdv_to_mcap": None, "volume_to_mcap": None},
+        "project": {"categories": []},
+        "futures": {"is_available": True, "symbol": "BTCUSDT", "latest_funding_rate_pct": None},
+    }
+
+    result = format_coin_detail_report(payload)
+
+    assert "연결 예정" not in result
+    assert "None" not in result
+    assert "현재가 —" in result
+    assert "카테고리 —" in result

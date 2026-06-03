@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from src.formatters.coin_market_formatter import _fmt_krw, _fmt_pct, _fmt_usd
-from src.utils.text_utils import display_value, section
+from src.formatters.coin_market_formatter import EMPTY_VALUE, _display, _fmt_krw, _fmt_pct, _fmt_usd
+from src.utils.text_utils import section
 
 
 def _fmt_number(value: object) -> str:
     if value is None:
-        return "연결 예정"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -30,14 +30,14 @@ def format_coin_detail_report(payload: dict) -> str:
     risk_flags = payload.get("risk_flags", [])
 
     chunks = [
-        f"[개별 코인 공부 - {display_value(basics.get('name'))} - {payload.get('target_datetime', '-')}]",
+        f"[개별 코인 공부 - {_display(basics.get('name'))} - {payload.get('target_datetime', '-')}]",
         section(
             "기본 정보",
             [
-                f"이름 {display_value(basics.get('name'))} ({display_value(basics.get('symbol'))})",
-                f"CoinGecko ID {display_value(basics.get('id'))}",
-                f"시총 순위 #{display_value(basics.get('market_cap_rank'))}",
-                f"카테고리 {', '.join(project.get('categories', [])[:5]) or '연결 예정'}",
+                f"이름 {_display(basics.get('name'))} ({_display(basics.get('symbol'))})",
+                f"CoinGecko ID {_display(basics.get('id'))}",
+                f"시총 순위 #{_display(basics.get('market_cap_rank'))}",
+                f"카테고리 {', '.join(project.get('categories', [])[:5]) or EMPTY_VALUE}",
             ],
         ),
         section(
@@ -57,27 +57,27 @@ def format_coin_detail_report(payload: dict) -> str:
                 f"유통량 {_fmt_number(supply.get('circulating_supply'))}",
                 f"총공급량 {_fmt_number(supply.get('total_supply'))}",
                 f"최대공급량 {_fmt_number(supply.get('max_supply'))}",
-                f"FDV / 시총 {display_value(risk.get('fdv_to_mcap'))}",
+                f"FDV / 시총 {_display(risk.get('fdv_to_mcap'))}",
             ],
         ),
         section(
             "업비트 KRW",
             [
                 (
-                    f"{display_value(upbit.get('market'))} | 현재가 {_fmt_krw(upbit.get('trade_price'))} | "
+                    f"{_display(upbit.get('market'))} | 현재가 {_fmt_krw(upbit.get('trade_price'))} | "
                     f"24h {_fmt_pct(upbit.get('change_pct'))} | 거래대금 {_fmt_krw(upbit.get('acc_trade_price_24h'))}"
                     if upbit.get("is_listed")
                     else "업비트 KRW 마켓 미상장 또는 조회 실패"
                 ),
                 f"김치 프리미엄 {_fmt_pct(upbit.get('kimchi_premium_pct'))}",
-                f"유의/주의 {display_value(upbit.get('warning'))}",
+                f"유의/주의 {_display(upbit.get('warning'))}",
             ],
         ),
         section(
             "리스크 체크",
             [
-                f"시총 대비 거래량 {display_value(risk.get('volume_to_mcap'))}",
-                f"FDV 희석 비율 {display_value(risk.get('fdv_to_mcap'))}",
+                f"시총 대비 거래량 {_display(risk.get('volume_to_mcap'))}",
+                f"FDV 희석 비율 {_display(risk.get('fdv_to_mcap'))}",
                 f"ATH 대비 위치 {_fmt_pct(market.get('ath_change_pct'))}",
                 f"국내 수급 과열 {_fmt_pct(upbit.get('kimchi_premium_pct'))}",
                 *[
@@ -101,9 +101,9 @@ def format_coin_detail_report(payload: dict) -> str:
             "파생상품",
             [
                 (
-                    f"{display_value(futures.get('symbol'))} | 펀딩비 {_fmt_pct(futures.get('latest_funding_rate_pct'))} | "
+                    f"{_display(futures.get('symbol'))} | 펀딩비 {_fmt_pct(futures.get('latest_funding_rate_pct'))} | "
                     f"연율 환산 {_fmt_pct(futures.get('annualized_funding_pct'))} | "
-                    f"OI 변화 {_fmt_pct(futures.get('open_interest_change_24h_pct'))} | {display_value(futures.get('warning'))}"
+                    f"OI 변화 {_fmt_pct(futures.get('open_interest_change_24h_pct'))} | {_display(futures.get('warning'))}"
                     if futures.get("is_available")
                     else "Binance USD-M 선물 데이터 없음"
                 ),

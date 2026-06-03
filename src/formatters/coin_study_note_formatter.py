@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from src.utils.text_utils import display_value, section
+from src.formatters.coin_market_formatter import _display
+from src.utils.text_utils import section
 
 
 def format_coin_study_note(payload: dict) -> str:
@@ -9,30 +10,30 @@ def format_coin_study_note(payload: dict) -> str:
         section(
             "오늘 시장 국면",
             [
-                f"국면: {display_value(payload.get('regime'))}",
-                f"근거: {display_value(payload.get('market_reason'))}",
+                f"국면: {_display(payload.get('regime'))}",
+                f"근거: {_display(payload.get('market_reason'))}",
             ],
         ),
         section(
             "가장 강한 섹터",
             [
-                f"섹터: {display_value(payload.get('sector'))}",
-                f"강한 이유로 보이는 데이터: {display_value(payload.get('sector_reason'))}",
+                f"섹터: {_display(payload.get('sector'))}",
+                f"강한 이유로 보이는 데이터: {_display(payload.get('sector_reason'))}",
             ],
         ),
         section(
             "오늘 본 코인",
             [
-                f"코인: {display_value(payload.get('coin'))}",
-                f"상승/하락 원인 가설: {display_value(payload.get('hypothesis'))}",
-                f"반증 조건: {display_value(payload.get('invalidating_condition'))}",
+                f"코인: {_display(payload.get('coin'))}",
+                f"상승/하락 원인 가설: {_display(payload.get('hypothesis'))}",
+                f"반증 조건: {_display(payload.get('invalidating_condition'))}",
             ],
         ),
         section(
             "다음에 확인할 것",
             [
-                f"지표: {display_value(payload.get('next_metric'))}",
-                f"자료: {display_value(payload.get('next_source'))}",
+                f"지표: {_display(payload.get('next_metric'))}",
+                f"자료: {_display(payload.get('next_source'))}",
             ],
         ),
     ]

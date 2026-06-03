@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.formatters.coin_market_formatter import _fmt_pct, _fmt_usd
+from src.formatters.coin_market_formatter import _display, _fmt_pct, _fmt_usd
 from src.utils.text_utils import section
 
 
@@ -15,7 +15,7 @@ def format_coin_sector_report(payload: dict) -> str:
 
     category_lines = [
         (
-            f"{item.get('name')} | 24h {_fmt_pct(item.get('market_cap_change_24h'))} | "
+            f"{_display(item.get('name'))} | 24h {_fmt_pct(item.get('market_cap_change_24h'))} | "
             f"시총 {_fmt_usd(item.get('market_cap'))} | 거래대금 {_fmt_usd(item.get('volume_24h'))}"
         )
         for item in categories
@@ -23,7 +23,7 @@ def format_coin_sector_report(payload: dict) -> str:
 
     coin_lines = [
         (
-            f"{item.get('sector')} - {item.get('name')} ({str(item.get('symbol', '')).upper()}) | "
+            f"{_display(item.get('sector'))} - {_display(item.get('name'))} ({str(item.get('symbol') or '-').upper()}) | "
             f"순위 #{item.get('market_cap_rank') or '-'} | 가격 {_fmt_usd(item.get('current_price'))} | "
             f"24h {_fmt_pct(item.get('price_change_percentage_24h'))}"
         )
@@ -32,21 +32,21 @@ def format_coin_sector_report(payload: dict) -> str:
 
     playbook_lines = [
         (
-            f"{item.get('name')} | 볼 것: {item.get('watch')} | 조심할 것: {item.get('risk')}"
+            f"{_display(item.get('name'))} | 볼 것: {_display(item.get('watch'))} | 조심할 것: {_display(item.get('risk'))}"
         )
         for item in payload.get("playbooks", [])[:8]
     ]
 
     protocol_lines = [
         (
-            f"{item.get('name')} | {item.get('category')} | TVL {_fmt_usd(item.get('tvl'))} | "
+            f"{_display(item.get('name'))} | {_display(item.get('category'))} | TVL {_fmt_usd(item.get('tvl'))} | "
             f"24h {_fmt_pct(item.get('change_1d'))}"
         )
         for item in protocols[:8]
     ]
 
     fee_lines = [
-        f"{item.get('name')} | 24h 수수료 {_fmt_usd(item.get('total24h'))} | 7d {_fmt_usd(item.get('total7d'))}"
+        f"{_display(item.get('name'))} | 24h 수수료 {_fmt_usd(item.get('total24h'))} | 7d {_fmt_usd(item.get('total7d'))}"
         for item in (fees.get("protocols") or [])[:6]
     ]
 
