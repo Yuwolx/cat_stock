@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import io
+import json
+import os
 import re
+import time
 import zipfile
 from datetime import datetime, timedelta
 from functools import lru_cache
+from hashlib import sha256
+from pathlib import Path
 from xml.etree import ElementTree
 
 import requests
@@ -13,6 +18,11 @@ import requests
 BASE_URL = "https://opendart.fss.or.kr/api"
 TIMEOUT_SECONDS = 20
 DART_API_KEY_LENGTH = 40
+CORP_CODE_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
+
+
+def _corp_code_cache_path() -> Path:
+    return Path(os.getenv("OUTPUT_DIR", "output")).resolve() / ".dart_corp_code_cache.json"
 
 
 def _normalize_name(value: str) -> str:
@@ -29,6 +39,44 @@ def _validate_api_key(api_key: str) -> str:
             ".env에 URL, 파라미터, 중복된 'DART_API_KEY='가 들어가지 않았는지 확인하세요."
         )
     return key
+
+
+def _corp_code_cache_key(api_key: str) -> str:
+    return sha256(api_key.encode("utf-8")).hexdigest()[:16]
+
+
+def _load_corp_code_file_cache(api_key: str) -> list[dict] | None:
+    path = _corp_code_cache_path()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        entry = data.get(_corp_code_cache_key(api_key))
+        if not entry:
+            return None
+        if entry.get("expires_at", 0) <= time.time():
+            return None
+        records = entry.get("records")
+        return records if isinstance(records, list) else None
+    except Exception:
+        return None
+
+
+def _save_corp_code_file_cache(api_key: str, records: list[dict]) -> None:
+    path = _corp_code_cache_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existing: dict = {}
+        if path.exists():
+            try:
+                existing = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                existing = {}
+        existing[_corp_code_cache_key(api_key)] = {
+            "expires_at": time.time() + CORP_CODE_CACHE_TTL_SECONDS,
+            "records": records,
+        }
+        path.write_text(json.dumps(existing, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def _safe_get_json(endpoint: str, params: dict) -> dict:
@@ -54,6 +102,10 @@ def _safe_get_json(endpoint: str, params: dict) -> dict:
 @lru_cache(maxsize=4)
 def get_corp_code_index(api_key: str) -> list[dict]:
     api_key = _validate_api_key(api_key)
+    cached = _load_corp_code_file_cache(api_key)
+    if cached is not None:
+        return cached
+
     response = requests.get(
         f"{BASE_URL}/corpCode.xml",
         params={"crtfc_key": api_key},
@@ -81,6 +133,7 @@ def get_corp_code_index(api_key: str) -> list[dict]:
                 "corp_name_normalized": _normalize_name(corp_name),
             }
         )
+    _save_corp_code_file_cache(api_key, records)
     return records
 
 
