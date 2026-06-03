@@ -34,6 +34,8 @@ def test_market_formatter_includes_sections() -> None:
         "derivatives": {
             "futures_foreign_net": 10,
             "futures_institution_net": -10,
+            "futures_contract_code": "A01606",
+            "futures_warning": None,
             "program_arbitrage": 20,
             "program_non_arbitrage": -5,
             "program_by_market": {
@@ -67,6 +69,8 @@ def test_market_formatter_includes_sections() -> None:
     assert "■ 주요 공시" not in result
     assert "공시" not in result
     assert "코스피 수급 외국인 90억" in result
+    assert "코스피200 선물 근월물 코드 A01606" in result
+    assert "선물 수급 경고 없음" in result
     assert "프로그램 코스닥 차익 2억" in result
     assert "5% 이상 상승 종목 (KOSPI) 테스트종목 | 현재가 12,300 | 등락률 +6.03%" in result
     assert "■ 주요 뉴스" in result

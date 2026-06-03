@@ -137,6 +137,8 @@ def format_market_briefing(payload: dict) -> str:
                     if institution_futures is not None
                     else "기관 코스피200 선물 순매수 데이터 없음"
                 ),
+                f"코스피200 선물 근월물 코드 {display_value(derivatives.get('futures_contract_code'))}",
+                f"선물 수급 경고 {display_value(derivatives.get('futures_warning'), '없음')}",
                 f"프로그램 차익 합산 {display_value(derivatives['program_arbitrage'])}억",
                 f"프로그램 비차익 합산 {display_value(derivatives['program_non_arbitrage'])}억",
                 (

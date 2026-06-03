@@ -48,6 +48,8 @@ def _empty_derivatives() -> dict:
     return {
         "futures_foreign_net": None,
         "futures_institution_net": None,
+        "futures_contract_code": None,
+        "futures_warning": None,
         "program_arbitrage": None,
         "program_non_arbitrage": None,
         "program_total": None,
@@ -98,6 +100,10 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     # KIS API 선물 수급 — 성공 시 네이버 기반 None 값 덮어씀
     if has_kis and not use_mock_data:
         kis_futures = get_futures_investor_flow(settings.kis_app_key, settings.kis_app_secret)
+        if "futures_contract_code" in kis_futures:
+            derivatives["futures_contract_code"] = kis_futures.get("futures_contract_code")
+        if "futures_warning" in kis_futures:
+            derivatives["futures_warning"] = kis_futures.get("futures_warning")
         if kis_futures.get("futures_foreign_net") is not None:
             derivatives["futures_foreign_net"] = kis_futures["futures_foreign_net"]
         if kis_futures.get("futures_institution_net") is not None:
