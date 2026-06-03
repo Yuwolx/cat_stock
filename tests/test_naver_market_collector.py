@@ -57,3 +57,45 @@ def test_get_rising_stocks_over_threshold_filters_and_sorts(monkeypatch) -> None
     )
 
     assert [item["name"] for item in result] == ["C", "B"]
+
+
+def test_get_market_event_lists_collects_rankings_with_page_two(monkeypatch) -> None:
+    called_urls: list[str] = []
+
+    def rows(prefix: str, start: int, count: int, sign: int) -> list[dict]:
+        return [
+            {
+                "name": f"{prefix}{idx}",
+                "code": f"{start + idx:06d}",
+                "market": "KOSPI",
+                "price": "1,000",
+                "change_pct": sign * float(100 - idx),
+                "change_pct_text": f"{sign * float(100 - idx):+.2f}%",
+            }
+            for idx in range(count)
+        ]
+
+    def fake_parse(url: str, market: str | None = None) -> list[dict]:
+        called_urls.append(url)
+        is_page_two = "page=2" in url
+        if "sise_rise" in url:
+            if "sosok=0" in url:
+                return rows("상승코스피", 100000 if not is_page_two else 200000, 30, 1)
+            return rows("상승코스닥", 300000 if not is_page_two else 400000, 10 if not is_page_two else 0, 1)
+        if "sise_fall" in url:
+            if "sosok=0" in url:
+                return rows("하락코스피", 500000 if not is_page_two else 600000, 12, -1)
+            return rows("하락코스닥", 700000 if not is_page_two else 800000, 8 if not is_page_two else 0, -1)
+        return []
+
+    monkeypatch.setattr(collector, "_parse_rise_fall_rows", fake_parse)
+    monkeypatch.setattr(collector, "get_home_market_snapshot", lambda use_mock_data=False: {"upper_limit": []})
+    monkeypatch.setattr(collector, "_parse_nxt_movers", lambda limit=10: [])
+    monkeypatch.setattr(collector, "get_rising_stocks_over_threshold", lambda use_mock_data=False: [])
+
+    result = collector.get_market_event_lists("2026-06-03", use_mock_data=False)
+
+    assert len(result["new_highs"]) == 50
+    assert len(result["new_lows"]) == 20
+    assert any("sise_rise.naver?sosok=0&page=2" in url for url in called_urls)
+    assert any("sise_fall.naver?sosok=0&page=2" in url for url in called_urls)

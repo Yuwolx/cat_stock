@@ -3,7 +3,6 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 
 from src.collectors.kis_client import get_token
-from src.collectors.market.dart_collector import get_major_disclosures
 from src.collectors.market.global_collector import get_global_macro_snapshot
 from src.collectors.market.kis_market_collector import get_futures_investor_flow
 from src.collectors.market.krx_collector import (
@@ -90,12 +89,6 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
             "investor_flows": executor.submit(get_investor_flows, target_date, use_mock_data=use_mock_data),
             "derivatives": executor.submit(get_derivatives_snapshot, target_date, use_mock_data=use_mock_data),
             "market_events": executor.submit(get_market_event_lists, target_date, use_mock_data=use_mock_data),
-            "disclosures": executor.submit(
-                get_major_disclosures,
-                target_date,
-                api_key=settings.dart_api_key,
-                use_mock_data=use_mock_data,
-            ),
         }
 
     derivatives = future_result(futures, "derivatives", _empty_derivatives())
@@ -118,7 +111,6 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
         "investor_flows": future_result(futures, "investor_flows", _empty_investor_flows()),
         "derivatives": derivatives,
         "market_events": future_result(futures, "market_events", _empty_market_events()),
-        "disclosures": future_result(futures, "disclosures", []),
     }
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)

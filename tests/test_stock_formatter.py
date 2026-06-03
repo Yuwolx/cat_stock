@@ -37,4 +37,6 @@ def test_stock_formatter_includes_stock_name() -> None:
 
     assert "[개별 종목 분석 - 삼성전자 - 2026-05-29]" in result
     assert "■ 기본 정보" in result
+    assert "■ 최근 공시" in result
+    assert "공시" in result
     assert "컨센서스 목표가 91,000원" in result

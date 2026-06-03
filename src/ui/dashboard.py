@@ -479,7 +479,6 @@ def build_market_dashboard(payload: dict) -> str:
     macro = payload.get("global_macro", {})
     investor_flows = payload.get("investor_flows", {})
     leaders = payload.get("leaders", [])
-    disclosures = payload.get("disclosures", [])
     sectors = payload.get("sectors", [])
     events = payload.get("market_events", {})
     column = payload.get("column")
@@ -588,8 +587,19 @@ def build_market_dashboard(payload: dict) -> str:
   </div>
 </div>"""
 
-    # ── 공시 ──────────────────────────────────────────────────
-    disc_html = "".join(f'<tr><td>{escape(str(d))}</td></tr>' for d in disclosures[:10]) if disclosures else '<tr><td class="disc-empty">데이터 없음</td></tr>'
+    # ── 등락률 상위 ───────────────────────────────────────────
+    def _mover_col(items: list, kind: str, limit: int) -> str:
+        cls = "buy" if kind == "buy" else "sell"
+        return "".join(f'<div class="flow-item {cls}">{escape(str(item))}</div>' for item in items[:limit]) or "—"
+
+    movers_section = f"""<div class="flow2">
+  <div class="flow-col">
+    <div class="flow-title">당일 상승 상위 50</div>{_mover_col(events.get("new_highs", []), "buy", 50)}
+  </div>
+  <div class="flow-col">
+    <div class="flow-title">당일 하락 상위 20</div>{_mover_col(events.get("new_lows", []), "sell", 20)}
+  </div>
+</div>"""
 
     sidebar = f"""<div class="sidebar">
   <div class="sb-section">
@@ -617,6 +627,8 @@ def build_market_dashboard(payload: dict) -> str:
   {sup_chart}
   <div class="rule-thin"></div>
   {flow_section}
+  <div class="chart-eyebrow">PRICE MOVERS</div>
+  {movers_section}
 </div>"""
 
     body = f"""
@@ -625,8 +637,6 @@ def build_market_dashboard(payload: dict) -> str:
   {main_col}
   {sidebar}
 </div>
-<div class="rule"><div class="rule-line"></div><div class="rule-title">DISCLOSURES</div><div class="rule-line"></div></div>
-<table class="disc-table"><tbody>{disc_html}</tbody></table>
 """
 
     return _dispatch_wrap(

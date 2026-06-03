@@ -50,14 +50,14 @@ def test_market_formatter_includes_sections() -> None:
                 {"name": "테스트종목", "market": "KOSPI", "price": "12,300", "change_pct": 6.03}
             ],
         },
-        "disclosures": ["공시 1"],
     }
 
     result = format_market_briefing(payload)
 
     assert "[시황 브리핑 데이터 - 2026-05-29]" in result
     assert "■ 한국 지수" in result
-    assert "■ 주요 공시" in result
+    assert "■ 주요 공시" not in result
+    assert "공시" not in result
     assert "코스피 수급 외국인 90억" in result
     assert "프로그램 코스닥 차익 2억" in result
     assert "5% 이상 상승 종목 (KOSPI) 테스트종목 | 현재가 12,300 | 등락률 +6.03%" in result

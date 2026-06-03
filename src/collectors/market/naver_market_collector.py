@@ -284,15 +284,44 @@ def _parse_rise_fall_rows(url: str, market: str | None = None) -> list[dict]:
     return rows
 
 
+def _format_rise_fall_item(item: dict) -> str:
+    rate = item.get("change_pct_text")
+    return f"{item['name']} {rate}" if rate else item["name"]
+
+
 def _parse_rise_fall_page(url: str, limit: int = 10) -> list[str]:
     """상승/하락 종목 페이지에서 종목명 + 등락률 파싱"""
-    items: list[str] = []
-    for item in _parse_rise_fall_rows(url):
-        rate = item.get("change_pct_text")
-        items.append(f"{item['name']} {rate}" if rate else item["name"])
-        if len(items) >= limit:
-            break
-    return items
+    return [_format_rise_fall_item(item) for item in _parse_rise_fall_rows(url)[:limit]]
+
+
+def _collect_rise_fall_rankings(
+    market_urls: list[tuple[str, str]],
+    limit: int,
+    *,
+    descending: bool,
+    max_pages: int = 2,
+) -> list[str]:
+    rows: list[dict] = []
+    seen: set[str] = set()
+
+    for market, url in market_urls:
+        market_rows: list[dict] = []
+        for page in range(1, max_pages + 1):
+            page_rows = _parse_rise_fall_rows(_with_page(url, page), market=market)
+            if not page_rows:
+                break
+            for row in page_rows:
+                key = row.get("code") or row["name"]
+                if key in seen:
+                    continue
+                seen.add(key)
+                market_rows.append(row)
+                rows.append(row)
+            if len(market_rows) >= limit:
+                break
+
+    rows.sort(key=lambda item: item.get("change_pct") if item.get("change_pct") is not None else 0, reverse=descending)
+    return [_format_rise_fall_item(item) for item in rows[:limit]]
 
 
 def _parse_nxt_movers(limit: int = 10) -> list[str]:
@@ -378,8 +407,8 @@ def get_rising_stocks_over_threshold(
 def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict:
     if use_mock_data:
         return {
-            "new_highs": ["HD현대일렉트릭", "두산", "한화오션"],
-            "new_lows": ["에코프로", "에코프로비엠"],
+            "new_highs": [f"상승상위{i} +{50 - i / 10:.2f}%" for i in range(1, 51)],
+            "new_lows": [f"하락상위{i} -{20 - i / 10:.2f}%" for i in range(1, 21)],
             "upper_limit": ["녹십자홀딩스2우"],
             "after_hours_movers": ["하나머티리얼즈 +4.8%", "ISC -3.2%"],
             "rising_over_5pct": get_rising_stocks_over_threshold(use_mock_data=True),
@@ -389,15 +418,21 @@ def get_market_event_lists(target_date: str, use_mock_data: bool = True) -> dict
 
     # 52주 신고가/신저가 URL(sise_high/low.naver)은 네이버에서 폐기됨
     # 당일 상승/하락 상위 종목으로 대체 (sise_rise/fall.naver)
-    daily_highs = _merge_unique(
-        _parse_rise_fall_page("https://finance.naver.com/sise/sise_rise.naver?sosok=0", limit=5)
-        + _parse_rise_fall_page("https://finance.naver.com/sise/sise_rise.naver?sosok=1", limit=5),
-        limit=10,
+    daily_highs = _collect_rise_fall_rankings(
+        [
+            ("KOSPI", "https://finance.naver.com/sise/sise_rise.naver?sosok=0"),
+            ("KOSDAQ", "https://finance.naver.com/sise/sise_rise.naver?sosok=1"),
+        ],
+        limit=50,
+        descending=True,
     )
-    daily_lows = _merge_unique(
-        _parse_rise_fall_page("https://finance.naver.com/sise/sise_fall.naver?sosok=0", limit=5)
-        + _parse_rise_fall_page("https://finance.naver.com/sise/sise_fall.naver?sosok=1", limit=5),
-        limit=10,
+    daily_lows = _collect_rise_fall_rankings(
+        [
+            ("KOSPI", "https://finance.naver.com/sise/sise_fall.naver?sosok=0"),
+            ("KOSDAQ", "https://finance.naver.com/sise/sise_fall.naver?sosok=1"),
+        ],
+        limit=20,
+        descending=False,
     )
 
     return {

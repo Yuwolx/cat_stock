@@ -471,8 +471,8 @@ def _render_market_page() -> None:
                     "거래대금 상위 종목",
                     "업종별 등락률",
                     "외국인 · 기관 순매수/순매도 상위",
-                    "52주 신고가 · 신저가 · 상한가 · 시간외 단일가",
-                    "프로그램 차익 · 비차익, DART 주요 공시",
+                    "등락률 상승 50개 · 하락 20개 · 상한가 · 시간외 단일가",
+                    "프로그램 차익 · 비차익",
                 ]
             )
 
@@ -629,8 +629,6 @@ def _render_missing_data_warnings(payload: dict, mode: str) -> None:
         inv = payload.get("investor_flows", {})
         if not inv.get("foreign_top_buy") and not inv.get("institution_top_buy"):
             missing.append("외국인/기관 수급 상위 종목")
-        if not payload.get("disclosures"):
-            missing.append("DART 공시 (API 키 확인 필요)")
         macro = payload.get("global_macro", {})
         if all(v is None for v in macro.values()):
             missing.append("글로벌 매크로")

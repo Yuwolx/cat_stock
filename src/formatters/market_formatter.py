@@ -142,14 +142,13 @@ def format_market_briefing(payload: dict) -> str:
         section(
             "시장 이벤트",
             [
-                f"당일 상승 상위 {format_list(market_events['new_highs'])}",
+                f"당일 상승 상위 {format_list(market_events['new_highs'][:50])}",
                 f"5% 이상 상승 종목 {format_list([_format_rising_stock(item) for item in rising_over_5pct])}",
-                f"당일 하락 상위 {format_list(market_events['new_lows'])}",
+                f"당일 하락 상위 {format_list(market_events['new_lows'][:20])}",
                 f"상한가 {format_list(market_events['upper_limit'])}",
                 f"시간외 단일가 급등락 {format_list(market_events['after_hours_movers'])}",
             ],
         ),
-        section("주요 공시", payload["disclosures"] or ["데이터 없음"]),
     ]
 
     chunks = [header]
