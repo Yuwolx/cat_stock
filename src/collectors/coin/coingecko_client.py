@@ -6,6 +6,8 @@ from typing import Any
 
 import requests
 
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
+
 
 BASE_URL = "https://api.coingecko.com/api/v3"
 HEADERS = {
@@ -35,6 +37,11 @@ def _mark_error(error: str, *, rate_limited: bool = False) -> None:
 
 
 def _get_json(path: str, params: dict[str, Any] | None = None) -> Any:
+    cache_key = ("coingecko", path, tuple(sorted((params or {}).items())))
+    cached = get_ttl_cache(cache_key)
+    if cached is not None:
+        return cached
+
     last_error: Exception | None = None
     for attempt in range(3):
         try:
@@ -53,7 +60,7 @@ def _get_json(path: str, params: dict[str, Any] | None = None) -> Any:
                 time.sleep(wait_seconds)
                 continue
             response.raise_for_status()
-            return response.json()
+            return set_ttl_cache(cache_key, response.json())
         except Exception as exc:
             last_error = exc
             if isinstance(exc, CoinGeckoRateLimitError):

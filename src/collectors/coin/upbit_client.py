@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
+
 
 BASE_URL = "https://api.upbit.com/v1"
 HEADERS = {
@@ -13,9 +15,14 @@ HEADERS = {
 
 
 def _get_json(path: str, params: dict[str, Any] | None = None) -> Any:
+    cache_key = ("upbit", path, tuple(sorted((params or {}).items())))
+    cached = get_ttl_cache(cache_key)
+    if cached is not None:
+        return cached
+
     response = requests.get(f"{BASE_URL}{path}", params=params, headers=HEADERS, timeout=10)
     response.raise_for_status()
-    return response.json()
+    return set_ttl_cache(cache_key, response.json())
 
 
 def _chunked(items: list[str], size: int) -> list[list[str]]:
