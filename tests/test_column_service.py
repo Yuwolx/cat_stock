@@ -5,6 +5,7 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 from src.config.settings import get_settings
+from src.services import column_service
 from src.services.column_service import _call_gpt, _split_title_body, generate_market_column
 from src.ui.dashboard import _column_html
 
@@ -86,6 +87,61 @@ def test_split_title_body_without_separator() -> None:
     result = _split_title_body("시장 방향성 재점검\n본문입니다.", "기본 제목")
 
     assert result == {"title": "시장 방향성 재점검", "body": "본문입니다."}
+
+
+def test_split_title_body_strips_markdown_markers() -> None:
+    result = _split_title_body(
+        "### **시장 방향성 재점검**\n---\n본문은 __수급__과 _A-B 스프레드_를 봅니다. OPENAI_API_KEY는 유지합니다.",
+        "기본 제목",
+    )
+
+    assert result == {
+        "title": "시장 방향성 재점검",
+        "body": "본문은 수급과 A-B 스프레드를 봅니다. OPENAI_API_KEY는 유지합니다.",
+    }
+
+
+def test_split_title_body_strips_markdown_without_separator() -> None:
+    result = _split_title_body("## __반도체 기대 확산__\n**본문**입니다.", "기본 제목")
+
+    assert result == {"title": "반도체 기대 확산", "body": "본문입니다."}
+
+
+def test_column_prompts_request_plain_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    prompts = []
+
+    def fake_call_gpt(prompt: str, max_tokens: int = 600) -> dict:
+        prompts.append(prompt)
+        return {"text": "제목\n---\n본문", "reason": "ok"}
+
+    monkeypatch.setattr(column_service, "_call_gpt", fake_call_gpt)
+
+    column_service.generate_stock_column(
+        {
+            "basics": {"name": "삼성전자", "ma_position": {}},
+            "flows": {"news": []},
+            "kis_flow": {},
+            "financials": [],
+            "disclosures": {"risk_flags": []},
+            "short_selling": {},
+        }
+    )
+    column_service.generate_market_column(
+        {
+            "target_date": "2026-06-04",
+            "indices": {},
+            "global_macro": {},
+            "investor_flows": {},
+            "market_events": {},
+            "sectors": [],
+        }
+    )
+
+    assert len(prompts) == 2
+    assert all(
+        "마크다운 기호(#, *, - 등) 없이 일반 텍스트로만 작성" in prompt
+        for prompt in prompts
+    )
 
 
 @pytest.mark.parametrize(

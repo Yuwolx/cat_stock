@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from src.config.settings import get_settings
 from src.utils.logger import get_logger
 
 
 LOGGER = get_logger(__name__)
 OPENAI_COLUMN_MODEL = "gpt-4o-mini"
+PLAIN_TEXT_INSTRUCTION = "- 마크다운 기호(#, *, - 등) 없이 일반 텍스트로만 작성"
 
 
 def _extract_response_text(response: object) -> str | None:
@@ -49,15 +52,42 @@ def _call_gpt(prompt: str, max_tokens: int = 600) -> dict:
         return {"text": None, "reason": "api_error"}
 
 
+def _strip_markdown_emphasis(text: str) -> str:
+    cleaned = text
+    emphasis_re = re.compile(r"(?<![A-Za-z0-9])(\*\*|__|\*|_)(.+?)\1(?![A-Za-z0-9])", re.DOTALL)
+    while True:
+        next_text = emphasis_re.sub(r"\2", cleaned)
+        if next_text == cleaned:
+            break
+        cleaned = next_text
+    return cleaned.replace("**", "").replace("__", "")
+
+
+def _clean_column_title(title: str, fallback_title: str) -> str:
+    without_heading = re.sub(r"^\s*#{1,6}\s*", "", title)
+    cleaned = _strip_markdown_emphasis(without_heading).strip()
+    return cleaned or fallback_title
+
+
+def _clean_column_body(body: str) -> str:
+    return _strip_markdown_emphasis(body).strip()
+
+
 def _split_title_body(text: str, fallback_title: str) -> dict:
     """'제목\n---\n본문' 형식을 분리"""
     if "---" in text:
         parts = text.split("---", 1)
-        return {"title": parts[0].strip(), "body": parts[1].strip()}
+        return {
+            "title": _clean_column_title(parts[0], fallback_title),
+            "body": _clean_column_body(parts[1]),
+        }
     lines = text.strip().splitlines()
     if len(lines) >= 2:
-        return {"title": lines[0].strip(), "body": "\n".join(lines[1:]).strip()}
-    return {"title": fallback_title, "body": text}
+        return {
+            "title": _clean_column_title(lines[0], fallback_title),
+            "body": _clean_column_body("\n".join(lines[1:])),
+        }
+    return {"title": fallback_title, "body": _clean_column_body(text)}
 
 
 def _available_column(parts: dict) -> dict:
@@ -121,6 +151,7 @@ def generate_stock_column(payload: dict) -> dict:
 - 구분자: ---
 - 본문: 200-280자 (3-4문장), 핵심 데이터 1-2개 인용
 - 투자 권유 없이 시장 구조 분석 관점
+{PLAIN_TEXT_INSTRUCTION}
 - 마지막 문장은 전망 또는 주목 포인트로 마무리"""
 
     result = _call_gpt(prompt, max_tokens=700)
@@ -176,6 +207,7 @@ def generate_market_column(payload: dict) -> dict:
 - 구분자: ---
 - 본문: 220-300자, 오늘 시장의 핵심 흐름 1-2가지 중심
 - 글로벌 → 국내 연결고리, 수급 주체 행동, 주목할 섹터 순서
+{PLAIN_TEXT_INSTRUCTION}
 - 투자 권유 없이 시장 해석 관점"""
 
     result = _call_gpt(prompt, max_tokens=700)
