@@ -23,8 +23,8 @@ def format_coin_sector_report(payload: dict) -> str:
 
     coin_lines = [
         (
-            f"{_display(item.get('sector'))} - {_display(item.get('name'))} ({str(item.get('symbol') or '-').upper()}) | "
-            f"순위 #{item.get('market_cap_rank') or '-'} | 가격 {_fmt_usd(item.get('current_price'))} | "
+            f"{_display(item.get('sector'))} - {_display(item.get('name'))} ({_display(item.get('symbol')).upper()}) | "
+            f"순위 #{_display(item.get('market_cap_rank'))} | 가격 {_fmt_usd(item.get('current_price'))} | "
             f"24h {_fmt_pct(item.get('price_change_percentage_24h'))}"
         )
         for item in representative
@@ -55,8 +55,8 @@ def format_coin_sector_report(payload: dict) -> str:
         section(
             "섹터 요약",
             [
-                f"가장 강한 섹터 {strongest.get('name') or '-'} ({_fmt_pct(strongest.get('market_cap_change_24h'))})",
-                f"가장 약한 섹터 {weakest.get('name') or '-'} ({_fmt_pct(weakest.get('market_cap_change_24h'))})",
+                f"가장 강한 섹터 {_display(strongest.get('name'))} ({_fmt_pct(strongest.get('market_cap_change_24h'))})",
+                f"가장 약한 섹터 {_display(weakest.get('name'))} ({_fmt_pct(weakest.get('market_cap_change_24h'))})",
                 f"추적 섹터 수 {len(categories)}개",
             ],
         ),

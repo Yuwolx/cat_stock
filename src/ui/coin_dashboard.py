@@ -3,9 +3,20 @@ from __future__ import annotations
 from html import escape
 
 
+EMPTY_VALUE = "—"
+
+
+def _display(value: object) -> str:
+    if value is None:
+        return EMPTY_VALUE
+    if isinstance(value, str) and not value.strip():
+        return EMPTY_VALUE
+    return str(value)
+
+
 def _fmt_pct(value: object) -> str:
     if value is None:
-        return "-"
+        return EMPTY_VALUE
     try:
         return f"{float(value):+.2f}%"
     except (TypeError, ValueError):
@@ -26,7 +37,7 @@ def _pct_class(value: object) -> str:
 
 def _fmt_usd(value: object) -> str:
     if value is None:
-        return "-"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -44,7 +55,7 @@ def _fmt_usd(value: object) -> str:
 
 def _fmt_krw(value: object) -> str:
     if value is None:
-        return "-"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -164,10 +175,10 @@ def _protocol_row(row: dict, rank: int) -> str:
     return f"""
     <tr>
       <td>{rank}</td>
-      <td><strong>{escape(str(row.get("name") or "-"))}</strong><span>{escape(str(row.get("category") or "-"))}</span></td>
+      <td><strong>{escape(_display(row.get("name")))}</strong><span>{escape(_display(row.get("category")))}</span></td>
       <td>{escape(_fmt_usd(row.get("tvl")))}</td>
       <td class="{_pct_class(row.get("change_1d"))}">{escape(_fmt_pct(row.get("change_1d")))}</td>
-      <td>{escape(chains or "-")}</td>
+      <td>{escape(chains or EMPTY_VALUE)}</td>
     </tr>
     """
 
@@ -176,7 +187,7 @@ def _fee_row(row: dict, rank: int) -> str:
     return f"""
     <tr>
       <td>{rank}</td>
-      <td><strong>{escape(str(row.get("name") or "-"))}</strong><span>{escape(str(row.get("category") or "-"))}</span></td>
+      <td><strong>{escape(_display(row.get("name")))}</strong><span>{escape(_display(row.get("category")))}</span></td>
       <td>{escape(_fmt_usd(row.get("total24h")))}</td>
       <td>{escape(_fmt_usd(row.get("total7d")))}</td>
     </tr>
@@ -187,7 +198,7 @@ def _category_card(row: dict) -> str:
     change = row.get("market_cap_change_24h")
     return f"""
     <div class="coin-sector">
-      <div class="coin-sector__name">{escape(str(row.get("name") or "-"))}</div>
+      <div class="coin-sector__name">{escape(_display(row.get("name")))}</div>
       <div class="coin-sector__change {_pct_class(change)}">{escape(_fmt_pct(change))}</div>
       <div class="coin-sector__sub">시총 {escape(_fmt_usd(row.get("market_cap")))}</div>
     </div>
@@ -694,7 +705,7 @@ def build_coin_market_empty_state() -> str:
 
 def _fmt_number(value: object) -> str:
     if value is None:
-        return "-"
+        return EMPTY_VALUE
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -710,14 +721,14 @@ def _detail_item(label: str, value: str, help_text: str = "") -> str:
     return f"""
     <div class="coin-detail-item">
       <div class="coin-detail-item__label">{escape(label)}</div>
-      <div class="coin-detail-item__value">{escape(value)}</div>
+      <div class="coin-detail-item__value">{escape(_display(value))}</div>
       <div class="coin-detail-item__help">{escape(help_text)}</div>
     </div>
     """
 
 
-def _chip(label: str) -> str:
-    return f'<span class="coin-detail-chip">{escape(label)}</span>'
+def _chip(label: object) -> str:
+    return f'<span class="coin-detail-chip">{escape(_display(label))}</span>'
 
 
 def build_coin_detail_dashboard(payload: dict) -> str:
@@ -743,8 +754,8 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         _metric("7d", _fmt_pct(market.get("change_7d_pct")), "주간 흐름", _pct_class(market.get("change_7d_pct"))),
         _metric("30d", _fmt_pct(market.get("change_30d_pct")), "월간 흐름", _pct_class(market.get("change_30d_pct"))),
         _metric("시가총액", _fmt_usd(market.get("market_cap_usd")), "코인의 전체 크기"),
-        _metric("FDV", _fmt_usd(market.get("fdv_usd")), f"FDV/MC {risk.get('fdv_to_mcap') or '-'}"),
-        _metric("24h 거래량", _fmt_usd(market.get("volume_usd")), f"Vol/MC {risk.get('volume_to_mcap') or '-'}"),
+        _metric("FDV", _fmt_usd(market.get("fdv_usd")), f"FDV/MC {_display(risk.get('fdv_to_mcap'))}"),
+        _metric("24h 거래량", _fmt_usd(market.get("volume_usd")), f"Vol/MC {_display(risk.get('volume_to_mcap'))}"),
         _metric("ATH 대비", _fmt_pct(market.get("ath_change_pct")), f"ATH {_fmt_usd(market.get('ath_usd'))}", _pct_class(market.get("ath_change_pct"))),
     ]
 
@@ -757,11 +768,11 @@ def build_coin_detail_dashboard(payload: dict) -> str:
     if upbit.get("is_listed"):
         upbit_body = f"""
         <div class="coin-detail-upbit">
-          {_detail_item("마켓", str(upbit.get("market") or "-"), str(upbit.get("korean_name") or ""))}
+          {_detail_item("마켓", _display(upbit.get("market")), str(upbit.get("korean_name") or ""))}
           {_detail_item("현재가", _fmt_krw(upbit.get("trade_price")), "업비트 KRW 기준")}
           {_detail_item("24h", _fmt_pct(upbit.get("change_pct")), "국내 거래소 등락")}
           {_detail_item("거래대금", _fmt_krw(upbit.get("acc_trade_price_24h")), "24시간 누적")}
-          {_detail_item("김치 프리미엄", _fmt_pct(upbit.get("kimchi_premium_pct")), f"USD/KRW {payload.get('usdkrw') or '-'}")}
+          {_detail_item("김치 프리미엄", _fmt_pct(upbit.get("kimchi_premium_pct")), f"USD/KRW {_display(payload.get('usdkrw'))}")}
           {_detail_item("유의/주의", "주의" if upbit.get("warning") else "없음", "업비트 market_event 기준")}
         </div>
         """
@@ -771,8 +782,8 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         """
 
     risk_items = [
-        _detail_item("FDV/시총", str(risk.get("fdv_to_mcap") or "-"), "높을수록 향후 희석 위험을 더 확인"),
-        _detail_item("거래량/시총", str(risk.get("volume_to_mcap") or "-"), "단기 관심과 회전율 확인"),
+        _detail_item("FDV/시총", _display(risk.get("fdv_to_mcap")), "높을수록 향후 희석 위험을 더 확인"),
+        _detail_item("거래량/시총", _display(risk.get("volume_to_mcap")), "단기 관심과 회전율 확인"),
         _detail_item("김치 프리미엄", _fmt_pct(upbit.get("kimchi_premium_pct")), "국내 가격이 글로벌보다 비싼지 확인"),
         _detail_item("ATH 대비", _fmt_pct(market.get("ath_change_pct")), "고점 대비 현재 위치"),
     ]
@@ -780,8 +791,8 @@ def build_coin_detail_dashboard(payload: dict) -> str:
     risk_flag_items = [
         f"""
         <div class="coin-risk-flag coin-risk-flag--{escape(str(item.get("level") or "warn"))}">
-          <strong>{escape(str(item.get("label") or "-"))}</strong>
-          <span>{escape(str(item.get("message") or ""))}</span>
+          <strong>{escape(_display(item.get("label")))}</strong>
+          <span>{escape(_display(item.get("message")))}</span>
         </div>
         """
         for item in risk_flags
@@ -811,7 +822,7 @@ def build_coin_detail_dashboard(payload: dict) -> str:
             )
         defi_body = f"""
         <div class="coin-detail-upbit">
-          {_detail_item("프로토콜", str(defi_protocol.get("name") or "-"), str(defi_protocol.get("category") or ""))}
+          {_detail_item("프로토콜", _display(defi_protocol.get("name")), str(defi_protocol.get("category") or ""))}
           {_detail_item("TVL", _fmt_usd(defi_protocol.get("tvl")), "DefiLlama 기준")}
           {_detail_item("24h TVL", _fmt_pct(defi_protocol.get("change_1d")), "단기 예치금 변화")}
           {_detail_item("7d TVL", _fmt_pct(defi_protocol.get("change_7d")), "주간 예치금 변화")}
@@ -827,12 +838,12 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         futures_label = str(futures.get("contract_label") or "Binance USD-M")
         futures_body = f"""
         <div class="coin-detail-upbit">
-          {_detail_item("마켓", str(futures.get("symbol") or "-"), futures_label)}
+          {_detail_item("마켓", _display(futures.get("symbol")), futures_label)}
           {_detail_item("최근 펀딩비", _fmt_pct(futures.get("latest_funding_rate_pct")), "양수면 롱이 숏에게 비용 지불")}
           {_detail_item("연율 환산", _fmt_pct(futures.get("annualized_funding_pct")), "최근 평균 펀딩비 단순 환산")}
           {_detail_item("OI 변화", _fmt_pct(futures.get("open_interest_change_24h_pct")), "24시간 미결제약정 변화")}
           {_detail_item("OI 규모", _fmt_usd(futures.get("open_interest_value_usd")), "선물 포지션 명목 규모")}
-          {_detail_item("상태", str(futures.get("warning") or "-"), "학습용 과열 체크")}
+          {_detail_item("상태", _display(futures.get("warning")), "학습용 과열 체크")}
         </div>
         """
     else:
@@ -1124,10 +1135,10 @@ def build_coin_detail_dashboard(payload: dict) -> str:
       <div class="coin-detail-head">
         <div>
           <p class="coin-detail-head__eyebrow">Single Coin Study</p>
-          <h2 class="coin-detail-head__title">{escape(str(basics.get("name") or "-"))} ({escape(str(basics.get("symbol") or "-"))})</h2>
+          <h2 class="coin-detail-head__title">{escape(_display(basics.get("name")))} ({escape(_display(basics.get("symbol")))})</h2>
           <div class="coin-detail-chips">{categories or _chip("카테고리 없음")}</div>
         </div>
-        <div class="coin-detail-rank">Rank #{escape(str(basics.get("market_cap_rank") or "-"))}</div>
+        <div class="coin-detail-rank">Rank #{escape(_display(basics.get("market_cap_rank")))}</div>
       </div>
 
       <div class="coin-detail-metrics">
@@ -1215,7 +1226,7 @@ def _sector_row(row: dict, rank: int) -> str:
     return f"""
     <tr>
       <td>{rank}</td>
-      <td><strong>{escape(str(row.get("name") or "-"))}</strong><span>{escape(str(row.get("id") or ""))}</span></td>
+      <td><strong>{escape(_display(row.get("name")))}</strong><span>{escape(str(row.get("id") or ""))}</span></td>
       <td class="{_pct_class(row.get("market_cap_change_24h"))}">{escape(_fmt_pct(row.get("market_cap_change_24h")))}</td>
       <td>{escape(_fmt_usd(row.get("market_cap")))}</td>
       <td>{escape(_fmt_usd(row.get("volume_24h")))}</td>
@@ -1226,9 +1237,9 @@ def _sector_row(row: dict, rank: int) -> str:
 def _sector_coin_row(row: dict) -> str:
     return f"""
     <tr>
-      <td><strong>{escape(str(row.get("sector") or "-"))}</strong></td>
-      <td><strong>{escape(str(row.get("name") or "-"))}</strong><span>{escape(str(row.get("symbol") or "").upper())}</span></td>
-      <td>{escape(str(row.get("market_cap_rank") or "-"))}</td>
+      <td><strong>{escape(_display(row.get("sector")))}</strong></td>
+      <td><strong>{escape(_display(row.get("name")))}</strong><span>{escape(_display(row.get("symbol")).upper())}</span></td>
+      <td>{escape(_display(row.get("market_cap_rank")))}</td>
       <td>{escape(_fmt_usd(row.get("current_price")))}</td>
       <td class="{_pct_class(row.get("price_change_percentage_24h"))}">{escape(_fmt_pct(row.get("price_change_percentage_24h")))}</td>
       <td>{escape(_fmt_usd(row.get("market_cap")))}</td>
@@ -1239,13 +1250,13 @@ def _sector_coin_row(row: dict) -> str:
 def _playbook_card(row: dict) -> str:
     return f"""
     <div class="coin-playbook">
-      <div class="coin-playbook__name">{escape(str(row.get("name") or "-"))}</div>
+      <div class="coin-playbook__name">{escape(_display(row.get("name")))}</div>
       <p>{escape(str(row.get("what") or ""))}</p>
       <dl>
         <dt>볼 것</dt>
-        <dd>{escape(str(row.get("watch") or "-"))}</dd>
+        <dd>{escape(_display(row.get("watch")))}</dd>
         <dt>조심할 것</dt>
-        <dd>{escape(str(row.get("risk") or "-"))}</dd>
+        <dd>{escape(_display(row.get("risk")))}</dd>
       </dl>
     </div>
     """
@@ -1269,7 +1280,7 @@ def build_coin_sector_dashboard(payload: dict) -> str:
     fee_rows = "".join(_fee_row(row, idx + 1) for idx, row in enumerate((fees.get("protocols") or [])[:6]))
     stable_rows = "".join(
         _mini_data_row(
-            str(row.get("symbol") or row.get("name") or "-"),
+            _display(row.get("symbol") or row.get("name")),
             _fmt_usd(row.get("circulating_usd")),
             f"7d {_fmt_pct(row.get('change_7d_pct'))}",
             _pct_class(row.get("change_7d_pct")),
@@ -1518,11 +1529,11 @@ def build_coin_sector_dashboard(payload: dict) -> str:
         <div class="coin-sector-summary">
           <div class="coin-sector-summary__box">
             <p class="coin-sector-summary__label">강한 섹터</p>
-            <p class="coin-sector-summary__value">{escape(str(strongest.get("name") or "-"))} {escape(_fmt_pct(strongest.get("market_cap_change_24h")))}</p>
+            <p class="coin-sector-summary__value">{escape(_display(strongest.get("name")))} {escape(_fmt_pct(strongest.get("market_cap_change_24h")))}</p>
           </div>
           <div class="coin-sector-summary__box">
             <p class="coin-sector-summary__label">약한 섹터</p>
-            <p class="coin-sector-summary__value">{escape(str(weakest.get("name") or "-"))} {escape(_fmt_pct(weakest.get("market_cap_change_24h")))}</p>
+            <p class="coin-sector-summary__value">{escape(_display(weakest.get("name")))} {escape(_fmt_pct(weakest.get("market_cap_change_24h")))}</p>
           </div>
         </div>
       </div>

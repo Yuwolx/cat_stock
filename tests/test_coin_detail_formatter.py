@@ -57,7 +57,9 @@ def test_coin_detail_formatter_marks_missing_values_plainly() -> None:
         "upbit": {"is_listed": False, "kimchi_premium_pct": None, "warning": None},
         "risk": {"fdv_to_mcap": None, "volume_to_mcap": None},
         "project": {"categories": []},
+        "defi_protocol": {"name": None, "tvl": None, "change_1d": None, "change_7d": None},
         "futures": {"is_available": True, "symbol": "BTCUSDT", "latest_funding_rate_pct": None},
+        "risk_flags": [{"label": None, "message": None}],
     }
 
     result = format_coin_detail_report(payload)

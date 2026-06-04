@@ -82,7 +82,7 @@ def format_coin_detail_report(payload: dict) -> str:
                 f"ATH 대비 위치 {_fmt_pct(market.get('ath_change_pct'))}",
                 f"국내 수급 과열 {_fmt_pct(upbit.get('kimchi_premium_pct'))}",
                 *[
-                    f"{item.get('label')}: {item.get('message')}"
+                    f"{_display(item.get('label'))}: {_display(item.get('message'))}"
                     for item in risk_flags
                 ],
             ],
@@ -91,7 +91,7 @@ def format_coin_detail_report(payload: dict) -> str:
             "온체인 / DeFi",
             [
                 (
-                    f"{defi_protocol.get('name')} | TVL {_fmt_usd(defi_protocol.get('tvl'))} | "
+                    f"{_display(defi_protocol.get('name'))} | TVL {_fmt_usd(defi_protocol.get('tvl'))} | "
                     f"24h {_fmt_pct(defi_protocol.get('change_1d'))} | 7d {_fmt_pct(defi_protocol.get('change_7d'))}"
                     if defi_protocol
                     else "DefiLlama 프로토콜 매핑 없음"
