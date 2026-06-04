@@ -144,7 +144,7 @@ def _news_cards_html(news_items: list[dict], fallback_news: list[str]) -> str:
 
 def _fig_html(fig: go.Figure, first: bool = False) -> str:
     return fig.to_html(
-        include_plotlyjs=first,
+        include_plotlyjs="cdn" if first else False,
         full_html=False,
         config={"displayModeBar": False, "responsive": True},
     )
