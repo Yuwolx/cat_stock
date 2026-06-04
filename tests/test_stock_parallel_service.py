@@ -189,7 +189,7 @@ def test_stock_parallel_payload_matches_sequential_result_and_primes_kis(monkeyp
         "financials": financials,
         "disclosures": disclosures,
         "short_selling": {
-            "short_balance_ratio": "1.00%",
+            "short_balance_ratio": "미제공",
             "short_sale_volume_ratio": "2.00%",
             "consensus_target_price": "90,000원",
         },

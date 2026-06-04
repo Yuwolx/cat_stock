@@ -86,6 +86,7 @@ def get_short_selling_ratio(
     - [국내주식] 시세분석 > 국내주식 공매도 일별추이[국내주식-134]
     - path: /uapi/domestic-stock/v1/quotations/daily-short-sale
     - tr_id: FHPST04830000
+    - verified field: ssts_vol_rlim (공매도 거래량 비중)
 
     개별 종목의 "공매도 잔고 비율"을 검증된 필드로 제공하는 엔드포인트는 확인되지 않아
     잔고 비율처럼 가공하지 않는다.

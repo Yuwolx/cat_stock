@@ -26,6 +26,9 @@ from src.utils.date_utils import today_kst_string
 from src.utils.file_utils import save_output_text
 
 
+SHORT_BALANCE_RATIO_UNSUPPORTED = "미제공"
+
+
 def _empty_basics(stock_name: str) -> dict:
     return {
         "name": stock_name,
@@ -68,7 +71,11 @@ def _empty_kis_flow() -> dict:
 
 
 def _empty_short_selling() -> dict:
-    return {"short_balance_ratio": None, "short_sale_volume_ratio": None, "consensus_target_price": None}
+    return {
+        "short_balance_ratio": SHORT_BALANCE_RATIO_UNSUPPORTED,
+        "short_sale_volume_ratio": None,
+        "consensus_target_price": None,
+    }
 
 
 def _prime_kis_token(app_key: str, app_secret: str) -> None:
@@ -147,7 +154,11 @@ def generate_stock_report(
         "financials": future_result(futures, "financials", []),
         "disclosures": future_result(futures, "disclosures", _empty_disclosures()),
         "short_selling": {
-            "short_balance_ratio": naver_snapshot.get("short_balance_ratio"),
+            "short_balance_ratio": (
+                naver_snapshot.get("short_balance_ratio")
+                if use_mock_data
+                else SHORT_BALANCE_RATIO_UNSUPPORTED
+            ),
             "short_sale_volume_ratio": kis_short_sale_volume_ratio,
             "consensus_target_price": naver_snapshot.get("consensus_target_price"),
         },

@@ -31,7 +31,7 @@ def test_stock_formatter_includes_stock_name() -> None:
             "risk_flags": ["CB 없음"],
         },
         "short_selling": {
-            "short_balance_ratio": None,
+            "short_balance_ratio": "미제공",
             "short_sale_volume_ratio": "1.84%",
             "consensus_target_price": "91,000원",
         },
@@ -44,5 +44,5 @@ def test_stock_formatter_includes_stock_name() -> None:
     assert "■ 최근 공시" in result
     assert "공시" in result
     assert "공매도 거래량 비중 1.84%" in result
-    assert "공매도 잔고 비율 —" in result
+    assert "공매도 잔고 비율 미제공" in result
     assert "컨센서스 목표가 91,000원" in result

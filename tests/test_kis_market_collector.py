@@ -31,28 +31,14 @@ def test_get_kospi200_nearest_future_code_reads_master(monkeypatch) -> None:
     assert collector.get_kospi200_nearest_future_code() == "A01606"
 
 
-def test_get_futures_investor_flow_uses_dynamic_contract_code(monkeypatch) -> None:
-    calls: list[dict] = []
+def test_get_futures_investor_flow_marks_kis_endpoint_unsupported(monkeypatch) -> None:
     monkeypatch.setattr(collector, "get_kospi200_nearest_future_code", lambda: "A01606")
-
-    def fake_kis_get(path: str, tr_id: str, params: dict, app_key: str, app_secret: str) -> dict:
-        calls.append({"path": path, "tr_id": tr_id, "params": params})
-        return {"output": [{"frgn_ntby_qty": "10", "orgn_ntby_qty": "-5"}]}
-
-    monkeypatch.setattr(collector, "kis_get", fake_kis_get)
 
     result = collector.get_futures_investor_flow("app", "secret")
 
     assert result == {
-        "futures_foreign_net": 10,
-        "futures_institution_net": -5,
+        "futures_foreign_net": None,
+        "futures_institution_net": None,
         "futures_contract_code": "A01606",
-        "futures_warning": None,
+        "futures_warning": collector.FUTURES_INVESTOR_FLOW_UNSUPPORTED_WARNING,
     }
-    assert calls == [
-        {
-            "path": "/uapi/domestic-futureoption/v1/quotations/inquire-futures-investor",
-            "tr_id": "FHKST01010400",
-            "params": {"FID_COND_MRKT_DIV_CODE": "F", "FID_INPUT_ISCD": "A01606"},
-        }
-    ]
