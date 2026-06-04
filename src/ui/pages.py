@@ -37,6 +37,22 @@ from src.ui.coin_dashboard import (
 )
 
 
+def _render_dashboard_with_text_output(
+    *,
+    result_key: str,
+    box_key: str,
+    placeholder: str,
+    dashboard_builder,
+) -> None:
+    result = st.session_state.get(result_key)
+    if result:
+        st.html(dashboard_builder(result["payload"]))
+        with st.expander("텍스트로 보기/복사"):
+            _render_output_box(result["text"], placeholder, box_key=box_key)
+    else:
+        _render_output_box("", placeholder, box_key=box_key)
+
+
 def render_app() -> None:
     settings = get_settings()
     icon_path = Path("cat_stock_image.png")
@@ -500,12 +516,12 @@ def _render_market_page() -> None:
             )
 
     with out_col:
-        result_text = st.session_state.get("market_result", {}).get("text", "")
-        _render_output_box(result_text, "기준일을 선택하고 생성 버튼을 누르면 여기에 결과가 나타납니다.", box_key="market")
-
-    if "market_result" in st.session_state:
-        with st.expander("대시보드 미리보기"):
-            _render_dashboard_preview(build_market_dashboard(st.session_state["market_result"]["payload"]))
+        _render_dashboard_with_text_output(
+            result_key="market_result",
+            box_key="market",
+            placeholder="기준일을 선택하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            dashboard_builder=build_market_dashboard,
+        )
 
 
 def _render_stock_page() -> None:
@@ -564,12 +580,12 @@ def _render_stock_page() -> None:
             )
 
     with out_col:
-        result_text = st.session_state.get("stock_result", {}).get("text", "")
-        _render_output_box(result_text, "종목명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.", box_key="stock")
-
-    if "stock_result" in st.session_state:
-        with st.expander("대시보드 미리보기"):
-            _render_dashboard_preview(build_stock_dashboard(st.session_state["stock_result"]["payload"]))
+        _render_dashboard_with_text_output(
+            result_key="stock_result",
+            box_key="stock",
+            placeholder="종목명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            dashboard_builder=build_stock_dashboard,
+        )
 
 
 def _render_theme_page() -> None:
@@ -617,12 +633,12 @@ def _render_theme_page() -> None:
             )
 
     with out_col:
-        result_text = st.session_state.get("theme_result", {}).get("text", "")
-        _render_output_box(result_text, "테마명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.", box_key="theme")
-
-    if "theme_result" in st.session_state:
-        with st.expander("대시보드 미리보기"):
-            _render_dashboard_preview(build_theme_dashboard(st.session_state["theme_result"]["payload"]))
+        _render_dashboard_with_text_output(
+            result_key="theme_result",
+            box_key="theme",
+            placeholder="테마명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            dashboard_builder=build_theme_dashboard,
+        )
 
 
 def _render_missing_data_warnings(payload: dict, mode: str) -> None:
@@ -685,11 +701,6 @@ def _render_data_warnings(payload: dict) -> None:
     warnings = payload.get("data_warnings") or []
     if warnings:
         render_note("데이터 경고: " + " · ".join(str(item) for item in warnings), tone="warn")
-
-
-def _render_dashboard_preview(html: str) -> None:
-    st.markdown("**대시보드 미리보기**", unsafe_allow_html=False)
-    components.html(html, height=900, scrolling=True)
 
 
 _OUTPUT_LABELS: dict[str, str] = {
