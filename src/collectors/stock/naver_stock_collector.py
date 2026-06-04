@@ -11,6 +11,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
+from src.utils.news_formatting import format_news_item
+
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
@@ -278,14 +280,6 @@ def _news_url_from_href(href: str) -> str | None:
     return absolute_url
 
 
-def _format_news_item(item: dict) -> str:
-    title = item.get("title") or ""
-    meta = ", ".join(part for part in [item.get("source"), item.get("date")] if part)
-    title_line = f"{title} ({meta})" if meta else title
-    url = item.get("url")
-    return f"{title_line}\n  링크: {url}" if url else title_line
-
-
 def _parse_news_items(soup: BeautifulSoup, limit: int = 6) -> list[dict]:
     items: list[dict] = []
     seen: set[str] = set()
@@ -317,7 +311,7 @@ def _parse_news_items(soup: BeautifulSoup, limit: int = 6) -> list[dict]:
 
 
 def _parse_news_rows(soup: BeautifulSoup, limit: int = 6) -> list[str]:
-    return [_format_news_item(item) for item in _parse_news_items(soup, limit)]
+    return [format_news_item(item) for item in _parse_news_items(soup, limit)]
 
 
 def _fetch_news_soup_by_code(code: str) -> BeautifulSoup:
@@ -489,7 +483,7 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         return {
             "foreign_20d": "+1,245,000주",
             "institution_20d": "-342,000주",
-            "news": [_format_news_item(item) for item in news_items],
+            "news": [format_news_item(item) for item in news_items],
             "news_items": news_items,
             "naver_reports": [
                 f"{stock_name}: 매수 / 목표가 95,000원",
@@ -522,7 +516,7 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
-        "news": [_format_news_item(item) for item in news_items],
+        "news": [format_news_item(item) for item in news_items],
         "news_items": news_items,
         "naver_reports": naver_report_lines,
     }
