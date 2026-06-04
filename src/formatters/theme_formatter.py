@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from src.utils.text_utils import section
+from src.utils.text_utils import display_value, section
+
+
+EMPTY_VALUE = "—"
+
+
+def _display(value: object) -> str:
+    return display_value(value, fallback=EMPTY_VALUE)
 
 
 def format_theme_report(payload: dict) -> str:
@@ -10,8 +17,8 @@ def format_theme_report(payload: dict) -> str:
 
     stock_lines = [
         (
-            f"{item['name']} | 시총 {item['market_cap']} | 현재가 {item['price']} | "
-            f"등락률 {item['change_pct']} | PER {item['per']} | PBR {item['pbr']}"
+            f"{_display(item.get('name'))} | 시총 {_display(item.get('market_cap'))} | 현재가 {_display(item.get('price'))} | "
+            f"등락률 {_display(item.get('change_pct'))} | PER {_display(item.get('per'))} | PBR {_display(item.get('pbr'))}"
         )
         for item in stocks
     ]

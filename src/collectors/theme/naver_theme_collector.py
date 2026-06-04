@@ -59,6 +59,13 @@ def _compact_text(text: str | None) -> str | None:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _normalize_market_cap(text: str | None) -> str | None:
+    compacted = _compact_text(text)
+    if not compacted:
+        return None
+    return re.sub(r"\s+(억원|조원|원)$", r"\1", compacted)
+
+
 def _extract_code(href: str | None) -> str | None:
     match = re.search(r"code=(\d{6})", href or "")
     return match.group(1) if match else None
@@ -73,7 +80,7 @@ def _parse_stock_valuation(code: str) -> dict:
     market_sum = soup.select_one("#_market_sum")
     per = soup.select_one("#_per")
     pbr = soup.select_one("#_pbr")
-    market_cap = _compact_text(market_sum.parent.get_text(" ", strip=True)) if market_sum and market_sum.parent else None
+    market_cap = _normalize_market_cap(market_sum.parent.get_text(" ", strip=True)) if market_sum and market_sum.parent else None
     return {
         "market_cap": market_cap,
         "per": _compact_text(per.get_text(" ", strip=True)) if per else None,

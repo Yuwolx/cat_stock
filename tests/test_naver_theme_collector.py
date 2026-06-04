@@ -17,14 +17,14 @@ def test_find_theme_no_uses_current_sise_group_detail_links(monkeypatch) -> None
 
 def test_parse_stock_valuation_from_naver_main(monkeypatch) -> None:
     html = """
-    <div><em id="_market_sum">44조 31</em> 억원</div>
+    <div><em id="_market_sum">3조 5,680</em> 억원</div>
     <em id="_per">24.35</em>
     <em id="_pbr">1.42</em>
     """
     monkeypatch.setattr(collector, "_fetch_soup", lambda url: BeautifulSoup(html, "html.parser"))
 
     assert collector._parse_stock_valuation("035420") == {
-        "market_cap": "44조 31 억원",
+        "market_cap": "3조 5,680억원",
         "per": "24.35",
         "pbr": "1.42",
     }
@@ -46,7 +46,7 @@ def test_parse_theme_detail_enriches_market_cap_per_pbr(monkeypatch) -> None:
     monkeypatch.setattr(
         collector,
         "_parse_stock_valuation",
-        lambda code: {"market_cap": "44조 31 억원", "per": "24.35", "pbr": "1.42"},
+        lambda code: {"market_cap": "44조 31억원", "per": "24.35", "pbr": "1.42"},
     )
 
     assert collector._parse_theme_detail("49") == [
@@ -54,7 +54,7 @@ def test_parse_theme_detail_enriches_market_cap_per_pbr(monkeypatch) -> None:
             "name": "NAVER",
             "price": "280,500",
             "change_pct": "+3.31%",
-            "market_cap": "44조 31 억원",
+            "market_cap": "44조 31억원",
             "per": "24.35",
             "pbr": "1.42",
         }
