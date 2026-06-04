@@ -149,6 +149,50 @@ def _parse_market_news_items(soup: BeautifulSoup, limit: int = 12) -> list[dict]
     return items
 
 
+def _market_report_url_from_href(href: str) -> str:
+    if not href:
+        return ""
+    return urljoin(f"{NAVER_FINANCE_BASE_URL}/research/", href)
+
+
+def _parse_market_report_items(soup: BeautifulSoup, limit: int = 10) -> list[dict]:
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    for row in soup.select("table.type_1 tr"):
+        report_link = row.select_one('a[href*="market_info_read.naver"]')
+        if not report_link:
+            continue
+
+        title = report_link.get_text(" ", strip=True)
+        if not title:
+            continue
+
+        cells = [cell.get_text(" ", strip=True) for cell in row.select("td")]
+        broker = cells[1] if len(cells) > 1 else ""
+        report_date = cells[3] if len(cells) > 3 else ""
+
+        pdf_url = ""
+        for anchor in row.select("a[href]"):
+            href = anchor.get("href", "")
+            if href.lower().endswith(".pdf"):
+                pdf_url = _market_report_url_from_href(href)
+                break
+
+        detail_url = _market_report_url_from_href(report_link.get("href", ""))
+        url = pdf_url or detail_url
+        key = url or title
+        if key in seen:
+            continue
+
+        items.append({"title": title, "broker": broker, "date": report_date, "url": url})
+        seen.add(key)
+        if len(items) >= limit:
+            break
+
+    return items
+
+
 def get_market_news(use_mock_data: bool = True, limit: int = 12) -> list[dict]:
     if use_mock_data:
         return [
@@ -175,6 +219,35 @@ def get_market_news(use_mock_data: bool = True, limit: int = 12) -> list[dict]:
         return items
     except Exception as exc:
         logger.warning("Naver parser failed: market_news (%s)", exc)
+        return []
+
+
+def get_market_reports(use_mock_data: bool = True, limit: int = 10) -> list[dict]:
+    if use_mock_data:
+        return [
+            {
+                "title": "Daily 신한생각",
+                "broker": "샘플증권",
+                "date": "26.06.03",
+                "url": "https://finance.naver.com/research/market_info_read.naver?nid=1&page=1",
+            },
+            {
+                "title": "국내주식 마감 시황",
+                "broker": "샘플투자증권",
+                "date": "26.06.03",
+                "url": "https://stock.pstatic.net/stock-research/market/sample.pdf",
+            },
+        ][:limit]
+
+    try:
+        url = f"{NAVER_FINANCE_BASE_URL}/research/market_info_list.naver"
+        soup = _fetch_soup(url, encoding="euc-kr")
+        items = _parse_market_report_items(soup, limit=limit)
+        if not items:
+            _warn_empty_parser("market_reports", url)
+        return items
+    except Exception as exc:
+        logger.warning("Naver parser failed: market_reports (%s)", exc)
         return []
 
 

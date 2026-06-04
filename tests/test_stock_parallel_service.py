@@ -12,6 +12,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     derivatives = {"futures_foreign_net": None, "futures_institution_net": None, "program_total": 4}
     events = {"new_highs": ["A"], "new_lows": [], "upper_limit": [], "after_hours_movers": [], "rising_over_5pct": []}
     news_items = [{"title": "시장 뉴스", "url": "https://n.news.naver.com/mnews/article/001/0000000001", "source": "연합", "date": "2026-06-03"}]
+    market_reports = [{"title": "시황 리포트", "url": "https://finance.naver.com/research/market_info_read.naver?nid=1&page=1", "broker": "증권사", "date": "26.06.04"}]
     column = {"is_available": False, "reason": "missing_api_key", "title": None, "body": None}
 
     monkeypatch.setattr(
@@ -27,6 +28,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     monkeypatch.setattr(market_service, "get_derivatives_snapshot", lambda target_date, use_mock_data=False: derivatives.copy())
     monkeypatch.setattr(market_service, "get_market_event_lists", lambda target_date, use_mock_data=False: events)
     monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: news_items)
+    monkeypatch.setattr(market_service, "get_market_reports", lambda use_mock_data=False: market_reports)
     monkeypatch.setattr(market_service, "generate_market_column", lambda payload: column)
     monkeypatch.setattr(market_service, "format_market_briefing", lambda payload: "market text")
     monkeypatch.setattr(market_service, "save_output_text", lambda prefix, target_date, text: "/tmp/market.txt")
@@ -44,6 +46,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
         "derivatives": derivatives,
         "market_events": events,
         "news_items": news_items,
+        "market_reports": market_reports,
         "collector_status": {
             "indices": {"status": "ok", "error": None},
             "global_macro": {"status": "ok", "error": None},
@@ -53,6 +56,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
             "derivatives": {"status": "ok", "error": None},
             "market_events": {"status": "ok", "error": None},
             "news_items": {"status": "ok", "error": None},
+            "market_reports": {"status": "ok", "error": None},
         },
         "column": column,
     }
@@ -76,6 +80,7 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
     monkeypatch.setattr(market_service, "get_derivatives_snapshot", lambda target_date, use_mock_data=False: {"program_total": 1})
     monkeypatch.setattr(market_service, "get_market_event_lists", lambda target_date, use_mock_data=False: {"new_highs": []})
     monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "get_market_reports", lambda use_mock_data=False: [])
     monkeypatch.setattr(market_service, "generate_market_column", lambda payload: {"is_available": False, "reason": "x"})
     monkeypatch.setattr(market_service, "format_market_briefing", lambda payload: "market text")
     monkeypatch.setattr(market_service, "save_output_text", lambda prefix, target_date, text: "/tmp/market.txt")
@@ -110,6 +115,7 @@ def test_market_parallel_primes_kis_and_applies_overlay_after_derivatives(monkey
     monkeypatch.setattr(market_service, "get_derivatives_snapshot", lambda target_date, use_mock_data=False: derivatives.copy())
     monkeypatch.setattr(market_service, "get_market_event_lists", lambda target_date, use_mock_data=False: {"new_highs": []})
     monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "get_market_reports", lambda use_mock_data=False: [])
     monkeypatch.setattr(
         market_service,
         "get_futures_investor_flow",

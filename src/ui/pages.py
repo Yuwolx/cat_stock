@@ -657,6 +657,7 @@ def _render_missing_data_warnings(payload: dict, mode: str) -> None:
                 "derivatives": "파생/프로그램 매매",
                 "market_events": "시장 이벤트",
                 "news_items": "시장 뉴스",
+                "market_reports": "증권사 리포트",
             }
             for key, label in labels.items():
                 status = collector_status.get(key, {})

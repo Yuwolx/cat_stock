@@ -136,6 +136,44 @@ def test_parse_market_news_items_includes_title_url_source_and_date() -> None:
     ]
 
 
+def test_parse_market_report_items_includes_title_broker_date_and_url() -> None:
+    html = """
+    <table class="type_1">
+      <tr>
+        <td><a href="market_info_read.naver?nid=36264&page=1">Daily 신한생각</a></td>
+        <td>신한투자증권</td>
+        <td class="file"><a href="https://stock.pstatic.net/stock-research/market/66/report.pdf"></a></td>
+        <td class="date">26.06.04</td>
+        <td class="date">563</td>
+      </tr>
+      <tr>
+        <td><a href="market_info_read.naver?nid=36265&page=1">마켓레이더</a></td>
+        <td>유안타증권</td>
+        <td class="file"></td>
+        <td class="date">26.06.03</td>
+        <td class="date">1201</td>
+      </tr>
+    </table>
+    """
+
+    result = collector._parse_market_report_items(BeautifulSoup(html, "html.parser"), limit=10)
+
+    assert result == [
+        {
+            "title": "Daily 신한생각",
+            "broker": "신한투자증권",
+            "date": "26.06.04",
+            "url": "https://stock.pstatic.net/stock-research/market/66/report.pdf",
+        },
+        {
+            "title": "마켓레이더",
+            "broker": "유안타증권",
+            "date": "26.06.03",
+            "url": "https://finance.naver.com/research/market_info_read.naver?nid=36265&page=1",
+        },
+    ]
+
+
 def test_market_news_url_from_href_falls_back_to_finance_url() -> None:
     assert collector._market_news_url_from_href("/news/news_read.naver?mode=mainnews") == (
         "https://finance.naver.com/news/news_read.naver?mode=mainnews"
@@ -150,3 +188,13 @@ def test_get_market_news_logs_empty_parser(monkeypatch, caplog) -> None:
 
     assert result == []
     assert "market_news" in caplog.text
+
+
+def test_get_market_reports_logs_empty_parser(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(collector, "_fetch_soup", lambda url, encoding=None: BeautifulSoup("<html></html>", "html.parser"))
+
+    with caplog.at_level(logging.WARNING):
+        result = collector.get_market_reports(use_mock_data=False)
+
+    assert result == []
+    assert "market_reports" in caplog.text

@@ -60,6 +60,14 @@ def test_market_formatter_includes_sections() -> None:
                 "date": "2026-06-03 17:15:09",
             }
         ],
+        "market_reports": [
+            {
+                "title": "Daily 신한생각",
+                "url": "https://finance.naver.com/research/market_info_read.naver?nid=36261&page=1",
+                "broker": "신한투자증권",
+                "date": "26.06.04",
+            }
+        ],
     }
 
     result = format_market_briefing(payload)
@@ -79,3 +87,6 @@ def test_market_formatter_includes_sections() -> None:
     assert "■ 주요 뉴스" in result
     assert "코스피 강세 지속 (이데일리, 2026-06-03 17:15:09)" in result
     assert "  링크: https://n.news.naver.com/mnews/article/018/0006296662" in result
+    assert "■ 증권사 리포트" in result
+    assert "Daily 신한생각 (신한투자증권, 26.06.04)" in result
+    assert "  링크: https://finance.naver.com/research/market_info_read.naver?nid=36261&page=1" in result

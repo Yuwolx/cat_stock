@@ -22,6 +22,14 @@ def _market_payload() -> dict:
                 "date": "2026-06-03",
             }
         ],
+        "market_reports": [
+            {
+                "title": "Daily 신한생각",
+                "url": "https://finance.naver.com/research/market_info_read.naver?nid=36261&page=1",
+                "broker": "신한투자증권",
+                "date": "26.06.04",
+            }
+        ],
     }
 
 
@@ -67,6 +75,10 @@ def test_market_dashboard_includes_latest_news_links() -> None:
     assert "LATEST NEWS" in html
     assert "코스피 강세 지속" in html
     assert 'href="https://n.news.naver.com/mnews/article/018/0006296662"' in html
+    assert "ANALYST REPORTS" in html
+    assert "Daily 신한생각" in html
+    assert "신한투자증권" in html
+    assert 'href="https://finance.naver.com/research/market_info_read.naver?nid=36261&amp;page=1"' in html
 
 
 def test_plotly_dashboards_use_cdn_without_heavy_inline_bundle() -> None:

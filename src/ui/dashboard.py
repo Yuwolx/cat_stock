@@ -107,7 +107,7 @@ def _news_grid3_html(news_items: list[dict], fallback_news: list[str]) -> str:
     for item in news_items:
         title = escape(str(item.get("title") or ""))
         url = str(item.get("url") or "")
-        source = escape(str(item.get("source") or ""))
+        source = escape(str(item.get("source") or item.get("broker") or ""))
         src_html = f'<div class="nc-source">{source}</div>' if source else ""
         title_html = (
             f'<a href="{escape(url)}" target="_blank" rel="noopener">{title}</a>'
@@ -373,6 +373,7 @@ def build_market_dashboard(payload: dict) -> str:
     sectors = payload.get("sectors", [])
     events = payload.get("market_events", {})
     news_items = payload.get("news_items", [])
+    market_reports = payload.get("market_reports", [])
     column = payload.get("column")
     date_str = payload.get("target_date", "")
     is_first = True
@@ -531,6 +532,8 @@ def build_market_dashboard(payload: dict) -> str:
 </div>
 <div class="rule"><div class="rule-line"></div><div class="rule-title">LATEST NEWS</div><div class="rule-line"></div></div>
 {_news_grid3_html(news_items, [])}
+<div class="rule"><div class="rule-line"></div><div class="rule-title">ANALYST REPORTS</div><div class="rule-line"></div></div>
+{_news_grid3_html(market_reports, [])}
 """
 
     return _dispatch_wrap(

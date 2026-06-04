@@ -57,6 +57,7 @@ def format_market_briefing(payload: dict) -> str:
     sectors = payload.get("sectors", [])
     rising_over_5pct = market_events.get("rising_over_5pct", [])
     news_items = payload.get("news_items", [])
+    market_reports = payload.get("market_reports", [])
 
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
     mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
@@ -175,6 +176,7 @@ def format_market_briefing(payload: dict) -> str:
             ],
         ),
         section("주요 뉴스", [format_news_item(item) for item in news_items] or ["데이터 없음"]),
+        section("증권사 리포트", [format_news_item(item) for item in market_reports] or ["데이터 없음"]),
     ]
 
     chunks = [header]
