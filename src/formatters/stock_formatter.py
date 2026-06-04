@@ -1,15 +1,24 @@
 from __future__ import annotations
 
-from src.utils.text_utils import display_value, format_krw_amount, format_list, section
+from src.utils.text_utils import display_value, format_krw_amount, format_krw_eok, format_list, section
 
 
 def _format_turnover(value: object) -> str:
-    if value is None:
-        return "연결 예정"
-    try:
-        return f"{int(value):,}"
-    except (ValueError, TypeError):
-        return str(value)
+    return format_krw_eok(value)
+
+
+def _format_krw_flow(value: object) -> str:
+    return format_krw_amount(value)
+
+
+def _format_accumulated_flow(amount_value: object, share_value: object) -> str:
+    if amount_value:
+        return _format_krw_flow(amount_value)
+    return display_value(share_value)
+
+
+def _flow_basis(amount_value: object) -> str:
+    return "금액 기준" if amount_value else "주 수 기준"
 
 
 def format_stock_report(payload: dict) -> str:
@@ -19,6 +28,8 @@ def format_stock_report(payload: dict) -> str:
     short_selling = payload["short_selling"]
     financials = payload["financials"]
     kis_flow = payload.get("kis_flow", {})
+    foreign_20d_krw = kis_flow.get("foreign_20d_krw")
+    institution_20d_krw = kis_flow.get("institution_20d_krw")
 
     financial_lines = [
         (
@@ -49,7 +60,7 @@ def format_stock_report(payload: dict) -> str:
                 (
                     f"현재가 {display_value(basics['price'])} | "
                     f"등락률 {display_value(basics['change_pct'])} | "
-                    f"거래대금 {_format_turnover(basics['turnover_krw_billion'])}억"
+                    f"거래대금 {_format_turnover(basics['turnover_krw_billion'])}"
                 ),
                 (
                     f"시가총액 {display_value(basics['market_cap'])} | "
@@ -73,12 +84,12 @@ def format_stock_report(payload: dict) -> str:
         section(
             "수급",
             [
-                f"외국인 20일 누적 순매수 {display_value(kis_flow.get('foreign_20d_krw') or flows['foreign_20d'])} "
-                f"({'금액 기준' if kis_flow.get('foreign_20d_krw') else '주 수 기준'})",
-                f"기관 20일 누적 순매수 {display_value(kis_flow.get('institution_20d_krw') or flows['institution_20d'])} "
-                f"({'금액 기준' if kis_flow.get('institution_20d_krw') else '주 수 기준'})",
-                f"외국인 당일 순매수 {display_value(kis_flow.get('foreign_today_krw'))} (금액 기준)",
-                f"기관 당일 순매수 {display_value(kis_flow.get('institution_today_krw'))} (금액 기준)",
+                f"외국인 20일 누적 순매수 {_format_accumulated_flow(foreign_20d_krw, flows['foreign_20d'])} "
+                f"({_flow_basis(foreign_20d_krw)})",
+                f"기관 20일 누적 순매수 {_format_accumulated_flow(institution_20d_krw, flows['institution_20d'])} "
+                f"({_flow_basis(institution_20d_krw)})",
+                f"외국인 당일 순매수 {_format_krw_flow(kis_flow.get('foreign_today_krw'))} (금액 기준)",
+                f"기관 당일 순매수 {_format_krw_flow(kis_flow.get('institution_today_krw'))} (금액 기준)",
                 f"공매도 거래량 비중 {display_value(short_selling.get('short_sale_volume_ratio'), '—')}",
                 f"공매도 잔고 비율 {display_value(short_selling.get('short_balance_ratio'), '—')}",
             ],

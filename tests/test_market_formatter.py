@@ -19,11 +19,11 @@ def test_market_formatter_includes_sections() -> None:
             "shanghai": "-0.1%",
             "shenzhen": "+0.1%",
         },
-        "leaders": [{"name": "삼성전자", "price": "79,000", "change_pct": 1.2, "turnover_krw_billion": 1000}],
+        "leaders": [{"name": "삼성전자", "price": "79,000", "change_pct": 1.2, "turnover_krw_billion": 121726.1}],
         "investor_flows": {
-            "summary": {"foreign": 100, "institution": 50, "retail": -150},
+            "summary": {"foreign": -67087.0, "institution": 50.0, "retail": -150},
             "by_market": {
-                "kospi": {"foreign": 90, "institution": 40, "retail": -130},
+                "kospi": {"foreign": 90.0, "institution": 40, "retail": -130},
                 "kosdaq": {"foreign": 10, "institution": 10, "retail": -20},
             },
             "foreign_top_buy": ["삼성전자"],
@@ -68,10 +68,13 @@ def test_market_formatter_includes_sections() -> None:
     assert "■ 한국 지수" in result
     assert "■ 주요 공시" not in result
     assert "공시" not in result
+    assert "거래대금 12.2조" in result
+    assert "순매수 요약 외국인 -6.7조" in result
     assert "코스피 수급 외국인 90억" in result
-    assert "코스피200 선물 근월물 코드 A01606" in result
-    assert "선물 수급 경고 없음" in result
+    assert "코스피200 선물 근월물 코드 A01606" not in result
+    assert "선물 수급 경고" not in result
     assert "프로그램 코스닥 차익 2억" in result
+    assert "당일 상승 상위" not in result
     assert "5% 이상 상승 종목 (KOSPI) 테스트종목 | 현재가 12,300 | 등락률 +6.03%" in result
     assert "■ 주요 뉴스" in result
     assert "코스피 강세 지속 (이데일리, 2026-06-03 17:15:09)" in result

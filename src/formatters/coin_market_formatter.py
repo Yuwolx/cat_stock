@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.utils.text_utils import display_value, section
+from src.utils.text_utils import display_value, format_krw_amount, section
 
 
 EMPTY_VALUE = "—"
@@ -40,15 +40,7 @@ def _fmt_usd(value: object) -> str:
 def _fmt_krw(value: object) -> str:
     if value is None:
         return EMPTY_VALUE
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return str(value)
-    if number >= 1_000_000_000_000:
-        return f"{number / 1_000_000_000_000:.2f}조"
-    if number >= 100_000_000:
-        return f"{number / 100_000_000:.0f}억"
-    return f"{number:,.0f}원"
+    return format_krw_amount(value)
 
 
 def format_coin_market_briefing(payload: dict) -> str:

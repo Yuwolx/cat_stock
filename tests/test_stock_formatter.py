@@ -24,7 +24,7 @@ def test_stock_formatter_includes_stock_name() -> None:
             "news": ["뉴스"],
         },
         "reports": [],
-        "financials": [{"quarter": "2026Q1", "sales": "10", "op_income": "2", "net_income": "1"}],
+        "financials": [{"quarter": "2026Q1", "sales": "20.0조", "op_income": "35000.0억", "net_income": "1"}],
         "disclosures": {
             "disclosures": ["공시"],
             "major_shareholder_ratio": "20%",
@@ -46,3 +46,6 @@ def test_stock_formatter_includes_stock_name() -> None:
     assert "공매도 거래량 비중 1.84%" in result
     assert "공매도 잔고 비율 미제공" in result
     assert "컨센서스 목표가 91,000원" in result
+    assert "매출 20조 | 영업이익 3.5조" in result
+    assert "외국인 당일 순매수 —" in result
+    assert "연결 예정" not in result
