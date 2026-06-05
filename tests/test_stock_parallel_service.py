@@ -15,11 +15,6 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     market_reports = [{"title": "시황 리포트", "url": "https://finance.naver.com/research/market_info_read.naver?nid=1&page=1", "broker": "증권사", "date": "26.06.04"}]
     column = {"is_available": False, "reason": "missing_api_key", "title": None, "body": None}
 
-    monkeypatch.setattr(
-        market_service,
-        "get_settings",
-        lambda: SimpleNamespace(dart_api_key="dart-key", kis_app_key="", kis_app_secret=""),
-    )
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: indices)
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: macro)
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: leaders)
@@ -67,11 +62,6 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
     def broken_sectors(use_mock_data=False):
         raise RuntimeError("sector failed")
 
-    monkeypatch.setattr(
-        market_service,
-        "get_settings",
-        lambda: SimpleNamespace(dart_api_key="", kis_app_key="", kis_app_secret=""),
-    )
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {"dow": "+1%"})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [{"name": "A"}])
@@ -93,20 +83,13 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
     assert "sector failed" in payload["collector_status"]["sectors"]["error"]
 
 
-def test_market_parallel_primes_kis_and_applies_overlay_after_derivatives(monkeypatch) -> None:
-    calls: list[str] = []
+def test_market_parallel_keeps_derivatives_without_unsupported_kis_overlay(monkeypatch) -> None:
     derivatives = {
         "futures_foreign_net": None,
         "futures_institution_net": -1,
         "program_total": 4,
     }
 
-    monkeypatch.setattr(
-        market_service,
-        "get_settings",
-        lambda: SimpleNamespace(dart_api_key="", kis_app_key="kis-key", kis_app_secret="kis-secret"),
-    )
-    monkeypatch.setattr(market_service, "get_token", lambda app_key, app_secret: calls.append("token") or "token")
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [])
@@ -116,22 +99,13 @@ def test_market_parallel_primes_kis_and_applies_overlay_after_derivatives(monkey
     monkeypatch.setattr(market_service, "get_market_event_lists", lambda target_date, use_mock_data=False: {"new_highs": []})
     monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: [])
     monkeypatch.setattr(market_service, "get_market_reports", lambda use_mock_data=False: [])
-    monkeypatch.setattr(
-        market_service,
-        "get_futures_investor_flow",
-        lambda app_key, app_secret: calls.append("kis_futures") or {
-            "futures_foreign_net": 100,
-            "futures_institution_net": None,
-        },
-    )
     monkeypatch.setattr(market_service, "generate_market_column", lambda payload: {"is_available": False, "reason": "x"})
     monkeypatch.setattr(market_service, "format_market_briefing", lambda payload: "market text")
     monkeypatch.setattr(market_service, "save_output_text", lambda prefix, target_date, text: "/tmp/market.txt")
 
     payload = market_service.generate_market_briefing("2026-06-03", use_mock_data=False)["payload"]
 
-    assert calls == ["token", "kis_futures"]
-    assert payload["derivatives"]["futures_foreign_net"] == 100
+    assert payload["derivatives"]["futures_foreign_net"] is None
     assert payload["derivatives"]["futures_institution_net"] == -1
 
 

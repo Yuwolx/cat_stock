@@ -44,7 +44,7 @@ def test_stock_formatter_includes_stock_name() -> None:
     assert "■ 최근 공시" in result
     assert "공시" in result
     assert "공매도 거래량 비중 1.84%" in result
-    assert "공매도 잔고 비율 미제공" in result
+    assert "공매도 잔고 비율" not in result
     assert "컨센서스 목표가 91,000원" in result
     assert "매출 20조 | 영업이익 3.5조" in result
     assert "외국인 당일 순매수 —" in result

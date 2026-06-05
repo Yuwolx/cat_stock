@@ -91,7 +91,6 @@ def format_stock_report(payload: dict) -> str:
                 f"외국인 당일 순매수 {_format_krw_flow(kis_flow.get('foreign_today_krw'))} (금액 기준)",
                 f"기관 당일 순매수 {_format_krw_flow(kis_flow.get('institution_today_krw'))} (금액 기준)",
                 f"공매도 거래량 비중 {display_value(short_selling.get('short_sale_volume_ratio'), '—')}",
-                f"공매도 잔고 비율 {display_value(short_selling.get('short_balance_ratio'), '—')}",
             ],
         ),
         section("재무 요약", financial_lines or ["데이터 없음"]),

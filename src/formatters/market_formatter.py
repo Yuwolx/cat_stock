@@ -72,17 +72,6 @@ def format_market_briefing(payload: dict) -> str:
     ]
     investor_by_market = investor_flows.get("by_market", {})
     program_by_market = derivatives.get("program_by_market", {})
-    foreign_futures = derivatives.get("futures_foreign_net")
-    institution_futures = derivatives.get("futures_institution_net")
-
-    futures_lines = []
-    if foreign_futures is None and institution_futures is None:
-        futures_lines.append("선물 수급: 미제공")
-    else:
-        if foreign_futures is not None:
-            futures_lines.append(f"외국인 코스피200 선물 순매수 {_fmt_number(foreign_futures, 0)}계약")
-        if institution_futures is not None:
-            futures_lines.append(f"기관 코스피200 선물 순매수 {_fmt_number(institution_futures, 0)}계약")
 
     program_lines = [
         f"프로그램 차익 합산 {format_krw_eok(derivatives['program_arbitrage'])}",
@@ -164,7 +153,7 @@ def format_market_briefing(payload: dict) -> str:
         ),
         section(
             "파생/프로그램 매매",
-            futures_lines + program_lines,
+            program_lines,
         ),
         section(
             "시장 이벤트",

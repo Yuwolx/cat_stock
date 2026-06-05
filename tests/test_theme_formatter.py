@@ -23,7 +23,8 @@ def test_theme_formatter_includes_theme_name() -> None:
     result = format_theme_report(payload)
 
     assert "[테마 공부 - HBM - 2026-05-29]" in result
-    assert "■ 글로벌 피어" in result
+    assert "■ 글로벌 피어" not in result
+    assert "NVIDIA" not in result
 
 
 def test_theme_formatter_hides_empty_per_pbr_values() -> None:

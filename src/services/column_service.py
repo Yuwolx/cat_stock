@@ -136,7 +136,6 @@ def generate_stock_column(payload: dict) -> dict:
 외국인 20일 누적: {kis.get('foreign_20d_krw') or flows.get('foreign_20d')}
 기관 20일 누적: {kis.get('institution_20d_krw') or flows.get('institution_20d')}
 공매도 거래량 비중: {short.get('short_sale_volume_ratio') or '?'}
-공매도 잔고 비율: {short.get('short_balance_ratio') or '?'}
 컨센서스 목표가: {short.get('consensus_target_price','?')}
 {fin_summary}
 재무 리스크: {risk_flags}

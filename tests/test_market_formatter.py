@@ -80,6 +80,8 @@ def test_market_formatter_includes_sections() -> None:
     assert "순매수 요약 외국인 -6.7조" in result
     assert "코스피 수급 외국인 90억" in result
     assert "코스피200 선물 근월물 코드 A01606" not in result
+    assert "코스피200 선물" not in result
+    assert "선물 수급" not in result
     assert "선물 수급 경고" not in result
     assert "프로그램 코스닥 차익 2억" in result
     assert "당일 상승 상위" not in result
