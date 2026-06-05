@@ -409,9 +409,16 @@ def build_coin_market_dashboard(payload: dict) -> str:
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+        max-width: 100%;
+        overflow-x: hidden;
+        touch-action: pan-y;
       }}
       .coin-chart-card {{
+        min-width: 0;
+        max-width: 100%;
         min-height: 138px;
+        overflow: hidden;
+        touch-action: pan-y;
         padding: 12px;
         border: 1px solid rgba(17, 19, 24, 0.09);
         border-radius: 8px;
@@ -442,6 +449,9 @@ def build_coin_market_dashboard(payload: dict) -> str:
       }}
       .coin-chart-bars {{
         height: 88px;
+        max-width: 100%;
+        overflow: hidden;
+        touch-action: pan-y;
         display: flex;
         align-items: flex-end;
         gap: 3px;
@@ -921,10 +931,17 @@ def build_coin_detail_dashboard(payload: dict) -> str:
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+        max-width: 100%;
+        overflow-x: hidden;
+        touch-action: pan-y;
         padding: 10px;
       }}
       .coin-chart-card {{
+        min-width: 0;
+        max-width: 100%;
         min-height: 138px;
+        overflow: hidden;
+        touch-action: pan-y;
         padding: 12px;
         border: 1px solid rgba(17, 19, 24, 0.09);
         border-radius: 8px;
@@ -954,6 +971,9 @@ def build_coin_detail_dashboard(payload: dict) -> str:
       }}
       .coin-chart-bars {{
         height: 88px;
+        max-width: 100%;
+        overflow: hidden;
+        touch-action: pan-y;
         display: flex;
         align-items: flex-end;
         gap: 3px;

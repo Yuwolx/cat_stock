@@ -89,3 +89,14 @@ def test_plotly_dashboards_use_cdn_without_heavy_inline_bundle() -> None:
         assert "https://cdn.plot.ly/" in html
         assert html.count("https://cdn.plot.ly/") == 1
         assert len(html) < 200_000
+
+
+def test_plotly_dashboards_disable_chart_interaction_for_mobile_scroll() -> None:
+    market_html = build_market_dashboard(_market_payload())
+    stock_html = build_stock_dashboard(_stock_payload())
+
+    for html in (market_html, stock_html):
+        assert '"staticPlot": true' in html
+        assert "touch-action:pan-y" in html
+        assert ".plotly-graph-div" in html
+        assert "overflow-x:hidden" in html

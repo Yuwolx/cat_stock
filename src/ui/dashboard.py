@@ -146,7 +146,7 @@ def _fig_html(fig: go.Figure, first: bool = False) -> str:
     return fig.to_html(
         include_plotlyjs="cdn" if first else False,
         full_html=False,
-        config={"displayModeBar": False, "responsive": True},
+        config={"displayModeBar": False, "responsive": True, "staticPlot": True},
     )
 
 

@@ -1,4 +1,4 @@
-from src.ui.coin_dashboard import build_coin_detail_dashboard, build_coin_sector_dashboard
+from src.ui.coin_dashboard import build_coin_detail_dashboard, build_coin_market_dashboard, build_coin_sector_dashboard
 
 
 def test_coin_detail_dashboard_hides_raw_none_values() -> None:
@@ -63,3 +63,46 @@ def test_coin_sector_dashboard_hides_raw_none_values() -> None:
 
     assert "None" not in html
     assert "—" in html
+
+
+def test_coin_chart_cards_prioritize_vertical_scroll() -> None:
+    market_html = build_coin_market_dashboard(
+        {
+            "target_datetime": "2026-06-05 09:00 KST",
+            "global_market": {},
+            "majors": {},
+            "fear_greed": {},
+            "upbit_leaders": [],
+            "top_coins": [],
+            "categories": [],
+            "charts": {
+                "bitcoin": {"prices": [[1, 100], [2, 110]]},
+                "ethereum": {"prices": [[1, 10], [2, 11]]},
+            },
+            "stablecoins": {},
+            "top_protocols": [],
+            "fees": {},
+        }
+    )
+    detail_html = build_coin_detail_dashboard(
+        {
+            "target_datetime": "2026-06-05 09:00 KST",
+            "basics": {"name": "Bitcoin", "symbol": "BTC", "market_cap_rank": 1},
+            "market": {},
+            "supply": {},
+            "upbit": {"is_listed": False},
+            "risk": {},
+            "project": {"categories": []},
+            "community": {},
+            "developer": {},
+            "price_chart": {"prices": [[1, 100], [2, 110]], "total_volumes": [[1, 10], [2, 20]]},
+            "defi_protocol": {},
+            "futures": {},
+            "risk_flags": [],
+        }
+    )
+
+    for html in (market_html, detail_html):
+        assert "touch-action: pan-y" in html
+        assert "max-width: 100%" in html
+        assert "overflow-x: hidden" in html
