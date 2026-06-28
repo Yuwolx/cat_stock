@@ -15,7 +15,7 @@ class _FakeExpander:
         self._calls.append(("expander_exit", self._label))
 
 
-def test_stock_output_renders_dashboard_before_text_expander(monkeypatch) -> None:
+def test_stock_output_renders_text_as_primary_result(monkeypatch) -> None:
     calls: list[tuple] = []
     fake_st = SimpleNamespace(
         session_state={"market_result": {"payload": {"ok": True}, "text": "TXT"}},
@@ -36,12 +36,7 @@ def test_stock_output_renders_dashboard_before_text_expander(monkeypatch) -> Non
         dashboard_builder=lambda payload: "DASHBOARD",
     )
 
-    assert calls == [
-        ("html", "DASHBOARD"),
-        ("expander_enter", "텍스트로 보기/복사"),
-        ("output", "TXT", "market"),
-        ("expander_exit", "텍스트로 보기/복사"),
-    ]
+    assert calls == [("output", "TXT", "market")]
 
 
 def test_stock_output_empty_state_keeps_placeholder(monkeypatch) -> None:
@@ -62,3 +57,27 @@ def test_stock_output_empty_state_keeps_placeholder(monkeypatch) -> None:
     )
 
     assert calls == [("output", "", "placeholder", "market")]
+
+
+def test_newspaper_button_opens_dedicated_view(monkeypatch) -> None:
+    calls: list[tuple] = []
+    fake_st = SimpleNamespace(
+        session_state={},
+        button=lambda label, **kwargs: calls.append(("button", label, kwargs.get("key"))) or True,
+        rerun=lambda: calls.append(("rerun",)),
+    )
+    monkeypatch.setattr(pages, "st", fake_st)
+
+    pages._render_newspaper_button(
+        title="시황 브리핑 신문",
+        html="<html>paper</html>",
+        file_name="market.html",
+        key="market_newspaper_view",
+    )
+
+    assert fake_st.session_state["newspaper_view"] == {
+        "title": "시황 브리핑 신문",
+        "html": "<html>paper</html>",
+        "file_name": "market.html",
+    }
+    assert calls == [("button", "신문 보기 →", "market_newspaper_view"), ("rerun",)]

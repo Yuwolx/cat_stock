@@ -440,7 +440,7 @@ def inject_app_styles() -> None:
           display: flex;
           flex-direction: column;
           width: 100%;
-          height: 460px;
+          height: clamp(440px, 64vh, 620px);
           min-width: 0;
           overflow: hidden;
           border: 1px solid rgba(17, 19, 24, 0.14);
@@ -570,6 +570,15 @@ def inject_app_styles() -> None:
           height: 1px;
           opacity: 0;
           pointer-events: none;
+        }
+
+        .newspaper-view-title {
+          margin: 8px 0 12px;
+          color: var(--ink);
+          font-family: Manrope, Inter, sans-serif;
+          font-size: clamp(18px, 2vw, 26px);
+          font-weight: 800;
+          letter-spacing: -0.03em;
         }
 
         /* 왼쪽 컨트롤 패널 섹션 라벨 */

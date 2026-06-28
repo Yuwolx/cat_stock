@@ -47,11 +47,48 @@ def _render_dashboard_with_text_output(
 ) -> None:
     result = st.session_state.get(result_key)
     if result:
-        st.html(dashboard_builder(result["payload"]))
-        with st.expander("텍스트로 보기/복사"):
-            _render_output_box(result["text"], placeholder, box_key=box_key)
+        _render_output_box(result["text"], placeholder, box_key=box_key)
     else:
         _render_output_box("", placeholder, box_key=box_key)
+
+
+def _open_newspaper_view(title: str, html: str, file_name: str) -> None:
+    st.session_state["newspaper_view"] = {
+        "title": title,
+        "html": html,
+        "file_name": file_name,
+    }
+
+
+def _render_newspaper_button(*, title: str, html: str, file_name: str, key: str) -> None:
+    if st.button("신문 보기 →", use_container_width=False, key=key):
+        _open_newspaper_view(title, html, file_name)
+        st.rerun()
+
+
+def _render_newspaper_view() -> None:
+    view = st.session_state.get("newspaper_view") or {}
+    html = str(view.get("html") or "")
+    title = str(view.get("title") or "신문 보기")
+    file_name = str(view.get("file_name") or "dashboard.html")
+
+    top_col, action_col = st.columns([1, 1], gap="small")
+    with top_col:
+        if st.button("← 텍스트 화면으로 돌아가기", key="newspaper_back"):
+            st.session_state.pop("newspaper_view", None)
+            st.rerun()
+    with action_col:
+        st.download_button(
+            "HTML 다운로드",
+            data=html,
+            file_name=file_name,
+            mime="text/html",
+            use_container_width=False,
+            key="newspaper_download",
+        )
+
+    st.markdown(f'<div class="newspaper-view-title">{escape(title)}</div>', unsafe_allow_html=True)
+    st.html(html)
 
 
 def render_app() -> None:
@@ -68,6 +105,10 @@ def render_app() -> None:
         layout="wide",
     )
     inject_app_styles()
+
+    if st.session_state.get("newspaper_view"):
+        _render_newspaper_view()
+        return
 
     mode = st.session_state.get("mode", "stock")
     render_shell_with_toggle(mode)
@@ -502,6 +543,13 @@ def _render_market_page() -> None:
             result = st.session_state["market_result"]
             _render_missing_data_warnings(result["payload"], "market")
             dash_html = build_market_dashboard(result["payload"])
+            market_dashboard_file = f"market_dashboard_{_compact_date(result['payload']['target_date'])}.html"
+            _render_newspaper_button(
+                title="시황 브리핑 신문",
+                html=dash_html,
+                file_name=market_dashboard_file,
+                key="market_newspaper_view",
+            )
             st.download_button(
                 "TXT 다운로드",
                 data=result["text"],
@@ -510,9 +558,9 @@ def _render_market_page() -> None:
                 use_container_width=False,
             )
             st.download_button(
-                "대시보드 HTML",
+                "신문 HTML",
                 data=dash_html,
-                file_name=f"market_dashboard_{_compact_date(result['payload']['target_date'])}.html",
+                file_name=market_dashboard_file,
                 mime="text/html",
                 use_container_width=False,
             )
@@ -567,6 +615,13 @@ def _render_stock_page() -> None:
             result = st.session_state["stock_result"]
             _render_missing_data_warnings(result["payload"], "stock")
             dash_html = build_stock_dashboard(result["payload"])
+            stock_dashboard_file = f"stock_{result['payload']['basics']['name']}_dashboard.html"
+            _render_newspaper_button(
+                title=f"{result['payload']['basics']['name']} 신문",
+                html=dash_html,
+                file_name=stock_dashboard_file,
+                key="stock_newspaper_view",
+            )
             st.download_button(
                 "TXT 다운로드",
                 data=result["text"],
@@ -575,9 +630,9 @@ def _render_stock_page() -> None:
                 use_container_width=False,
             )
             st.download_button(
-                "대시보드 HTML",
+                "신문 HTML",
                 data=dash_html,
-                file_name=f"stock_{result['payload']['basics']['name']}_dashboard.html",
+                file_name=stock_dashboard_file,
                 mime="text/html",
                 use_container_width=False,
             )
@@ -620,6 +675,13 @@ def _render_theme_page() -> None:
             result = st.session_state["theme_result"]
             _render_missing_data_warnings(result["payload"], "theme")
             dash_html = build_theme_dashboard(result["payload"])
+            theme_dashboard_file = f"theme_{result['payload']['theme_name']}_dashboard.html"
+            _render_newspaper_button(
+                title=f"{result['payload']['theme_name']} 테마 신문",
+                html=dash_html,
+                file_name=theme_dashboard_file,
+                key="theme_newspaper_view",
+            )
             st.download_button(
                 "TXT 다운로드",
                 data=result["text"],
@@ -628,9 +690,9 @@ def _render_theme_page() -> None:
                 use_container_width=False,
             )
             st.download_button(
-                "대시보드 HTML",
+                "신문 HTML",
                 data=dash_html,
-                file_name=f"theme_{result['payload']['theme_name']}_dashboard.html",
+                file_name=theme_dashboard_file,
                 mime="text/html",
                 use_container_width=False,
             )
