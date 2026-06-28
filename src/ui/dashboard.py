@@ -95,7 +95,7 @@ def _column_html(column: dict | None, date_str: str) -> str:
     return f"""<div class="section-tag">MARKET INSIGHT</div>
 <h2 class="column-title">{title}</h2>
 <div class="byline">CAT STOCK AI Analysis · {escape(date_str)}</div>
-<div class="col-body"><p class="drop-cap">{body}</p></div>"""
+<div class="col-body"><p class="column-copy">{body}</p></div>"""
 
 
 def _news_grid3_html(news_items: list[dict], fallback_news: list[str]) -> str:

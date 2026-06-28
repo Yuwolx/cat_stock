@@ -164,3 +164,18 @@ def test_column_html_renders_reason_message(reason: str, message: str) -> None:
     )
 
     assert message in html
+
+
+def test_column_html_uses_plain_body_without_drop_cap() -> None:
+    html = _column_html(
+        {
+            "is_available": True,
+            "reason": None,
+            "title": "반도체 수급 재점검",
+            "body": "삼성전자는 외국인 수급과 업황 회복 기대가 함께 움직이고 있다.",
+        },
+        "2026-06-28",
+    )
+
+    assert "column-copy" in html
+    assert "drop-cap" not in html
