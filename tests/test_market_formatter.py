@@ -92,3 +92,55 @@ def test_market_formatter_includes_sections() -> None:
     assert "■ 증권사 리포트" in result
     assert "Daily 신한생각 (신한투자증권, 26.06.04)" in result
     assert "  링크: https://finance.naver.com/research/market_info_read.naver?nid=36261&page=1" in result
+
+
+def test_market_formatter_shows_adjusted_trading_date_notice() -> None:
+    payload = {
+        "requested_date": "2026-06-28",
+        "target_date": "2026-06-26",
+        "resolved_date": "2026-06-26",
+        "requested_weekday": "일",
+        "resolved_weekday": "금",
+        "is_adjusted": True,
+        "is_mock_data": False,
+        "indices": {
+            "kospi": {"close": None, "change_pct": None, "turnover_trillion_krw": None, "change_points": None},
+            "kosdaq": {"close": None, "change_pct": None, "turnover_trillion_krw": None, "change_points": None},
+        },
+        "global_macro": {
+            "dow": None,
+            "sp500": None,
+            "nasdaq": None,
+            "usdkrw": None,
+            "us10y": None,
+            "wti": None,
+            "shanghai": None,
+            "shenzhen": None,
+        },
+        "leaders": [],
+        "investor_flows": {
+            "summary": {"foreign": None, "institution": None, "retail": None},
+            "by_market": {},
+            "foreign_top_buy": [],
+            "foreign_top_sell": [],
+            "institution_top_buy": [],
+            "institution_top_sell": [],
+        },
+        "derivatives": {
+            "program_arbitrage": None,
+            "program_non_arbitrage": None,
+            "program_by_market": {},
+        },
+        "market_events": {
+            "new_lows": [],
+            "upper_limit": [],
+            "after_hours_movers": [],
+            "rising_over_5pct": [],
+        },
+    }
+
+    result = format_market_briefing(payload)
+
+    assert "[시황 브리핑 데이터 - 2026-06-26]" in result
+    assert "요청일: 2026-06-28 일요일" in result
+    assert "분석 기준일: 2026-06-26 금요일" in result

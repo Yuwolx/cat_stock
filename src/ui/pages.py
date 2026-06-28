@@ -35,6 +35,7 @@ from src.ui.coin_dashboard import (
     build_coin_sector_dashboard,
     build_coin_sector_empty_state,
 )
+from src.utils.date_utils import resolve_stock_trading_date
 
 
 def _render_dashboard_with_text_output(
@@ -476,7 +477,8 @@ def _render_market_page() -> None:
     with ctrl_col:
         render_page_intro("Market Briefing", "오늘 시황을 한 번에 정리합니다")
         render_ctrl_section("분석 설정")
-        target_date = st.date_input("기준일", value=date.today(), format="YYYY-MM-DD")
+        default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
+        target_date = st.date_input("기준일", value=default_stock_date, format="YYYY-MM-DD")
         if st.button("브리핑 생성 →", type="primary", use_container_width=True, key="market_generate"):
             with st.spinner("정리하고 있습니다..."):
                 result = generate_market_briefing(target_date.isoformat())
@@ -531,9 +533,10 @@ def _render_stock_page() -> None:
         render_page_intro("Single Stock", "종목 하나를 빠르게 분석합니다")
         render_ctrl_section("분석 설정")
         stock_name = st.text_input("종목명", placeholder="예: 삼성전자")
+        default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
         report_dates = st.date_input(
             "리포트 기간",
-            value=(date.today(), date.today()),
+            value=(default_stock_date, default_stock_date),
             format="YYYY-MM-DD",
         )
         if st.button("분석 생성 →", type="primary", use_container_width=True, key="stock_generate"):

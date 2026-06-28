@@ -98,6 +98,22 @@ def _column_html(column: dict | None, date_str: str) -> str:
 <div class="col-body"><p class="column-copy">{body}</p></div>"""
 
 
+def _date_notice_html(payload: dict) -> str:
+    if not payload.get("is_adjusted"):
+        return ""
+    requested = escape(str(payload.get("requested_date") or ""))
+    requested_weekday = escape(str(payload.get("requested_weekday") or ""))
+    resolved = escape(str(payload.get("resolved_date") or payload.get("target_date") or ""))
+    resolved_weekday = escape(str(payload.get("resolved_weekday") or ""))
+    return (
+        '<div class="date-notice">'
+        f'<span>요청일 {requested} {requested_weekday}요일</span>'
+        f'<strong>분석 기준일 {resolved} {resolved_weekday}요일</strong>'
+        '<span>주말/휴장일은 최근 거래일 기준</span>'
+        '</div>'
+    )
+
+
 def _news_grid3_html(news_items: list[dict], fallback_news: list[str]) -> str:
     if not news_items and fallback_news:
         news_items = [{"title": t, "url": "", "source": "", "date": ""} for t in fallback_news]
@@ -342,6 +358,7 @@ def build_stock_dashboard(payload: dict) -> str:
 
     body = f"""
 {ticker_html}
+{_date_notice_html(payload)}
 <div class="main-grid">
   {main_col}
   {sidebar}
@@ -526,6 +543,7 @@ def build_market_dashboard(payload: dict) -> str:
 
     body = f"""
 <div class="ticker-bar">{ticker}</div>
+{_date_notice_html(payload)}
 <div class="main-grid">
   {main_col}
   {sidebar}

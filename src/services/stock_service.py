@@ -22,7 +22,7 @@ from src.config.settings import get_settings
 from src.formatters.stock_formatter import format_stock_report
 from src.services.column_service import generate_stock_column
 from src.utils.concurrency import future_result
-from src.utils.date_utils import today_kst_string
+from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
 
 
@@ -92,9 +92,16 @@ def generate_stock_report(
     use_mock_data: bool = False,
 ) -> dict:
     settings = get_settings()
-    target_date = today_kst_string()
-    from_date = (report_from or target_date).replace("-", "")
-    to_date = (report_to or report_from or target_date).replace("-", "")
+    date_context = resolve_stock_trading_date()
+    target_date = date_context["target_date"]
+    report_from_context = resolve_stock_trading_date(report_from) if report_from else date_context
+    report_to_context = resolve_stock_trading_date(report_to or report_from) if (report_to or report_from) else date_context
+    report_from_resolved = report_from_context["target_date"]
+    report_to_resolved = report_to_context["target_date"]
+    if report_from_resolved > report_to_resolved:
+        report_from_resolved = report_to_resolved
+    from_date = report_from_resolved.replace("-", "")
+    to_date = report_to_resolved.replace("-", "")
 
     try:
         code = get_stock_code(stock_name) if not use_mock_data else None
@@ -146,8 +153,11 @@ def generate_stock_report(
     naver_snapshot = future_result(futures, "naver_snapshot", _empty_short_selling())
 
     payload = {
-        "target_date": target_date,
-        "report_date": f"{report_from or target_date} ~ {report_to or report_from or target_date}",
+        **date_context,
+        "report_date": f"{report_from_resolved} ~ {report_to_resolved}",
+        "requested_report_date": (
+            f"{report_from or date_context['requested_date']} ~ {report_to or report_from or date_context['requested_date']}"
+        ),
         "is_mock_data": use_mock_data,
         "basics": future_result(futures, "basics", _empty_basics(stock_name)),
         "flows": future_result(futures, "flows", _empty_flows()),

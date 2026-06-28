@@ -3,6 +3,21 @@ from types import SimpleNamespace
 from src.services import market_service, stock_service
 
 
+def _date_context(day: str, *, requested: str = None, adjusted: bool = False) -> dict:
+    requested_day = requested or day
+    return {
+        "requested_date": requested_day,
+        "target_date": day,
+        "resolved_date": day,
+        "requested_weekday": "수",
+        "resolved_weekday": "수",
+        "is_adjusted": adjusted,
+        "basis": "test",
+        "resolved_label": f"{day} 수요일",
+        "date_note": f"분석 기준일: {day} 수요일",
+    }
+
+
 def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     indices = {"kospi": {"close": 1}, "kosdaq": {"close": 2}}
     macro = {"dow": "+1%"}
@@ -14,7 +29,9 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     news_items = [{"title": "시장 뉴스", "url": "https://n.news.naver.com/mnews/article/001/0000000001", "source": "연합", "date": "2026-06-03"}]
     market_reports = [{"title": "시황 리포트", "url": "https://finance.naver.com/research/market_info_read.naver?nid=1&page=1", "broker": "증권사", "date": "26.06.04"}]
     column = {"is_available": False, "reason": "missing_api_key", "title": None, "body": None}
+    date_context = _date_context("2026-06-03")
 
+    monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: date_context)
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: indices)
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: macro)
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: leaders)
@@ -31,7 +48,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     result = market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
 
     assert result["payload"] == {
-        "target_date": "2026-06-03",
+        **date_context,
         "is_mock_data": False,
         "indices": indices,
         "global_macro": macro,
@@ -62,6 +79,7 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
     def broken_sectors(use_mock_data=False):
         raise RuntimeError("sector failed")
 
+    monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context("2026-06-03"))
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {"dow": "+1%"})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [{"name": "A"}])
@@ -90,6 +108,7 @@ def test_market_parallel_keeps_derivatives_without_unsupported_kis_overlay(monke
         "program_total": 4,
     }
 
+    monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context("2026-06-03"))
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [])
@@ -109,6 +128,35 @@ def test_market_parallel_keeps_derivatives_without_unsupported_kis_overlay(monke
     assert payload["derivatives"]["futures_institution_net"] == -1
 
 
+def test_market_weekend_request_collects_resolved_trading_date(monkeypatch) -> None:
+    collected_dates: list[str] = []
+    date_context = _date_context("2026-06-26", requested="2026-06-28", adjusted=True)
+
+    def record_date(target_date, use_mock_data=False):
+        collected_dates.append(target_date)
+        return {"kospi": {}, "kosdaq": {}}
+
+    monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: date_context)
+    monkeypatch.setattr(market_service, "get_market_indices", record_date)
+    monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {})
+    monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "get_sector_changes", lambda use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "get_investor_flows", lambda target_date, use_mock_data=False: {"summary": {}})
+    monkeypatch.setattr(market_service, "get_derivatives_snapshot", lambda target_date, use_mock_data=False: {"program_total": 1})
+    monkeypatch.setattr(market_service, "get_market_event_lists", lambda target_date, use_mock_data=False: {"new_highs": []})
+    monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "get_market_reports", lambda use_mock_data=False: [])
+    monkeypatch.setattr(market_service, "generate_market_column", lambda payload: {"is_available": False, "reason": "x"})
+    monkeypatch.setattr(market_service, "format_market_briefing", lambda payload: "market text")
+    monkeypatch.setattr(market_service, "save_output_text", lambda prefix, target_date, text: f"/tmp/{target_date}.txt")
+
+    result = market_service.generate_market_briefing("2026-06-28", use_mock_data=False)
+
+    assert collected_dates == ["2026-06-26"]
+    assert result["payload"]["requested_date"] == "2026-06-28"
+    assert result["payload"]["target_date"] == "2026-06-26"
+
+
 def test_stock_parallel_payload_matches_sequential_result_and_primes_kis(monkeypatch) -> None:
     calls: list[str] = []
     basics = {"name": "삼성전자", "price": "70,000", "ma_position": {}}
@@ -125,7 +173,7 @@ def test_stock_parallel_payload_matches_sequential_result_and_primes_kis(monkeyp
         "get_settings",
         lambda: SimpleNamespace(dart_api_key="dart-key", kis_app_key="kis-key", kis_app_secret="kis-secret"),
     )
-    monkeypatch.setattr(stock_service, "today_kst_string", lambda: "2026-06-03")
+    monkeypatch.setattr(stock_service, "resolve_stock_trading_date", lambda value=None: _date_context(value or "2026-06-03"))
     monkeypatch.setattr(stock_service, "get_stock_code", lambda stock_name: calls.append("code") or "005930")
     monkeypatch.setattr(stock_service, "get_token", lambda app_key, app_secret: calls.append("token") or "token")
     monkeypatch.setattr(stock_service, "get_stock_basics", lambda stock_name, use_mock_data=False: basics)
@@ -161,8 +209,9 @@ def test_stock_parallel_payload_matches_sequential_result_and_primes_kis(monkeyp
     assert calls[:2] == ["code", "token"]
     assert calls.count("token") == 1
     assert result["payload"] == {
-        "target_date": "2026-06-03",
+        **_date_context("2026-06-03"),
         "report_date": "2026-06-01 ~ 2026-06-03",
+        "requested_report_date": "2026-06-01 ~ 2026-06-03",
         "is_mock_data": False,
         "basics": basics,
         "flows": flows,
@@ -190,7 +239,7 @@ def test_stock_parallel_collector_failure_keeps_remaining_payload(monkeypatch) -
         "get_settings",
         lambda: SimpleNamespace(dart_api_key="", kis_app_key="", kis_app_secret=""),
     )
-    monkeypatch.setattr(stock_service, "today_kst_string", lambda: "2026-06-03")
+    monkeypatch.setattr(stock_service, "resolve_stock_trading_date", lambda value=None: _date_context(value or "2026-06-03"))
     monkeypatch.setattr(stock_service, "get_stock_code", lambda stock_name: "005930")
     monkeypatch.setattr(stock_service, "get_stock_basics", lambda stock_name, use_mock_data=False: {"name": stock_name})
     monkeypatch.setattr(stock_service, "get_stock_investor_flows", lambda stock_name, use_mock_data=False: flows)

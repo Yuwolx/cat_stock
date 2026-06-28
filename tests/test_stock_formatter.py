@@ -49,3 +49,38 @@ def test_stock_formatter_includes_stock_name() -> None:
     assert "매출 20조 | 영업이익 3.5조" in result
     assert "외국인 당일 순매수 —" in result
     assert "연결 예정" not in result
+
+
+def test_stock_formatter_shows_adjusted_trading_date_notice() -> None:
+    payload = {
+        "requested_date": "2026-06-28",
+        "target_date": "2026-06-26",
+        "resolved_date": "2026-06-26",
+        "requested_weekday": "일",
+        "resolved_weekday": "금",
+        "is_adjusted": True,
+        "report_date": "2026-06-26 ~ 2026-06-26",
+        "is_mock_data": False,
+        "basics": {
+            "name": "삼성전자",
+            "price": None,
+            "change_pct": None,
+            "turnover_krw_billion": None,
+            "market_cap": None,
+            "year_high_low": None,
+            "per": None,
+            "pbr": None,
+            "roe": None,
+            "ma_position": {"ma5": None, "ma20": None, "ma60": None},
+        },
+        "flows": {"foreign_20d": None, "institution_20d": None, "news": []},
+        "financials": [],
+        "disclosures": {"disclosures": [], "major_shareholder_ratio": None, "risk_flags": []},
+        "short_selling": {"short_sale_volume_ratio": None, "consensus_target_price": None},
+    }
+
+    result = format_stock_report(payload)
+
+    assert "[개별 종목 분석 - 삼성전자 - 2026-06-26]" in result
+    assert "요청일: 2026-06-28 일요일" in result
+    assert "분석 기준일: 2026-06-26 금요일" in result

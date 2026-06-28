@@ -100,3 +100,20 @@ def test_plotly_dashboards_disable_chart_interaction_for_mobile_scroll() -> None
         assert "touch-action:pan-y" in html
         assert ".plotly-graph-div" in html
         assert "overflow-x:hidden" in html
+
+
+def test_dashboard_shows_adjusted_trading_date_notice() -> None:
+    payload = {
+        **_market_payload(),
+        "requested_date": "2026-06-28",
+        "target_date": "2026-06-26",
+        "resolved_date": "2026-06-26",
+        "requested_weekday": "일",
+        "resolved_weekday": "금",
+        "is_adjusted": True,
+    }
+
+    html = build_market_dashboard(payload)
+
+    assert "요청일 2026-06-28 일요일" in html
+    assert "분석 기준일 2026-06-26 금요일" in html

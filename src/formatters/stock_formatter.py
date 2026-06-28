@@ -21,6 +21,16 @@ def _flow_basis(amount_value: object) -> str:
     return "금액 기준" if amount_value else "주 수 기준"
 
 
+def _date_context_lines(payload: dict) -> list[str]:
+    if not payload.get("is_adjusted"):
+        return []
+    return [
+        f"요청일: {payload.get('requested_date')} {payload.get('requested_weekday', '')}요일".strip(),
+        f"분석 기준일: {payload.get('resolved_date') or payload.get('target_date')} {payload.get('resolved_weekday', '')}요일",
+        "주말/휴장일에는 최근 거래일 기준 데이터로 보정합니다.",
+    ]
+
+
 def format_stock_report(payload: dict) -> str:
     basics = payload["basics"]
     flows = payload["flows"]
@@ -53,6 +63,7 @@ def format_stock_report(payload: dict) -> str:
 
     sections = [
         f"[개별 종목 분석 - {basics['name']} - {payload['target_date']}]",
+        "\n".join(_date_context_lines(payload)),
         "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
         section(
             "기본 정보",

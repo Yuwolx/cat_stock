@@ -16,6 +16,8 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .t-name{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.55;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
 .t-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;letter-spacing:-.01em;}
 .t-val.up{color:#ff6b6b;}.t-val.dn{color:#51cf66;}.t-val.na{color:rgba(244,240,230,.4);}
+.date-notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #d8d0c0;background:#fffaf0;color:#4b4236;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.5;padding:8px 10px;margin:-6px 0 16px;}
+.date-notice strong{color:#1a1a1a;font-weight:700;}
 
 /* ── MAIN GRID ── */
 .main-grid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;margin-bottom:0;max-width:100%;overflow-x:hidden;}

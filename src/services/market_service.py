@@ -17,6 +17,7 @@ from src.collectors.market.naver_market_collector import (
 )
 from src.formatters.market_formatter import format_market_briefing
 from src.services.column_service import generate_market_column
+from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
 
 
@@ -91,15 +92,17 @@ def _resolve_collector(futures: dict[str, object], key: str, default: object) ->
 
 
 def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> dict:
+    date_context = resolve_stock_trading_date(target_date)
+    data_date = date_context["target_date"]
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
-            "indices": executor.submit(get_market_indices, target_date, use_mock_data=use_mock_data),
-            "global_macro": executor.submit(get_global_macro_snapshot, target_date, use_mock_data=use_mock_data),
-            "leaders": executor.submit(get_trading_value_leaders, target_date, use_mock_data=use_mock_data),
+            "indices": executor.submit(get_market_indices, data_date, use_mock_data=use_mock_data),
+            "global_macro": executor.submit(get_global_macro_snapshot, data_date, use_mock_data=use_mock_data),
+            "leaders": executor.submit(get_trading_value_leaders, data_date, use_mock_data=use_mock_data),
             "sectors": executor.submit(get_sector_changes, use_mock_data=use_mock_data),
-            "investor_flows": executor.submit(get_investor_flows, target_date, use_mock_data=use_mock_data),
-            "derivatives": executor.submit(get_derivatives_snapshot, target_date, use_mock_data=use_mock_data),
-            "market_events": executor.submit(get_market_event_lists, target_date, use_mock_data=use_mock_data),
+            "investor_flows": executor.submit(get_investor_flows, data_date, use_mock_data=use_mock_data),
+            "derivatives": executor.submit(get_derivatives_snapshot, data_date, use_mock_data=use_mock_data),
+            "market_events": executor.submit(get_market_event_lists, data_date, use_mock_data=use_mock_data),
             "news_items": executor.submit(get_market_news, use_mock_data=use_mock_data),
             "market_reports": executor.submit(get_market_reports, use_mock_data=use_mock_data),
         }
@@ -120,7 +123,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     market_reports, collector_status["market_reports"] = _resolve_collector(futures, "market_reports", [])
 
     payload = {
-        "target_date": target_date,
+        **date_context,
         "is_mock_data": use_mock_data,
         "indices": indices,
         "global_macro": global_macro,
@@ -135,5 +138,5 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     }
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)
-    path = save_output_text("market_briefing", target_date, text)
+    path = save_output_text("market_briefing", data_date, text)
     return {"text": text, "path": path, "payload": payload}

@@ -47,6 +47,16 @@ def _format_rising_stock(item: object) -> str:
     return f"{market_text}{name} | 현재가 {price} | 등락률 {change_text}"
 
 
+def _date_context_lines(payload: dict) -> list[str]:
+    if not payload.get("is_adjusted"):
+        return []
+    return [
+        f"요청일: {payload.get('requested_date')} {payload.get('requested_weekday', '')}요일".strip(),
+        f"분석 기준일: {payload.get('resolved_date') or payload.get('target_date')} {payload.get('resolved_weekday', '')}요일",
+        "주말/휴장일에는 최근 거래일 기준 데이터로 보정합니다.",
+    ]
+
+
 def format_market_briefing(payload: dict) -> str:
     indices = payload["indices"]
     global_macro = payload["global_macro"]
@@ -169,6 +179,7 @@ def format_market_briefing(payload: dict) -> str:
     ]
 
     chunks = [header]
+    chunks.extend(_date_context_lines(payload))
     if mock_notice:
         chunks.append(mock_notice)
     chunks.extend(sections)
