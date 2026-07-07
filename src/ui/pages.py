@@ -512,6 +512,92 @@ def _render_coin_study_note_page() -> None:
             box_key="coin-study-note",
         )
 
+    _render_hypothesis_scoreboard()
+
+
+def _format_snapshot_value(value: object) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, (int, float)):
+        if abs(value) >= 1_000_000_000:
+            return f"{value / 1_000_000_000:,.1f}B"
+        if abs(value) >= 1_000:
+            return f"{value:,.0f}"
+        return f"{value:,.2f}"
+    return str(value)
+
+
+def _render_hypothesis_scoreboard() -> None:
+    """가설 채점판 — 기록 시점 스냅샷과 현재 데이터를 대조해 스스로 판정한다."""
+    from src.services.coin_study_note_service import collect_market_snapshot
+    from src.utils.hypothesis_store import VERDICT_LABELS, list_hypotheses, set_verdict, verdict_stats
+
+    hypotheses = list_hypotheses(limit=20)
+
+    render_ctrl_section("가설 채점판")
+    if not hypotheses:
+        render_note(
+            "가설이 담긴 노트를 만들면 그 순간의 시장 스냅샷과 함께 여기에 기록됩니다. "
+            "며칠 뒤 다시 열어 시장이 채점하게 해보세요.",
+            tone="info",
+        )
+        return
+
+    stats = verdict_stats()
+    pending = stats["total"] - stats["judged"]
+    st.markdown(
+        f'<p class="cat-section__copy">기록 {stats["total"]}건 · 판정 대기 {pending}건 — '
+        f'맞음 {stats["right"]} · 부분 {stats["partial"]} · 틀림 {stats["wrong"]} · 반증됨 {stats["invalidated"]}</p>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button("지금 시장 데이터로 대조", key="hypothesis_refresh_now"):
+        with st.spinner("현재 시장 스냅샷을 가져오는 중..."):
+            st.session_state["hypothesis_now_snapshot"] = collect_market_snapshot()
+    now_snapshot = st.session_state.get("hypothesis_now_snapshot") or {}
+
+    for item in hypotheses:
+        note = item["note"]
+        created = str(item["created_at"])[:16].replace("T", " ")
+        subject = note.get("coin") or note.get("sector") or note.get("regime") or "시장"
+        verdict_label = VERDICT_LABELS.get(item["verdict"], "판정 대기")
+        with st.expander(f"[{verdict_label}] {created} · {subject} — {str(note.get('hypothesis') or '')[:40]}"):
+            st.markdown(
+                f"**가설** — {escape(str(note.get('hypothesis') or '—'))}<br>"
+                f"**반증 조건** — {escape(str(note.get('invalidating_condition') or '—'))}",
+                unsafe_allow_html=True,
+            )
+            snapshot = item["snapshot"]
+            if snapshot:
+                rows = "".join(
+                    f"<tr><td>{escape(key)}</td>"
+                    f"<td style='text-align:right'>{escape(_format_snapshot_value(value))}</td>"
+                    f"<td style='text-align:right'>{escape(_format_snapshot_value(now_snapshot.get(key))) if now_snapshot else '—'}</td></tr>"
+                    for key, value in snapshot.items()
+                )
+                st.markdown(
+                    "<table style='width:100%;font-size:12px;border-collapse:collapse'>"
+                    "<thead><tr><th style='text-align:left'>지표</th>"
+                    "<th style='text-align:right'>기록 시점</th><th style='text-align:right'>지금</th></tr></thead>"
+                    f"<tbody>{rows}</tbody></table>",
+                    unsafe_allow_html=True,
+                )
+                if not now_snapshot:
+                    st.caption("'지금 시장 데이터로 대조'를 누르면 오른쪽 열이 채워집니다.")
+            else:
+                st.caption("기록 시점 스냅샷이 없습니다 (수집 실패).")
+
+            if item["verdict"] is None:
+                cols = st.columns(4)
+                for col, (verdict_key, label) in zip(cols, VERDICT_LABELS.items()):
+                    with col:
+                        if st.button(label, key=f"verdict_{item['id']}_{verdict_key}", use_container_width=True):
+                            set_verdict(item["id"], verdict_key)
+                            st.rerun()
+            else:
+                judged_at = str(item.get("verdict_at") or "")[:10]
+                st.caption(f"판정: {verdict_label} ({judged_at})")
+
 
 def _render_market_page() -> None:
     ctrl_col, out_col = st.columns([4, 6], gap="large")

@@ -37,4 +37,14 @@ def format_coin_study_note(payload: dict) -> str:
             ],
         ),
     ]
+
+    snapshot = payload.get("snapshot") or {}
+    if snapshot:
+        chunks.append(
+            section(
+                "기록 시점 시장 스냅샷",
+                [f"{key}: {_display(value)}" for key, value in snapshot.items()],
+            )
+        )
+
     return "\n\n".join(chunks).strip()
