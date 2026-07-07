@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.utils.data_status import data_status_section, stock_missing_items
 from src.utils.text_utils import display_value, format_krw_amount, format_krw_eok, format_list, section
 
 
@@ -65,6 +66,7 @@ def format_stock_report(payload: dict) -> str:
         f"[개별 종목 분석 - {basics['name']} - {payload['target_date']}]",
         "\n".join(_date_context_lines(payload)),
         "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else "",
+        data_status_section(stock_missing_items(payload)) or "",
         section(
             "기본 정보",
             [

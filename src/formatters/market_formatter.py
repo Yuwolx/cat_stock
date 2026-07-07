@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.utils.data_status import data_status_section, market_missing_items
 from src.utils.news_formatting import format_news_item
 from src.utils.text_utils import display_value, format_krw_amount, format_krw_eok, format_list, format_number, section
 
@@ -182,5 +183,8 @@ def format_market_briefing(payload: dict) -> str:
     chunks.extend(_date_context_lines(payload))
     if mock_notice:
         chunks.append(mock_notice)
+    status_section = data_status_section(market_missing_items(payload))
+    if status_section:
+        chunks.append(status_section)
     chunks.extend(sections)
     return "\n\n".join(chunks).strip()

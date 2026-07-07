@@ -33,7 +33,7 @@ def test_market_missing_data_warning_uses_collector_status(monkeypatch) -> None:
         "market",
     )
 
-    assert messages == ["수집 실패 항목: 글로벌 매크로 빈 결과 · 테마/그룹 등락 오류"]
+    assert messages == ["수집 실패 항목: 글로벌 매크로 (빈 결과) · 테마/그룹 등락 (수집 오류)"]
 
 
 def test_stock_missing_data_warning_keeps_disclosures(monkeypatch) -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.utils.data_status import data_status_section, theme_missing_items
 from src.utils.text_utils import display_value, section
 
 
@@ -25,6 +26,7 @@ def format_theme_report(payload: dict) -> str:
 
     sections = [
         f"[테마 공부 - {payload['theme_name']} - {payload['target_date']}]",
+        data_status_section(theme_missing_items(payload)) or "",
         section("테마 관련 종목", stock_lines or ["데이터 없음"]),
         section("최근 관련 뉴스", news_bundle["news"] or ["데이터 없음"]),
         section("관련 공시", peer_bundle["disclosures"] or ["데이터 없음"]),

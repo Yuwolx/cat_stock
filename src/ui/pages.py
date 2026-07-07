@@ -35,6 +35,7 @@ from src.ui.coin_dashboard import (
     build_coin_sector_dashboard,
     build_coin_sector_empty_state,
 )
+from src.utils.data_status import market_missing_items, stock_missing_items, theme_missing_items
 from src.utils.date_utils import resolve_stock_trading_date
 
 
@@ -707,57 +708,15 @@ def _render_theme_page() -> None:
 
 
 def _render_missing_data_warnings(payload: dict, mode: str) -> None:
-    """수집 실패 항목을 경고로 표시"""
-    missing: list[str] = []
-
+    """수집 실패 항목을 경고로 표시 (프롬프트 텍스트와 같은 판정 사용)"""
     if mode == "market":
-        collector_status = payload.get("collector_status", {})
-        if collector_status:
-            labels = {
-                "indices": "한국 지수",
-                "global_macro": "글로벌 매크로",
-                "leaders": "거래대금 상위",
-                "sectors": "테마/그룹 등락",
-                "investor_flows": "외국인/기관 수급",
-                "derivatives": "파생/프로그램 매매",
-                "market_events": "시장 이벤트",
-                "news_items": "시장 뉴스",
-                "market_reports": "증권사 리포트",
-            }
-            for key, label in labels.items():
-                status = collector_status.get(key, {})
-                if status.get("status") == "error":
-                    missing.append(f"{label} 오류")
-                elif status.get("status") == "empty":
-                    missing.append(f"{label} 빈 결과")
-        else:
-            inv = payload.get("investor_flows", {})
-            if not inv.get("foreign_top_buy") and not inv.get("institution_top_buy"):
-                missing.append("외국인/기관 수급 상위 종목")
-            macro = payload.get("global_macro", {})
-            if all(v is None for v in macro.values()):
-                missing.append("글로벌 매크로")
-            if not payload.get("sectors"):
-                missing.append("테마/그룹 등락")
-
+        missing = market_missing_items(payload)
     elif mode == "stock":
-        basics = payload.get("basics", {})
-        if not basics.get("price"):
-            missing.append("기본 시세 (종목명 확인 필요)")
-        flows = payload.get("flows", {})
-        if not flows.get("foreign_20d") and not flows.get("institution_20d"):
-            missing.append("외국인/기관 수급")
-        disc = payload.get("disclosures", {})
-        if not disc.get("disclosures"):
-            missing.append("DART 공시 (API 키 확인 필요)")
-        if not payload.get("financials"):
-            missing.append("재무 요약 (API 키 확인 필요)")
-
+        missing = stock_missing_items(payload)
     elif mode == "theme":
-        if not payload.get("stocks"):
-            missing.append("테마 관련 종목 (테마명 재확인)")
-        if not payload.get("news_bundle", {}).get("news"):
-            missing.append("관련 뉴스")
+        missing = theme_missing_items(payload)
+    else:
+        missing = []
 
     if missing:
         render_note("수집 실패 항목: " + " · ".join(missing), tone="warn")
