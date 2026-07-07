@@ -42,6 +42,8 @@ def test_market_briefing_is_cached_within_ttl(monkeypatch) -> None:
 def test_market_briefing_cache_is_per_date(monkeypatch) -> None:
     calls: list[str] = []
     _patch_market_collectors(monkeypatch, calls)
+    # 날짜별 캐시 검증이므로 resolve가 요청일을 그대로 반영해야 한다
+    monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context(target_date))
 
     market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
     count_after_first = len(calls)

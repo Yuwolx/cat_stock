@@ -24,6 +24,7 @@ from src.services.column_service import generate_stock_column
 from src.utils.concurrency import future_result
 from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
+from src.utils.report_store import is_finalized_date, load_payload, save_payload
 from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
 
 
@@ -110,6 +111,16 @@ def generate_stock_report(
     from_date = report_from_resolved.replace("-", "")
     to_date = report_to_resolved.replace("-", "")
 
+    # 이미 끝난 거래일(주말·휴일 요청 등)은 저장된 payload로 즉시 서빙
+    store_key = f"{stock_name}|{report_from_resolved}~{report_to_resolved}"
+    if not use_mock_data and is_finalized_date(target_date):
+        stored = load_payload("stock", store_key, target_date)
+        if stored is not None:
+            payload = {**stored, **date_context}
+            text = format_stock_report(payload)
+            path = save_output_text(f"stock_{stock_name}", target_date, text)
+            return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})
+
     try:
         code = get_stock_code(stock_name) if not use_mock_data else None
     except Exception:
@@ -185,4 +196,6 @@ def generate_stock_report(
     payload["column"] = generate_stock_column(payload)
     text = format_stock_report(payload)
     path = save_output_text(f"stock_{stock_name}", target_date, text)
+    if not use_mock_data and is_finalized_date(target_date):
+        save_payload("stock", store_key, target_date, payload)
     return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})

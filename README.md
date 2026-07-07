@@ -15,6 +15,7 @@
   - 종목/시황 대시보드 HTML은 Plotly CDN을 사용하므로 열람 시 인터넷 연결이 필요합니다.
 - AI 칼럼 생성 (OpenAI API 키가 있을 때)
 - CAT COIN 모드 스위처 (로고 클릭 전환 / 공부용 대시보드)
+- 과거 거래일 브리핑 SQLite 저장 — 한 번 생성한 지난 날짜는 재크롤링 없이 즉시 서빙
 - Railway 배포 완료
 
 ## 현재 연결된 실데이터
@@ -85,6 +86,18 @@ streamlit run app.py
 main 브랜치에 push하면 자동 배포됩니다.
 
 - 운영 주소: https://catstock-production.up.railway.app
+
+### 과거 브리핑 저장 유지 (볼륨)
+
+과거 거래일 리포트는 `OUTPUT_DIR`의 `cat_stock.db`(SQLite)에 저장됩니다.
+Railway 컨테이너 디스크는 재배포 때 초기화되므로, 저장분을 유지하려면
+서비스에 **볼륨을 마운트**해야 합니다:
+
+1. Railway 대시보드 → cat_stock 서비스 → 우클릭(또는 Settings) → **Attach Volume**
+2. Mount path: `/app/output`
+3. 환경 변수 `OUTPUT_DIR=/app/output` 설정 (기본값 `output`은 상대 경로라 마운트 경로와 다를 수 있음)
+
+볼륨 없이도 동작은 하며, 재배포 시점에 저장분만 사라집니다.
 
 ## 참고 문서
 

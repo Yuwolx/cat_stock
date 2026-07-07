@@ -19,6 +19,7 @@ from src.formatters.market_formatter import format_market_briefing
 from src.services.column_service import generate_market_column
 from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
+from src.utils.report_store import is_finalized_date, load_payload, save_payload
 from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
 
 
@@ -100,6 +101,16 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
 
     date_context = resolve_stock_trading_date(target_date)
     data_date = date_context["target_date"]
+
+    # 이미 끝난 거래일은 저장된 payload로 즉시 서빙 (날짜 맥락만 요청자 기준으로 갱신)
+    if not use_mock_data and is_finalized_date(data_date):
+        stored = load_payload("market", "briefing", data_date)
+        if stored is not None:
+            payload = {**stored, **date_context}
+            text = format_market_briefing(payload)
+            path = save_output_text("market_briefing", data_date, text)
+            return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})
+
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
             "indices": executor.submit(get_market_indices, data_date, use_mock_data=use_mock_data),
@@ -148,4 +159,6 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)
     path = save_output_text("market_briefing", data_date, text)
+    if not use_mock_data and is_finalized_date(data_date):
+        save_payload("market", "briefing", data_date, payload)
     return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})
