@@ -71,11 +71,13 @@ def test_newspaper_button_opens_dedicated_view(monkeypatch) -> None:
         html="<html>paper</html>",
         file_name="market.html",
         key="market_newspaper_view",
+        source="market",
     )
 
     assert fake_st.session_state["newspaper_view"] == {
         "title": "시황 브리핑 신문",
         "html": "<html>paper</html>",
         "file_name": "market.html",
+        "source": "market",
     }
     assert calls == [("button", "오늘의 신문", "market_newspaper_view"), ("rerun",)]

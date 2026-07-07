@@ -94,8 +94,10 @@ def generate_stock_report(
     report_to: str | None = None,
     use_mock_data: bool = False,
 ) -> dict:
+    from src.services.market_service import _cache_ttl_seconds
+
     cache_key = ("stock_report", stock_name, report_from, report_to, use_mock_data)
-    cached = get_ttl_cache(cache_key)
+    cached = get_ttl_cache(cache_key, ttl_seconds=_cache_ttl_seconds())
     if cached is not None:
         return cached
 

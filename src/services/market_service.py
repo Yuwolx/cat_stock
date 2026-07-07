@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from src.collectors.market.global_collector import get_global_macro_snapshot, get_korean_index_trend
 from src.collectors.market.krx_collector import (
@@ -92,6 +92,19 @@ def _now_kst() -> datetime:
     return datetime.now(KST)
 
 
+def _cache_ttl_seconds() -> int:
+    """장마감 후(16시~자정)엔 데이터가 확정이므로 자정까지 캐시를 연장한다.
+
+    5분마다 확정 데이터를 재크롤링하고 AI 칼럼을 다시 생성하는 낭비를 막고,
+    같은 저녁 사용자들이 동일한 브리핑을 보게 한다.
+    """
+    now = _now_kst()
+    if now.hour >= 16:
+        midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return max(300, int((midnight - now).total_seconds()))
+    return 300
+
+
 def _is_storable(collector_status: dict) -> bool:
     """모든 수집기가 정상일 때만 영구 저장 — 실패분을 박제하면 자연 치유가 없다."""
     return bool(collector_status) and all(
@@ -112,7 +125,7 @@ def _resolve_collector(futures: dict[str, object], key: str, default: object) ->
 
 def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> dict:
     cache_key = ("market_briefing", target_date, use_mock_data)
-    cached = get_ttl_cache(cache_key)
+    cached = get_ttl_cache(cache_key, ttl_seconds=_cache_ttl_seconds())
     if cached is not None:
         return cached
 

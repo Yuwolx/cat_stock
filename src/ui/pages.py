@@ -58,18 +58,28 @@ def _render_dashboard_with_text_output(
         _render_output_box("", placeholder, box_key=box_key)
 
 
-def _open_newspaper_view(title: str, html: str, file_name: str) -> None:
+def _open_newspaper_view(title: str, html: str, file_name: str, source: str) -> None:
     st.session_state["newspaper_view"] = {
         "title": title,
         "html": html,
         "file_name": file_name,
+        "source": source,
     }
 
 
-def _render_newspaper_button(*, title: str, html: str, file_name: str, key: str) -> None:
+def _render_newspaper_button(*, title: str, html: str, file_name: str, key: str, source: str) -> None:
     if st.button("오늘의 신문", use_container_width=False, key=key):
-        _open_newspaper_view(title, html, file_name)
+        _open_newspaper_view(title, html, file_name, source)
         st.rerun()
+
+
+def _newspaper_takes_over(source: str) -> bool:
+    """이 탭에서 연 신문이 있으면 탭 콘텐츠 대신 신문을 렌더 (탭 구조를 유지해 선택 상태 보존)."""
+    view = st.session_state.get("newspaper_view") or {}
+    if view.get("source") != source:
+        return False
+    _render_newspaper_view()
+    return True
 
 
 def _render_newspaper_view() -> None:
@@ -142,10 +152,6 @@ def render_app() -> None:
         layout="wide",
     )
     inject_app_styles()
-
-    if st.session_state.get("newspaper_view"):
-        _render_newspaper_view()
-        return
 
     mode = st.session_state.get("mode", "stock")
     render_shell_with_toggle(mode)
@@ -646,7 +652,11 @@ def _render_hypothesis_scoreboard() -> None:
         created = str(item["created_at"])[:16].replace("T", " ")
         subject = note.get("coin") or note.get("sector") or note.get("regime") or "시장"
         verdict_label = VERDICT_LABELS.get(item["verdict"], "판정 대기")
-        with st.expander(f"[{verdict_label}] {created} · {subject} — {str(note.get('hypothesis') or '')[:40]}"):
+        open_key = f"hypothesis_open_{item['id']}"
+        with st.expander(
+            f"[{verdict_label}] {created} · {subject} — {str(note.get('hypothesis') or '')[:40]}",
+            expanded=st.session_state.pop(open_key, False),  # 판정 직후엔 열린 상태 유지
+        ):
             reason_line = (
                 f"<br>**이유** — {escape(str(note.get('reason')))}" if note.get("reason") else ""
             )
@@ -700,6 +710,7 @@ def _render_hypothesis_scoreboard() -> None:
                     with col:
                         if st.button(label, key=f"verdict_{item['id']}_{verdict_key}", use_container_width=True):
                             set_verdict(item["id"], verdict_key)
+                            st.session_state[open_key] = True
                             st.rerun()
             else:
                 judged_at = str(item.get("verdict_at") or "")[:10]
@@ -707,6 +718,9 @@ def _render_hypothesis_scoreboard() -> None:
 
 
 def _render_market_page() -> None:
+    if _newspaper_takes_over("market"):
+        return
+
     ctrl_col, out_col = st.columns([4, 6], gap="large")
 
     with ctrl_col:
@@ -749,6 +763,7 @@ def _render_market_page() -> None:
                 html=dash_html,
                 file_name=market_dashboard_file,
                 key="market_newspaper_view",
+                source="market",
             )
             st.download_button(
                 ".txt 저장",
@@ -774,6 +789,9 @@ def _render_market_page() -> None:
 
 
 def _render_stock_page() -> None:
+    if _newspaper_takes_over("stock"):
+        return
+
     ctrl_col, out_col = st.columns([4, 6], gap="large")
 
     with ctrl_col:
@@ -820,6 +838,7 @@ def _render_stock_page() -> None:
                 html=dash_html,
                 file_name=stock_dashboard_file,
                 key="stock_newspaper_view",
+                source="stock",
             )
             st.download_button(
                 ".txt 저장",
@@ -845,6 +864,9 @@ def _render_stock_page() -> None:
 
 
 def _render_theme_page() -> None:
+    if _newspaper_takes_over("theme"):
+        return
+
     ctrl_col, out_col = st.columns([4, 6], gap="large")
 
     with ctrl_col:
@@ -879,6 +901,7 @@ def _render_theme_page() -> None:
                 html=dash_html,
                 file_name=theme_dashboard_file,
                 key="theme_newspaper_view",
+                source="theme",
             )
             st.download_button(
                 ".txt 저장",
