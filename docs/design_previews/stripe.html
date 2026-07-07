@@ -91,7 +91,16 @@ body{background:var(--canvas);color:var(--ink-2);font-family:var(--sans);font-we
   </div>
 </div>
 
-<div class="content">
+<div class="content" style="display:block;margin-bottom:0;">
+  <div class="panel" style="margin-top:0;display:grid;grid-template-columns:auto repeat(3,1fr);gap:14px;align-items:center;">
+    <h2 style="margin:0;padding-right:8px;">투자자별 수급</h2>
+    <div class="flowcell"><div class="k">외국인</div><div class="v sell">−6,708억</div></div>
+    <div class="flowcell"><div class="k">기관</div><div class="v buy">+2,551억</div></div>
+    <div class="flowcell"><div class="k">개인</div><div class="v neutral">+4,043억</div></div>
+  </div>
+</div>
+
+<div class="content" style="margin-top:0;">
   <main>
     <div class="panel chart">
       <h2>지수 흐름</h2>
@@ -116,16 +125,6 @@ body{background:var(--canvas);color:var(--ink-2);font-family:var(--sans);font-we
         <div class="row"><div class="name">한화에어로</div><div class="track"><div class="fill" style="width:43%"></div></div><div class="val">1.8조</div></div>
         <div class="row"><div class="name">두산에너빌리티</div><div class="track"><div class="fill" style="width:29%"></div></div><div class="val">1.2조</div></div>
         <div class="row"><div class="name">현대차</div><div class="track"><div class="fill" style="width:21%"></div></div><div class="val">0.9조</div></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>투자자별 수급</h2>
-      <div class="sub">당일 순매수 · 억원</div>
-      <div class="flow3">
-        <div class="flowcell"><div class="k">외국인</div><div class="v sell">−6,708</div></div>
-        <div class="flowcell"><div class="k">기관</div><div class="v buy">+2,551</div></div>
-        <div class="flowcell"><div class="k">개인</div><div class="v neutral">+4,043</div></div>
       </div>
     </div>
 
