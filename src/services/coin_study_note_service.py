@@ -52,8 +52,14 @@ QUICK_DIRECTIONS = ["오를 것 같다", "내릴 것 같다", "횡보할 것 같
 
 
 def record_quick_prediction(target: str, direction: str, reason: str = "") -> int | None:
-    """초보용 한 줄 예측 — 클릭 몇 번으로 가설 루프에 들어오게 한다."""
+    """초보용 한 줄 예측 — 클릭 몇 번으로 가설 루프에 들어오게 한다.
+
+    스냅샷 없이는 나중에 채점이 불가능하므로, 수집 실패 시 저장하지 않고
+    None을 반환한다 (조용히 반쪽짜리 기록을 남기지 않는다).
+    """
     snapshot = collect_market_snapshot()
+    if not snapshot:
+        return None
     note = {
         "type": "quick",
         "coin": target,
@@ -123,9 +129,10 @@ def generate_coin_study_note(
     text = format_coin_study_note(payload)
     path = save_output_text("coin_study_note", target_date, text)
 
-    # 가설이 있는 노트만 채점판에 기록한다 (빈 노트는 훈련 대상이 아님)
+    # 가설이 있는 노트만 채점판에 기록한다 (빈 노트는 훈련 대상이 아님).
+    # 스냅샷이 없으면 나중에 대조가 불가능하므로 채점판에는 넣지 않는다.
     hypothesis_id = None
-    if (hypothesis or "").strip():
+    if (hypothesis or "").strip() and snapshot:
         hypothesis_id = save_hypothesis(payload, snapshot)
 
     return {"text": text, "path": path, "payload": payload, "hypothesis_id": hypothesis_id}

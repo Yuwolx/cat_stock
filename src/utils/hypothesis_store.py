@@ -16,7 +16,8 @@ from datetime import datetime
 from src.utils import report_store
 from src.utils.date_utils import KST
 
-_LOCK = threading.Lock()
+# 같은 SQLite 파일에 쓰는 report_store와 락을 공유해야 상호 배제가 성립한다
+_LOCK = report_store._LOCK
 
 VERDICT_LABELS = {
     "right": "맞음",
@@ -27,7 +28,7 @@ VERDICT_LABELS = {
 
 
 def _connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(report_store._db_path())
+    conn = sqlite3.connect(report_store._db_path(), timeout=10)
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS hypotheses (

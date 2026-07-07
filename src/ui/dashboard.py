@@ -75,6 +75,12 @@ def _opinion_tag(text: str) -> str:
     return ""
 
 
+def _safe_url(url: object) -> str:
+    """http(s) 링크만 허용 — 오염된 피드의 javascript:/data: 스킴 차단."""
+    text = str(url or "").strip()
+    return text if text.startswith(("http://", "https://")) else ""
+
+
 def _ticker_item(name: str, value: str, cls: str = "") -> str:
     val_cls = f"t-val {cls}" if cls else "t-val na"
     return f'<div class="ticker-item"><div class="t-name">{escape(name)}</div><div class="{val_cls}">{escape(str(value or "—"))}</div></div>'
@@ -122,11 +128,11 @@ def _news_grid3_html(news_items: list[dict], fallback_news: list[str]) -> str:
     cells = []
     for item in news_items:
         title = escape(str(item.get("title") or ""))
-        url = str(item.get("url") or "")
+        url = _safe_url(item.get("url"))
         source = escape(str(item.get("source") or item.get("broker") or ""))
         src_html = f'<div class="nc-source">{source}</div>' if source else ""
         title_html = (
-            f'<a href="{escape(url)}" target="_blank" rel="noopener">{title}</a>'
+            f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">{title}</a>'
             if url else title
         )
         cells.append(f'<div class="news-cell">{src_html}<div class="nc-title">{title_html}</div></div>')
@@ -145,7 +151,7 @@ def _news_cards_html(news_items: list[dict], fallback_news: list[str]) -> str:
         title = escape(str(item.get("title") or "제목 없음"))
         meta = " · ".join(str(part) for part in [item.get("source"), item.get("date")] if part)
         meta_html = f'<div class="news-meta">{escape(meta)}</div>' if meta else ""
-        url = str(item.get("url") or "")
+        url = _safe_url(item.get("url"))
         inner = f"{meta_html}<div class=\"news-title\">{title}</div>"
         if url:
             cards.append(
@@ -340,9 +346,9 @@ def build_stock_dashboard(payload: dict) -> str:
             date_r = escape(str(r.get("date") or ""))
             target = escape(str(r.get("target_price") or ""))
             opinion = str(r.get("opinion") or "")
-            pdf = str(r.get("pdf_url") or r.get("detail_url") or "")
+            pdf = _safe_url(r.get("pdf_url") or r.get("detail_url"))
             tag = _opinion_tag(opinion)
-            title_html = f'<a href="{escape(pdf)}" target="_blank">{title}</a>' if pdf else title
+            title_html = f'<a href="{escape(pdf)}" target="_blank" rel="noopener noreferrer">{title}</a>' if pdf else title
             meta = " · ".join(p for p in [broker, date_r] if p)
             target_html = f'<span class="rpt-meta up">{target}</span>' if target else ""
             rows.append(f'<div class="rpt-row"><div class="rpt-broker">{meta}</div>'

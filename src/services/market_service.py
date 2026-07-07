@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 from src.collectors.market.global_collector import get_global_macro_snapshot, get_korean_index_trend
 from src.collectors.market.krx_collector import (
@@ -17,7 +18,7 @@ from src.collectors.market.naver_market_collector import (
 )
 from src.formatters.market_formatter import format_market_briefing
 from src.services.column_service import generate_market_column
-from src.utils.date_utils import resolve_stock_trading_date
+from src.utils.date_utils import KST, resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
 from src.utils.report_store import is_finalized_date, load_payload, save_payload
 from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
@@ -82,6 +83,22 @@ def _is_empty_data(value: object) -> bool:
     return False
 
 
+# v2: 저장 조건(수집기 전부 정상 + 07시 이후) 도입 이전의 저장분은
+# '현재 데이터가 과거 날짜로 라벨링'됐을 수 있어 키를 올려 무효화한다
+_STORE_KEY = "briefing.v2"
+
+
+def _now_kst() -> datetime:
+    return datetime.now(KST)
+
+
+def _is_storable(collector_status: dict) -> bool:
+    """모든 수집기가 정상일 때만 영구 저장 — 실패분을 박제하면 자연 치유가 없다."""
+    return bool(collector_status) and all(
+        (status or {}).get("status") == "ok" for status in collector_status.values()
+    )
+
+
 def _resolve_collector(futures: dict[str, object], key: str, default: object) -> tuple[object, dict]:
     try:
         data = futures[key].result()
@@ -104,12 +121,25 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
 
     # 이미 끝난 거래일은 저장된 payload로 즉시 서빙 (날짜 맥락만 요청자 기준으로 갱신)
     if not use_mock_data and is_finalized_date(data_date):
-        stored = load_payload("market", "briefing", data_date)
+        stored = load_payload("market", _STORE_KEY, data_date)
         if stored is not None:
             payload = {**stored, **date_context}
             text = format_market_briefing(payload)
             path = save_output_text("market_briefing", data_date, text)
             return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})
+
+        # 저장본 없는 과거 날짜는 생성을 거절한다. 수집기는 항상 '지금'의
+        # 네이버/KRX 화면을 읽으므로, 지나간 날짜로 라벨을 붙이면 거짓 데이터가 된다.
+        latest_trading_date = resolve_stock_trading_date(None)["target_date"]
+        if data_date != latest_trading_date:
+            notice = (
+                f"[시황 브리핑 - {data_date}]\n\n"
+                "이 날짜의 저장된 브리핑이 없습니다.\n"
+                "수집기는 '지금'의 시장 화면을 읽기 때문에, 지나간 날짜를 나중에 생성하면 "
+                "오늘 데이터가 그 날짜로 잘못 저장됩니다. 그래서 만들지 않았어요.\n"
+                "브리핑은 그날그날 생성된 것이 자동으로 보관됩니다 — 앞으로 쌓이는 날짜들은 언제든 다시 볼 수 있어요."
+            )
+            return {"text": notice, "path": None, "payload": None}
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
@@ -159,6 +189,13 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)
     path = save_output_text("market_briefing", data_date, text)
-    if not use_mock_data and is_finalized_date(data_date):
-        save_payload("market", "briefing", data_date, payload)
+    # 저장 조건: 확정 거래일 + 모든 수집기 정상 + KST 07시 이후
+    # (자정~새벽엔 미국 세션이 진행 중이라 글로벌 지표가 미완성 값으로 박제될 수 있다)
+    if (
+        not use_mock_data
+        and is_finalized_date(data_date)
+        and _is_storable(collector_status)
+        and _now_kst().hour >= 7
+    ):
+        save_payload("market", _STORE_KEY, data_date, payload)
     return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})

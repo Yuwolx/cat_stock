@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import date
+from datetime import date, datetime
 from html import escape
 
 from pathlib import Path
@@ -42,7 +42,7 @@ from src.ui.coin_dashboard import (
     build_coin_sector_empty_state,
 )
 from src.utils.data_status import market_missing_items, stock_missing_items, theme_missing_items
-from src.utils.date_utils import resolve_stock_trading_date
+from src.utils.date_utils import KST, resolve_stock_trading_date
 
 
 def _render_dashboard_with_text_output(
@@ -50,7 +50,6 @@ def _render_dashboard_with_text_output(
     result_key: str,
     box_key: str,
     placeholder: str,
-    dashboard_builder,
 ) -> None:
     result = st.session_state.get(result_key)
     if result:
@@ -108,12 +107,20 @@ def _render_newspaper_view() -> None:
       if (!frame) { return; }
       frame.setAttribute("scrolling", "no");
       frame.style.width = "100%";
-      frame.style.height = document.documentElement.scrollHeight + "px";
+      // scrollHeight는 현재 iframe 높이 아래로 내려가지 않으므로(래칫),
+      // 잠깐 0으로 접어 실제 콘텐츠 높이를 잰 뒤 되돌린다.
+      frame.style.height = "0px";
+      var height = document.documentElement.scrollHeight;
+      frame.style.height = height + "px";
     } catch (error) {}
   }
   window.addEventListener("load", fit);
-  window.addEventListener("resize", fit);
-  [200, 700, 1500, 3000].forEach(function (ms) { setTimeout(fit, ms); });
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 150);
+  });
+  [200, 700, 1500, 3000, 6000].forEach(function (ms) { setTimeout(fit, ms); });
 })();
 </script>
 """
@@ -393,8 +400,10 @@ def _render_coin_detail_page() -> None:
                 with st.spinner("코인 구조를 불러오고 있습니다..."):
                     result = generate_coin_detail_report(query)
                 if result.get("error"):
+                    # 오류 note는 아래 세션 기반 블록에서 매 rerun 유지 렌더된다
                     st.session_state["coin_detail_error"] = result
-                    render_note(result["error"], tone="warn")
+                    # 이전 코인 결과가 새 검색의 결과로 오독되지 않게 치운다
+                    st.session_state.pop("coin_detail_result", None)
                 else:
                     st.session_state["coin_detail_result"] = result
                     st.session_state.pop("coin_detail_error", None)
@@ -414,6 +423,8 @@ def _render_coin_detail_page() -> None:
             )
 
         error = st.session_state.get("coin_detail_error")
+        if error:
+            render_note(str(error.get("error") or "코인을 찾지 못했어요."), tone="warn")
         if error and error.get("candidates"):
             with st.expander("검색 후보"):
                 render_list(
@@ -515,7 +526,10 @@ def _render_coin_study_note_page() -> None:
             if saved_id:
                 render_note("기록 완료! 아래 채점판에 저장됐어요. 며칠 뒤 다시 와서 채점해 보세요.", tone="info")
             else:
-                render_note("저장에 실패했어요. 잠시 후 다시 시도해 주세요.", tone="warn")
+                render_note(
+                    "지금 시장 데이터를 가져오지 못해 기록하지 않았어요 — 스냅샷 없이는 나중에 채점할 수 없거든요. 잠시 후 다시 시도해 주세요.",
+                    tone="warn",
+                )
 
         with st.expander("자세히 기록하기 (익숙해지면)"):
             regime = st.selectbox(
@@ -617,8 +631,15 @@ def _render_hypothesis_scoreboard() -> None:
 
     if st.button("지금 시장 데이터로 대조", key="hypothesis_refresh_now"):
         with st.spinner("현재 시장 스냅샷을 가져오는 중..."):
-            st.session_state["hypothesis_now_snapshot"] = collect_market_snapshot()
-    now_snapshot = st.session_state.get("hypothesis_now_snapshot") or {}
+            st.session_state["hypothesis_now_snapshot"] = {
+                "data": collect_market_snapshot(),
+                "at": datetime.now(KST).isoformat(),
+            }
+    now_state = st.session_state.get("hypothesis_now_snapshot") or {}
+    now_snapshot = now_state.get("data") or {}
+    now_at = str(now_state.get("at") or "")
+    if now_snapshot:
+        st.caption(f"대조 기준 시각: {now_at[:16].replace('T', ' ')} — 다시 누르면 갱신됩니다.")
 
     for item in hypotheses:
         note = item["note"]
@@ -640,12 +661,16 @@ def _render_hypothesis_scoreboard() -> None:
                 unsafe_allow_html=True,
             )
             snapshot = item["snapshot"]
-            if now_snapshot:
+            # 대조 스냅샷이 이 기록보다 오래됐으면 "기록 후 변화"가 아니므로 계산하지 않는다
+            now_is_fresh = bool(now_snapshot) and now_at >= str(item["created_at"])
+            if now_is_fresh:
                 quick_eval = evaluate_quick_prediction(note, snapshot, now_snapshot)
                 if quick_eval:
                     st.markdown(
                         f"**기록 후 변화: {quick_eval['change_pct']:+.1f}%** — {escape(quick_eval['comment'])}"
                     )
+            elif now_snapshot:
+                st.caption("이 기록은 대조 시점보다 나중에 만들어졌어요 — '지금 시장 데이터로 대조'를 다시 눌러 갱신하세요.")
             if snapshot:
                 rows = "".join(
                     f"<tr><td>{escape(key)}</td>"
@@ -687,7 +712,7 @@ def _render_market_page() -> None:
     with ctrl_col:
         render_page_intro("Market Briefing", "오늘 시황을 한 번에 정리합니다")
         render_ctrl_section("오늘의 브리핑")
-        default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
+        default_stock_date = date.fromisoformat(resolve_stock_trading_date(None)["target_date"])
         if st.button("오늘의 브리핑 만들기", type="primary", use_container_width=True, key="market_generate"):
             with st.spinner("만드는 중입니다..."):
                 result = generate_market_briefing(default_stock_date.isoformat())
@@ -714,7 +739,7 @@ def _render_market_page() -> None:
                 ]
             )
 
-        if "market_result" in st.session_state:
+        if "market_result" in st.session_state and st.session_state["market_result"].get("payload"):
             result = st.session_state["market_result"]
             _render_missing_data_warnings(result["payload"], "market")
             dash_html = build_market_dashboard(result["payload"])
@@ -745,7 +770,6 @@ def _render_market_page() -> None:
             result_key="market_result",
             box_key="market",
             placeholder="오늘의 브리핑 만들기를 누르면 여기에 오늘의 텍스트가 담깁니다.",
-            dashboard_builder=build_market_dashboard,
         )
 
 
@@ -756,7 +780,7 @@ def _render_stock_page() -> None:
         render_page_intro("Single Stock", "종목 하나를 빠르게 분석합니다")
         render_ctrl_section("분석 설정")
         stock_name = st.text_input("종목명", placeholder="예: 삼성전자")
-        default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
+        default_stock_date = date.fromisoformat(resolve_stock_trading_date(None)["target_date"])
         report_dates = st.date_input(
             "리포트 기간",
             value=(default_stock_date, default_stock_date),
@@ -817,7 +841,6 @@ def _render_stock_page() -> None:
             result_key="stock_result",
             box_key="stock",
             placeholder="종목명을 입력하고 종목 분석 만들기를 누르면 여기에 결과가 담깁니다.",
-            dashboard_builder=build_stock_dashboard,
         )
 
 
@@ -877,7 +900,6 @@ def _render_theme_page() -> None:
             result_key="theme_result",
             box_key="theme",
             placeholder="테마명을 입력하고 테마 자료 만들기를 누르면 여기에 결과가 담깁니다.",
-            dashboard_builder=build_theme_dashboard,
         )
 
 

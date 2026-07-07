@@ -116,6 +116,15 @@ def test_evaluate_quick_prediction_matches_direction() -> None:
     assert flat["comment"] == "아직 크게 움직이지 않았어요"
 
 
+def test_quick_prediction_refuses_to_save_without_snapshot(monkeypatch) -> None:
+    monkeypatch.setattr(coin_study_note_service, "collect_market_snapshot", lambda: {})
+
+    saved_id = coin_study_note_service.record_quick_prediction("비트코인", "오를 것 같다")
+
+    assert saved_id is None
+    assert list_hypotheses() == []
+
+
 def test_evaluate_quick_prediction_handles_missing_data() -> None:
     assert coin_study_note_service.evaluate_quick_prediction({}, {}, {}) is None
     note = {"metric_key": "BTC 가격 (USD)", "direction": "오를 것 같다"}

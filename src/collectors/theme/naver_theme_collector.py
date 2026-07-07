@@ -58,6 +58,10 @@ def _load_theme_directory() -> dict[str, str]:
             f"{NAVER_FINANCE_BASE_URL}/sise/theme.naver",
         )
         return directory
+    if len(directory) < 50:
+        # 중간 페이지가 빈 200 응답이면 부분 사전이 만들어질 수 있다 — 캐시하지 않고 다음 요청에 재시도
+        logger.warning("Naver theme directory looks partial (%d entries) — not caching", len(directory))
+        return directory
     return set_ttl_cache("naver_theme_directory", directory)
 
 

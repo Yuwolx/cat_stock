@@ -112,7 +112,7 @@ def generate_stock_report(
     to_date = report_to_resolved.replace("-", "")
 
     # 이미 끝난 거래일(주말·휴일 요청 등)은 저장된 payload로 즉시 서빙
-    store_key = f"{stock_name}|{report_from_resolved}~{report_to_resolved}"
+    store_key = f"v2|{stock_name}|{report_from_resolved}~{report_to_resolved}"
     if not use_mock_data and is_finalized_date(target_date):
         stored = load_payload("stock", store_key, target_date)
         if stored is not None:

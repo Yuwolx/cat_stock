@@ -33,7 +33,6 @@ def test_stock_output_renders_text_as_primary_result(monkeypatch) -> None:
         result_key="market_result",
         box_key="market",
         placeholder="placeholder",
-        dashboard_builder=lambda payload: "DASHBOARD",
     )
 
     assert calls == [("output", "TXT", "market")]
@@ -53,7 +52,6 @@ def test_stock_output_empty_state_keeps_placeholder(monkeypatch) -> None:
         result_key="market_result",
         box_key="market",
         placeholder="placeholder",
-        dashboard_builder=lambda payload: "DASHBOARD",
     )
 
     assert calls == [("output", "", "placeholder", "market")]

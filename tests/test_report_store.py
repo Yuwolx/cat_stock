@@ -21,23 +21,28 @@ def test_is_finalized_date_only_for_past_days() -> None:
 def test_save_and_load_roundtrip() -> None:
     payload = {"indices": {"kospi": {"close": 2640.0}}, "한글": "값"}
 
-    save_payload("market", "briefing", "2026-06-03", payload)
+    save_payload("market", market_service._STORE_KEY, "2026-06-03", payload)
 
-    assert load_payload("market", "briefing", "2026-06-03") == payload
-    assert load_payload("market", "briefing", "2026-06-04") is None
+    assert load_payload("market", market_service._STORE_KEY, "2026-06-03") == payload
+    assert load_payload("market", market_service._STORE_KEY, "2026-06-04") is None
     assert load_payload("stock", "briefing", "2026-06-03") is None
 
 
 def test_save_overwrites_same_key() -> None:
-    save_payload("market", "briefing", "2026-06-03", {"v": 1})
-    save_payload("market", "briefing", "2026-06-03", {"v": 2})
+    save_payload("market", market_service._STORE_KEY, "2026-06-03", {"v": 1})
+    save_payload("market", market_service._STORE_KEY, "2026-06-03", {"v": 2})
 
-    assert load_payload("market", "briefing", "2026-06-03") == {"v": 2}
+    assert load_payload("market", market_service._STORE_KEY, "2026-06-03") == {"v": 2}
+
+
+def _freeze_storable_hour(monkeypatch) -> None:
+    monkeypatch.setattr(market_service, "_now_kst", lambda: datetime(2026, 7, 7, 9, 0, tzinfo=KST))
 
 
 def test_market_briefing_served_from_store_after_restart(monkeypatch) -> None:
     calls: list[str] = []
     _patch_market_collectors(monkeypatch, calls)
+    _freeze_storable_hour(monkeypatch)
 
     first = market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
     count_after_first = len(calls)
@@ -55,6 +60,7 @@ def test_market_briefing_served_from_store_after_restart(monkeypatch) -> None:
 def test_stored_payload_gets_requesters_date_context(monkeypatch) -> None:
     calls: list[str] = []
     _patch_market_collectors(monkeypatch, calls)
+    _freeze_storable_hour(monkeypatch)
 
     market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
     clear_ttl_cache()
@@ -70,10 +76,41 @@ def test_stored_payload_gets_requesters_date_context(monkeypatch) -> None:
     assert result["payload"]["target_date"] == "2026-06-03"
 
 
+def test_past_date_without_archive_is_refused(monkeypatch) -> None:
+    """저장본 없는 과거 날짜는 생성하지 않는다 — 수집기는 '지금' 데이터만 주므로."""
+    calls: list[str] = []
+    _patch_market_collectors(monkeypatch, calls)
+    _freeze_storable_hour(monkeypatch)
+    # 요청일은 그대로 반영하되, 최신 거래일(None 요청)은 2026-06-05로
+    monkeypatch.setattr(
+        market_service,
+        "resolve_stock_trading_date",
+        lambda target_date: _date_context(target_date or "2026-06-05"),
+    )
+
+    result = market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
+
+    assert result["payload"] is None
+    assert "저장된 브리핑이 없습니다" in result["text"]
+    assert calls == []  # 수집기를 아예 부르지 않음
+
+
+def test_failed_collection_is_not_stored(monkeypatch) -> None:
+    """수집기 일부가 실패한 payload는 영구 저장하지 않는다 (다음 요청에서 재시도)."""
+    calls: list[str] = []
+    _patch_market_collectors(monkeypatch, calls)
+    _freeze_storable_hour(monkeypatch)
+    monkeypatch.setattr(market_service, "get_market_news", lambda use_mock_data=False: [])  # 빈 결과
+
+    market_service.generate_market_briefing("2026-06-03", use_mock_data=False)
+
+    assert load_payload("market", market_service._STORE_KEY, "2026-06-03") is None
+
+
 def test_mock_data_never_touches_store(monkeypatch) -> None:
     calls: list[str] = []
     _patch_market_collectors(monkeypatch, calls)
 
     market_service.generate_market_briefing("2026-06-03", use_mock_data=True)
 
-    assert load_payload("market", "briefing", "2026-06-03") is None
+    assert load_payload("market", market_service._STORE_KEY, "2026-06-03") is None

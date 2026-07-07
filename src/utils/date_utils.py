@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime, timedelta
-from functools import lru_cache
+
 from zoneinfo import ZoneInfo
 
 
@@ -46,9 +46,26 @@ def _previous_weekday(day: date) -> date:
     return resolved
 
 
-@lru_cache(maxsize=64)
+_business_day_cache: dict[date, date] = {}
+
+
 def _nearest_krx_business_day(day: date) -> date | None:
-    # 코스피 일별 시세의 마지막 행 날짜 = 가장 가까운 실제 거래일 (휴장일 반영)
+    """코스피 일별 시세의 마지막 행 날짜 = 가장 가까운 실제 거래일 (휴장일 반영).
+
+    캐시 정책:
+    - 실패(None)는 캐시하지 않는다 — 일시 오류를 박제하면 휴장일 보정이 꺼진다.
+    - 지난 날짜의 매핑은 불변이므로 영구 캐시.
+    - 오늘의 매핑은 개장 시점(09시)에 '어제→오늘'로 바뀌므로 5분 TTL만 준다.
+    """
+    from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
+
+    permanent = _business_day_cache.get(day)
+    if permanent is not None:
+        return permanent
+    cached = get_ttl_cache(("krx_business_day", day))
+    if cached is not None:
+        return cached
+
     try:
         from src.utils.naver_index_history import fetch_index_daily_rows
 
@@ -58,7 +75,17 @@ def _nearest_krx_business_day(day: date) -> date | None:
 
     trading_days = [_parse_krx_date(row[0]) for row in rows]
     valid = [parsed for parsed in trading_days if parsed and parsed <= day]
-    return max(valid) if valid else None
+    if not valid:
+        return None
+
+    resolved = max(valid)
+    if day < datetime.now(KST).date():
+        if len(_business_day_cache) > 64:
+            _business_day_cache.clear()
+        _business_day_cache[day] = resolved
+    else:
+        set_ttl_cache(("krx_business_day", day), resolved)
+    return resolved
 
 
 def weekday_ko(day: str | date) -> str:
@@ -69,8 +96,13 @@ def weekday_ko(day: str | date) -> str:
 def resolve_stock_trading_date(requested_date: str | date | None = None) -> dict:
     requested = _coerce_date(requested_date)
     if requested.weekday() >= 5:
-        resolved = _previous_weekday(requested)
-        basis = "weekday_fallback"
+        # 주말이라도 직전 금요일이 공휴일일 수 있으므로 KRX 캘린더로 재확인
+        base = _previous_weekday(requested)
+        resolved = _nearest_krx_business_day(base)
+        basis = "krx_calendar"
+        if resolved is None:
+            resolved = base
+            basis = "weekday_fallback"
     else:
         resolved = _nearest_krx_business_day(requested)
         basis = "krx_calendar"

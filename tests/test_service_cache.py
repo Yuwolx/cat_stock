@@ -10,17 +10,18 @@ def _patch_market_collectors(monkeypatch, calls: list[str]) -> None:
 
         return collector
 
+    # 모든 수집기를 '정상(비어있지 않음)'으로 — 저장 가능 조건을 만족시키기 위함
     monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context("2026-06-03"))
-    monkeypatch.setattr(market_service, "get_market_indices", counted("indices", {"kospi": {}}))
-    monkeypatch.setattr(market_service, "get_korean_index_trend", counted("index_trend", {}))
+    monkeypatch.setattr(market_service, "get_market_indices", counted("indices", {"kospi": {"close": 1.0}}))
+    monkeypatch.setattr(market_service, "get_korean_index_trend", counted("index_trend", {"kospi": {"closes": [1.0, 2.0]}}))
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", counted("macro", {"dow": "+1%"}))
     monkeypatch.setattr(market_service, "get_trading_value_leaders", counted("leaders", [{"name": "A"}]))
-    monkeypatch.setattr(market_service, "get_sector_changes", counted("sectors", []))
-    monkeypatch.setattr(market_service, "get_investor_flows", counted("flows", {"summary": {}}))
+    monkeypatch.setattr(market_service, "get_sector_changes", counted("sectors", [{"name": "반도체", "change_pct": 1.2}]))
+    monkeypatch.setattr(market_service, "get_investor_flows", counted("flows", {"summary": {"foreign": 1}}))
     monkeypatch.setattr(market_service, "get_derivatives_snapshot", counted("derivatives", {"program_total": 1}))
-    monkeypatch.setattr(market_service, "get_market_event_lists", counted("events", {"new_highs": []}))
-    monkeypatch.setattr(market_service, "get_market_news", counted("news", []))
-    monkeypatch.setattr(market_service, "get_market_reports", counted("reports", []))
+    monkeypatch.setattr(market_service, "get_market_event_lists", counted("events", {"new_highs": ["A"]}))
+    monkeypatch.setattr(market_service, "get_market_news", counted("news", [{"title": "뉴스"}]))
+    monkeypatch.setattr(market_service, "get_market_reports", counted("reports", [{"title": "리포트"}]))
     monkeypatch.setattr(market_service, "generate_market_column", lambda payload: {"is_available": False, "reason": "x"})
     monkeypatch.setattr(market_service, "format_market_briefing", lambda payload: "market text")
     monkeypatch.setattr(market_service, "save_output_text", lambda prefix, target_date, text: "/tmp/market.txt")

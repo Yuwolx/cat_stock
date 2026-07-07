@@ -21,19 +21,8 @@ _LOGO_B64 = _load_logo_b64()
 
 
 def inject_app_styles() -> None:
-    if _LOGO_B64:
-        st.markdown(
-            f"""<script>
-            (function() {{
-                var link = document.querySelector("link[rel*='icon']");
-                if (!link) {{ link = document.createElement('link'); document.head.appendChild(link); }}
-                link.type = 'image/png';
-                link.rel = 'shortcut icon';
-                link.href = 'data:image/png;base64,{_LOGO_B64}';
-            }})();
-            </script>""",
-            unsafe_allow_html=True,
-        )
+    # favicon은 st.set_page_config(page_icon=...)이 처리한다.
+    # (st.markdown은 script를 실행하지 않으므로 여기서 주입하는 방식은 동작하지 않음)
     st.markdown(
         """
         <style>
@@ -64,6 +53,12 @@ def inject_app_styles() -> None:
         [data-testid="stAppViewContainer"] {
           background: var(--bg);
           color: var(--ink);
+        }
+
+        /* 풀블리드 밴드의 100vw가 세로 스크롤바 폭만큼 넘치는 것을 클리핑 (Windows 가로 스크롤 방지) */
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"] {
+          overflow-x: hidden;
         }
 
         [data-testid="stHeader"],
@@ -206,7 +201,7 @@ def inject_app_styles() -> None:
           white-space: nowrap !important;
         }
 
-        [aria-selected="true"] {
+        [data-baseweb="tab"][aria-selected="true"] {
           color: var(--ink) !important;
         }
 
@@ -498,6 +493,7 @@ def inject_app_styles() -> None:
           display: flex;
           flex-direction: column;
           width: 100%;
+          height: clamp(320px, calc(100vh - 400px), 860px); /* dvh 미지원 브라우저 폴백 */
           height: clamp(320px, calc(100dvh - 400px), 860px);
           min-width: 0;
           overflow: hidden;
