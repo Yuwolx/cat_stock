@@ -97,8 +97,28 @@ def _render_newspaper_view() -> None:
 
     st.markdown(f'<div class="newspaper-view-title">{escape(title)}</div>', unsafe_allow_html=True)
     # st.html은 스크립트를 실행하지 않아 Plotly 차트가 빈 캔버스로 남는다.
-    # 스크립트가 실행되는 iframe(components.html)으로 렌더링한다.
-    components.html(html, height=1500, scrolling=True)
+    # 스크립트가 실행되는 iframe(components.html)으로 렌더링하되,
+    # iframe이 콘텐츠 전체 높이로 스스로 늘어나게 해서 이중 스크롤을 없앤다.
+    fit_script = """
+<script>
+(function () {
+  function fit() {
+    try {
+      var frame = window.frameElement;
+      if (!frame) { return; }
+      frame.setAttribute("scrolling", "no");
+      frame.style.width = "100%";
+      frame.style.height = document.documentElement.scrollHeight + "px";
+    } catch (error) {}
+  }
+  window.addEventListener("load", fit);
+  window.addEventListener("resize", fit);
+  [200, 700, 1500, 3000].forEach(function (ms) { setTimeout(fit, ms); });
+})();
+</script>
+"""
+    embedded = html.replace("</body>", fit_script + "</body>") if "</body>" in html else html + fit_script
+    components.html(embedded, height=900, scrolling=False)
 
 
 def render_app() -> None:
