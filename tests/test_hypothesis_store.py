@@ -80,6 +80,48 @@ def test_note_with_hypothesis_is_recorded(monkeypatch) -> None:
     assert items[0]["snapshot"] == {"공포탐욕지수": "40"}
 
 
+def test_quick_prediction_is_recorded_with_metric_key(monkeypatch) -> None:
+    monkeypatch.setattr(
+        coin_study_note_service,
+        "collect_market_snapshot",
+        lambda: {"BTC 가격 (USD)": 63000.0, "공포탐욕지수": "27"},
+    )
+
+    saved_id = coin_study_note_service.record_quick_prediction("비트코인", "오를 것 같다", "ETF 뉴스")
+
+    assert saved_id is not None
+    item = list_hypotheses()[0]
+    assert item["note"]["type"] == "quick"
+    assert item["note"]["coin"] == "비트코인"
+    assert item["note"]["metric_key"] == "BTC 가격 (USD)"
+    assert item["note"]["reason"] == "ETF 뉴스"
+
+
+def test_evaluate_quick_prediction_matches_direction() -> None:
+    note = {"metric_key": "BTC 가격 (USD)", "direction": "오를 것 같다"}
+    up = coin_study_note_service.evaluate_quick_prediction(
+        note, {"BTC 가격 (USD)": 60000.0}, {"BTC 가격 (USD)": 63000.0}
+    )
+    assert round(up["change_pct"], 1) == 5.0
+    assert up["comment"] == "예측과 일치해 보여요"
+
+    down = coin_study_note_service.evaluate_quick_prediction(
+        note, {"BTC 가격 (USD)": 60000.0}, {"BTC 가격 (USD)": 57000.0}
+    )
+    assert down["comment"] == "예측과 어긋나 보여요"
+
+    flat = coin_study_note_service.evaluate_quick_prediction(
+        note, {"BTC 가격 (USD)": 60000.0}, {"BTC 가격 (USD)": 60200.0}
+    )
+    assert flat["comment"] == "아직 크게 움직이지 않았어요"
+
+
+def test_evaluate_quick_prediction_handles_missing_data() -> None:
+    assert coin_study_note_service.evaluate_quick_prediction({}, {}, {}) is None
+    note = {"metric_key": "BTC 가격 (USD)", "direction": "오를 것 같다"}
+    assert coin_study_note_service.evaluate_quick_prediction(note, {}, {"BTC 가격 (USD)": 1.0}) is None
+
+
 def test_note_without_hypothesis_is_not_recorded(monkeypatch) -> None:
     monkeypatch.setattr(coin_study_note_service, "collect_market_snapshot", lambda: {})
     monkeypatch.setattr(coin_study_note_service, "save_output_text", lambda prefix, date, text: "/tmp/note.txt")

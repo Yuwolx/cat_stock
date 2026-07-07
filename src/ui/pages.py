@@ -14,7 +14,13 @@ from src.services.coin_detail_service import generate_coin_detail_report
 from src.services.market_service import generate_market_briefing
 from src.services.coin_market_service import generate_coin_market_report
 from src.services.coin_sector_service import generate_coin_sector_report
-from src.services.coin_study_note_service import generate_coin_study_note
+from src.services.coin_study_note_service import (
+    QUICK_DIRECTIONS,
+    QUICK_TARGETS,
+    evaluate_quick_prediction,
+    generate_coin_study_note,
+    record_quick_prediction,
+)
 from src.services.stock_service import generate_stock_report
 from src.services.theme_service import generate_theme_report
 from src.ui.components import (
@@ -463,36 +469,59 @@ def _render_coin_study_note_page() -> None:
     with ctrl_col:
         render_page_intro(
             "Study Note",
-            "오늘 배운 것을 내 말로 남깁니다",
-            "시장 국면, 강한 섹터, 본 코인, 반증 조건을 짧게 정리합니다.",
+            "예측을 남기면, 시장이 채점해 줍니다",
+            "코인을 몰라도 괜찮아요. 오늘 어떻게 될 것 같은지 한 줄만 남기면 "
+            "그 순간의 시장 데이터가 함께 저장되고, 며칠 뒤 맞았는지 확인할 수 있습니다.",
         )
-        regime = st.selectbox(
-            "시장 국면",
-            ["관망", "위험 선호", "위험 회피", "알트 확산", "한국 과열"],
-            key="coin_note_regime",
+        render_ctrl_section("오늘의 한 줄 예측")
+        quick_target = st.selectbox("무엇에 대한 예측인가요?", list(QUICK_TARGETS), key="quick_target")
+        quick_direction = st.radio(
+            "앞으로 어떻게 될 것 같아요?",
+            QUICK_DIRECTIONS,
+            key="quick_direction",
+            horizontal=True,
         )
-        market_reason = st.text_area("시장 국면 근거", placeholder="예: BTC는 상승했지만 도미넌스도 올라서 알트 확산은 아직 약함")
-        sector = st.text_input("가장 강한 섹터", placeholder="예: Layer 1, DeFi, Stablecoin")
-        sector_reason = st.text_area("섹터가 강해 보이는 이유", placeholder="예: 섹터 시총과 거래대금이 같이 증가했고 대표 코인들이 동반 상승")
-        coin = st.text_input("오늘 본 코인", placeholder="예: SOL")
-        hypothesis = st.text_area("상승/하락 원인 가설", placeholder="예: 거래대금 증가와 생태계 TVL 회복이 같이 보임")
-        invalidating_condition = st.text_area("반증 조건", placeholder="예: 거래대금이 줄고 펀딩비만 높아지면 단기 과열로 봄")
-        next_metric = st.text_input("다음에 확인할 지표", placeholder="예: TVL, fees, funding rate, unlock")
-        next_source = st.text_input("다음에 볼 자료", placeholder="예: 공식 docs, DefiLlama, 거래소 공지")
+        quick_reason = st.text_input(
+            "그렇게 생각한 이유 (선택)",
+            placeholder="예: 뉴스에 ETF 얘기가 많길래",
+            key="quick_reason",
+        )
+        if st.button("예측 남기기", type="primary", use_container_width=True, key="quick_predict"):
+            with st.spinner("시장 스냅샷과 함께 저장하는 중..."):
+                saved_id = record_quick_prediction(quick_target, quick_direction, quick_reason)
+            if saved_id:
+                render_note("기록 완료! 아래 채점판에 저장됐어요. 며칠 뒤 다시 와서 채점해 보세요.", tone="info")
+            else:
+                render_note("저장에 실패했어요. 잠시 후 다시 시도해 주세요.", tone="warn")
 
-        if st.button("노트 만들기", type="primary", use_container_width=False, key="coin_note_generate"):
-            result = generate_coin_study_note(
-                regime=regime,
-                market_reason=market_reason,
-                sector=sector,
-                sector_reason=sector_reason,
-                coin=coin,
-                hypothesis=hypothesis,
-                invalidating_condition=invalidating_condition,
-                next_metric=next_metric,
-                next_source=next_source,
+        with st.expander("자세히 기록하기 (익숙해지면)"):
+            regime = st.selectbox(
+                "시장 국면",
+                ["관망", "위험 선호", "위험 회피", "알트 확산", "한국 과열"],
+                key="coin_note_regime",
             )
-            st.session_state["coin_note_result"] = result
+            market_reason = st.text_area("시장 국면 근거", placeholder="예: BTC는 상승했지만 도미넌스도 올라서 알트 확산은 아직 약함")
+            sector = st.text_input("가장 강한 섹터", placeholder="예: Layer 1, DeFi, Stablecoin")
+            sector_reason = st.text_area("섹터가 강해 보이는 이유", placeholder="예: 섹터 시총과 거래대금이 같이 증가했고 대표 코인들이 동반 상승")
+            coin = st.text_input("오늘 본 코인", placeholder="예: SOL")
+            hypothesis = st.text_area("상승/하락 원인 가설", placeholder="예: 거래대금 증가와 생태계 TVL 회복이 같이 보임")
+            invalidating_condition = st.text_area("반증 조건", placeholder="예: 거래대금이 줄고 펀딩비만 높아지면 단기 과열로 봄")
+            next_metric = st.text_input("다음에 확인할 지표", placeholder="예: TVL, fees, funding rate, unlock")
+            next_source = st.text_input("다음에 볼 자료", placeholder="예: 공식 docs, DefiLlama, 거래소 공지")
+
+            if st.button("노트 만들기", type="primary", use_container_width=False, key="coin_note_generate"):
+                result = generate_coin_study_note(
+                    regime=regime,
+                    market_reason=market_reason,
+                    sector=sector,
+                    sector_reason=sector_reason,
+                    coin=coin,
+                    hypothesis=hypothesis,
+                    invalidating_condition=invalidating_condition,
+                    next_metric=next_metric,
+                    next_source=next_source,
+                )
+                st.session_state["coin_note_result"] = result
 
         if "coin_note_result" in st.session_state:
             result = st.session_state["coin_note_result"]
@@ -508,11 +537,23 @@ def _render_coin_study_note_page() -> None:
         result_text = st.session_state.get("coin_note_result", {}).get("text", "")
         _render_output_box(
             result_text,
-            "내용을 적고 노트 만들기 버튼을 누르면 시장 국면, 섹터, 코인 가설, 반증 조건이 정리됩니다.",
+            "한 줄 예측은 아래 채점판에 바로 기록됩니다.\n'자세히 기록하기'로 노트를 만들면 여기에 복사용 텍스트가 정리돼요.",
             box_key="coin-study-note",
         )
 
     _render_hypothesis_scoreboard()
+
+
+_METRIC_HELP = {
+    "BTC 가격 (USD)": "비트코인 1개의 달러 가격",
+    "BTC 24h (%)": "비트코인이 하루 동안 오르내린 정도",
+    "ETH 가격 (USD)": "이더리움 1개의 달러 가격",
+    "ETH 24h (%)": "이더리움이 하루 동안 오르내린 정도",
+    "BTC 도미넌스 (%)": "전체 코인 시장에서 비트코인 비중 — 오르면 돈이 비트코인으로 쏠리는 중",
+    "총 시총 (USD)": "모든 코인의 가치 합계 — 시장 전체의 크기",
+    "공포탐욕지수": "0(모두가 겁먹음)~100(모두가 욕심 부림) — 시장 분위기 온도계",
+    "김치 프리미엄 (%)": "한국 거래소가 해외보다 비싸게 거래되는 정도 — 높으면 국내 과열",
+}
 
 
 def _format_snapshot_value(value: object) -> str:
@@ -534,11 +575,11 @@ def _render_hypothesis_scoreboard() -> None:
 
     hypotheses = list_hypotheses(limit=20)
 
-    render_ctrl_section("가설 채점판")
+    render_ctrl_section("채점판 — 내 예측, 맞았을까?")
     if not hypotheses:
         render_note(
-            "가설이 담긴 노트를 만들면 그 순간의 시장 스냅샷과 함께 여기에 기록됩니다. "
-            "며칠 뒤 다시 열어 시장이 채점하게 해보세요.",
+            "예측을 남기면 그 순간의 시장 데이터와 함께 여기에 기록됩니다. "
+            "며칠 뒤 다시 와서 맞았는지 확인해 보세요 — 틀려도 기록하는 사람만 늘어요.",
             tone="info",
         )
         return
@@ -562,12 +603,26 @@ def _render_hypothesis_scoreboard() -> None:
         subject = note.get("coin") or note.get("sector") or note.get("regime") or "시장"
         verdict_label = VERDICT_LABELS.get(item["verdict"], "판정 대기")
         with st.expander(f"[{verdict_label}] {created} · {subject} — {str(note.get('hypothesis') or '')[:40]}"):
+            reason_line = (
+                f"<br>**이유** — {escape(str(note.get('reason')))}" if note.get("reason") else ""
+            )
+            invalidating_line = (
+                f"<br>**반증 조건** — {escape(str(note.get('invalidating_condition')))}"
+                if note.get("invalidating_condition")
+                else ""
+            )
             st.markdown(
-                f"**가설** — {escape(str(note.get('hypothesis') or '—'))}<br>"
-                f"**반증 조건** — {escape(str(note.get('invalidating_condition') or '—'))}",
+                f"**내 예측** — {escape(subject)}: {escape(str(note.get('hypothesis') or '—'))}"
+                f"{reason_line}{invalidating_line}",
                 unsafe_allow_html=True,
             )
             snapshot = item["snapshot"]
+            if now_snapshot:
+                quick_eval = evaluate_quick_prediction(note, snapshot, now_snapshot)
+                if quick_eval:
+                    st.markdown(
+                        f"**기록 후 변화: {quick_eval['change_pct']:+.1f}%** — {escape(quick_eval['comment'])}"
+                    )
             if snapshot:
                 rows = "".join(
                     f"<tr><td>{escape(key)}</td>"
@@ -584,6 +639,10 @@ def _render_hypothesis_scoreboard() -> None:
                 )
                 if not now_snapshot:
                     st.caption("'지금 시장 데이터로 대조'를 누르면 오른쪽 열이 채워집니다.")
+                shown_help = [f"· {key} — {_METRIC_HELP[key]}" for key in snapshot if key in _METRIC_HELP]
+                if shown_help:
+                    with st.popover("이 숫자들이 뭔가요?"):
+                        st.caption("\n\n".join(shown_help))
             else:
                 st.caption("기록 시점 스냅샷이 없습니다 (수집 실패).")
 
