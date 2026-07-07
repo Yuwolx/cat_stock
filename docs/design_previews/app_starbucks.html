@@ -4,99 +4,123 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CAT STOCK 앱 — Starbucks 스타일 미리보기</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* Starbucks-inspired: 크림+세라믹 캔버스, 딥 그린 브랜드 모먼트, 골드 리워드 세리머니. "아침 리추얼" */
+/* Starbucks-inspired, premium cut: 딥 그린 + 크림 + 골드 세리머니. 각진 지오메트리, 1px 헤어라인, 넉넉한 여백 */
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --green:#006241; --green-accent:#00754a; --green-house:#1e3932; --gold:#cba258;
-  --cream:#f2f0eb; --ceramic:#edebe9; --card:#fff; --ink:#1e3932; --body:#3d3d3d; --mute:#6b6b6b;
-  --hairline:#e0ddd6;
+  --green:#006241; --house:#1e3932; --gold:#cba258;
+  --cream:#f2f0eb; --ceramic:#edebe9; --card:#fff; --ink:#1e3932; --body:#3f3f3d; --mute:#77776f;
+  --hairline:#dfdcd4;
   --sans:"Inter","Noto Sans KR",sans-serif; --mono:"IBM Plex Mono",monospace;
+  --up:#b3261e; --dn:#00753a;
 }
-body{background:var(--cream);color:var(--body);font-family:var(--sans);padding-bottom:40px;}
-.band{background:var(--green-house);color:#fff;padding:0 22px;}
-.page{max-width:960px;margin:0 auto;}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 0;}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.02em;}
-.brand .cup{width:30px;height:30px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #fff;}
-.mode{display:flex;border:1px solid rgba(255,255,255,.4);border-radius:9999px;padding:2px;font-size:13px;font-weight:600;}
-.mode a{padding:6px 16px;border-radius:9999px;color:rgba(255,255,255,.8);text-decoration:none;}
-.mode a.on{background:#fff;color:var(--green-house);}
-.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 0 26px;flex-wrap:wrap;}
-.hero h1{font-size:clamp(22px,3.2vw,30px);font-weight:900;letter-spacing:-.01em;word-break:keep-all;line-height:1.25;}
-.hero .sub{font-size:13.5px;margin-top:8px;color:rgba(255,255,255,.75);}
-.idxcard{border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:12px 16px;min-width:230px;display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;}
-.idxcard .t{grid-column:1/-1;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px;}
-.idxcard .k{font-size:11px;color:rgba(255,255,255,.65);}
-.idxcard .v{font-family:var(--mono);font-size:15.5px;font-weight:600;font-variant-numeric:tabular-nums;}
-.idxcard .d{font-family:var(--mono);font-size:11px;color:#ff9d9d;}
-.deck{max-width:960px;margin:0 auto;padding:22px 22px 0;}
-.tabs{display:flex;gap:8px;}
-.tabs a{font-size:13.5px;font-weight:700;color:var(--mute);text-decoration:none;padding:8px 17px;border-radius:9999px;border:1px solid transparent;}
-.tabs a.on{color:var(--green-house);border-color:var(--green-house);background:var(--card);}
-.panel{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;padding-top:20px;}
-.ctrl{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:18px;height:fit-content;}
-.ctrl h2{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:6px;}
-.ctrl .desc{font-size:12.5px;color:var(--mute);margin-bottom:14px;line-height:1.6;}
-.gen{width:100%;background:var(--green);color:#fff;border:0;border-radius:9999px;padding:13px 0;font-size:14.5px;font-weight:700;cursor:pointer;}
-.gen:hover{background:var(--green-accent);}
+html,body{height:100%;}
+body{background:var(--cream);color:var(--body);font-family:var(--sans);display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+
+/* ── 헤더 밴드 ── */
+.band{background:var(--house);color:#fff;flex-shrink:0;}
+.band-inner{max-width:1040px;margin:0 auto;padding:0 28px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.14);}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand .mark{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:17px;border:1px solid rgba(255,255,255,.55);}
+.brand .name{font-weight:700;font-size:15px;letter-spacing:.22em;}
+.mode{display:flex;gap:22px;font-size:13px;font-weight:500;letter-spacing:.06em;}
+.mode a{color:rgba(255,255,255,.55);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;}
+.mode a.on{color:#fff;border-bottom-color:var(--gold);}
+.greet{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;padding:22px 0 24px;}
+.greet h1{font-size:clamp(19px,2.4vw,25px);font-weight:700;letter-spacing:-.01em;word-break:keep-all;line-height:1.35;}
+.greet .sub{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:7px;letter-spacing:.02em;}
+.idx{display:flex;gap:34px;flex-shrink:0;}
+.idx .item .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+.idx .item .v{font-family:var(--mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:5px;}
+.idx .item .d{font-family:var(--mono);font-size:11px;color:#e79a93;margin-top:2px;}
+
+/* ── 데크 ── */
+.deck{flex:1;min-height:0;max-width:1040px;width:100%;margin:0 auto;padding:22px 28px 0;display:flex;flex-direction:column;}
+.tabs{display:flex;gap:26px;border-bottom:1px solid var(--hairline);flex-shrink:0;}
+.tabs a{font-size:13.5px;font-weight:600;color:var(--mute);text-decoration:none;padding:2px 2px 11px;border-bottom:2px solid transparent;letter-spacing:.03em;}
+.tabs a.on{color:var(--house);border-bottom-color:var(--green);}
+.panel{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr);gap:22px;padding:20px 0 18px;}
+
+/* ── 컨트롤 ── */
+.ctrl{background:var(--card);border:1px solid var(--hairline);height:fit-content;}
+.ctrl .head{padding:16px 20px 0;}
+.ctrl .eyebrow{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+.ctrl h2{font-size:16px;font-weight:700;color:var(--ink);margin-top:6px;}
+.ctrl .desc{font-size:12.5px;color:var(--mute);line-height:1.65;margin-top:7px;padding-bottom:16px;border-bottom:1px solid var(--hairline);}
+.ctrl .bodyy{padding:16px 20px 18px;}
+.gen{width:100%;background:var(--green);color:#fff;border:0;border-radius:3px;padding:13px 0;font-size:13.5px;font-weight:700;letter-spacing:.06em;cursor:pointer;font-family:var(--sans);}
+.gen:hover{background:var(--house);}
 .ctrl details{margin-top:13px;}
-.ctrl summary{font-size:12.5px;font-weight:600;color:var(--green);cursor:pointer;}
+.ctrl summary{font-size:12px;font-weight:500;color:var(--mute);cursor:pointer;letter-spacing:.02em;}
+.ctrl summary:hover{color:var(--ink);}
 .ctrl details[open] summary{margin-bottom:9px;}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;}
-.field input{width:100%;background:var(--ceramic);border:1px solid var(--hairline);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink);font-family:var(--sans);}
-.out-card{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:16px 18px;}
-.out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.out-head .t{font-size:14.5px;font-weight:800;color:var(--ink);}
-.actions{display:flex;gap:7px;}
-.btn{font-size:13px;font-weight:700;border-radius:9999px;padding:8px 16px;cursor:pointer;border:1px solid var(--green-house);background:#fff;color:var(--green-house);}
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--mute);margin-bottom:6px;}
+.field input{width:100%;background:var(--cream);border:1px solid var(--hairline);border-radius:3px;padding:10px 12px;font-size:13.5px;color:var(--ink);font-family:var(--sans);}
+
+/* ── 출력 ── */
+.out-card{background:var(--card);border:1px solid var(--hairline);display:flex;flex-direction:column;min-height:0;}
+.out-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--hairline);flex-shrink:0;}
+.out-head .t{font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.04em;display:flex;align-items:center;gap:10px;}
+.out-head .t::before{content:"";width:22px;height:1px;background:var(--gold);}
+.actions{display:flex;gap:8px;}
+.btn{font-size:12px;font-weight:600;letter-spacing:.05em;border-radius:3px;padding:8px 15px;cursor:pointer;border:1px solid var(--house);background:transparent;color:var(--house);font-family:var(--sans);}
 .btn:hover{background:var(--ceramic);}
-.btn.primary{background:var(--green-house);color:#fff;}
-.output{background:var(--ceramic);border:1px solid var(--hairline);border-radius:6px;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:#33413c;max-height:calc(100vh - 430px);min-height:260px;overflow:auto;}
-.output .sec{color:var(--green-house);font-weight:600;}
-.footer{max-width:960px;margin:22px auto 0;padding:0 22px;font-size:12px;color:var(--mute);display:flex;justify-content:space-between;}
-@media(max-width:800px){.panel{grid-template-columns:1fr;}}
+.btn.primary{background:var(--house);color:#fff;}
+.btn.primary:hover{background:var(--green);border-color:var(--green);}
+.output{flex:1;min-height:0;overflow:auto;background:var(--card);padding:16px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:#3c4a45;}
+.output .sec{color:var(--green);font-weight:600;}
+.output::-webkit-scrollbar{width:5px;}
+.output::-webkit-scrollbar-thumb{background:var(--hairline);}
+
+/* ── 푸터 ── */
+.footer{flex-shrink:0;max-width:1040px;width:100%;margin:0 auto;padding:12px 28px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);display:flex;justify-content:space-between;}
+@media(max-width:820px){.panel{grid-template-columns:1fr;overflow:auto;}.idx{display:none;}body{overflow:auto;}}
 </style>
 </head>
 <body>
-<div class="band">
-  <div class="page">
-    <header class="topbar">
-      <div class="brand"><span class="cup">🐱</span> CAT STOCK</div>
+<header class="band">
+  <div class="band-inner">
+    <div class="topbar">
+      <div class="brand"><span class="mark">🐱</span><span class="name">CAT STOCK</span></div>
       <nav class="mode"><a href="#" class="on">주식</a><a href="#">코인</a></nav>
-    </header>
-    <div class="hero">
+    </div>
+    <div class="greet">
       <div>
-        <h1>좋은 아침이에요 ☕<br>오늘의 브리핑, 내려드릴까요?</h1>
-        <div class="sub">2026년 7월 7일 월요일 · 수집기 12/12 정상 · 아침 점검 통과</div>
+        <h1>좋은 아침입니다. 오늘의 브리핑이 준비되어 있어요.</h1>
+        <div class="sub">2026년 7월 7일 월요일 — 수집기 12/12 정상 · 아침 점검 통과</div>
       </div>
-      <div class="idxcard">
-        <div class="t">Market Now</div>
-        <div><div class="k">코스피</div><div class="v">7,708.82</div><div class="d">−1.87%</div></div>
-        <div><div class="k">코스닥</div><div class="v">845.10</div><div class="d">−0.23%</div></div>
+      <div class="idx">
+        <div class="item"><div class="k">KOSPI</div><div class="v">7,708.82</div><div class="d">−1.87%</div></div>
+        <div class="item"><div class="k">KOSDAQ</div><div class="v">845.10</div><div class="d">−0.23%</div></div>
       </div>
     </div>
   </div>
-</div>
+</header>
 
 <div class="deck">
   <nav class="tabs"><a href="#" class="on">시황 브리핑</a><a href="#">개별 종목</a><a href="#">테마 공부</a></nav>
 
   <div class="panel">
     <aside class="ctrl">
-      <h2>오늘의 메뉴</h2>
-      <div class="desc">시황 브리핑 (핫) — 코스피·수급·뉴스를 한 잔에. 추출 시간 약 9초.</div>
-      <button class="gen">오늘의 브리핑 내리기</button>
-      <details>
-        <summary>다른 날짜 보기</summary>
-        <div class="field"><label>분석 기준일</label><input value="2026-07-07"></div>
-      </details>
+      <div class="head">
+        <div class="eyebrow">Today's Briefing</div>
+        <h2>시황 브리핑</h2>
+        <div class="desc">코스피 · 수급 · 뉴스를 한 잔에. 추출 약 9초, 5분 내 재생성은 즉시.</div>
+      </div>
+      <div class="bodyy">
+        <button class="gen">오늘의 브리핑 내리기</button>
+        <details>
+          <summary>다른 날짜 보기</summary>
+          <div class="field"><label>분석 기준일</label><input value="2026-07-07"></div>
+        </details>
+      </div>
     </aside>
 
     <main class="out-card">
       <div class="out-head">
-        <span class="t">시황 브리핑 — 갓 내림 ☕</span>
+        <span class="t">시황 브리핑 — 생성 완료</span>
         <span class="actions"><button class="btn primary">복사</button><button class="btn">.txt 저장</button><button class="btn">오늘의 신문</button></span>
       </div>
       <div class="output">[시황 브리핑 데이터 - 2026-07-07]
@@ -123,11 +147,12 @@ body{background:var(--cream);color:var(--body);font-family:var(--sans);padding-b
 
 <span class="sec">■ 주요 뉴스</span>
 - 삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도 (이데일리)
-- LFP 수주 랠리에 이차전지 소재주 일제히 강세 (한국경제)</div>
+- LFP 수주 랠리에 이차전지 소재주 일제히 강세 (한국경제)
+- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)</div>
     </main>
   </div>
 </div>
 
-<footer class="footer"><span>CAT STOCK — 매일 아침의 리추얼</span><span>morning ritual style</span></footer>
+<footer class="footer"><span>Cat Stock — Daily Market Briefing</span><span>Est. 2026 · Seoul</span></footer>
 </body>
 </html>
