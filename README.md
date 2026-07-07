@@ -2,6 +2,8 @@
 
 한국 증시 데이터를 수집해서 ChatGPT / Gemini에 바로 붙여넣을 수 있는 분석용 텍스트를 만드는 웹앱입니다.
 
+**서비스 주소: https://catstock-production.up.railway.app**
+
 ## 현재 상태
 
 - 시황 브리핑 생성
@@ -81,6 +83,8 @@ streamlit run app.py
 
 `railway.json`이 포함되어 있어서 Railway에 바로 올릴 수 있습니다.  
 main 브랜치에 push하면 자동 배포됩니다.
+
+- 운영 주소: https://catstock-production.up.railway.app
 
 ## 참고 문서
 
