@@ -1,4 +1,5 @@
 # 작업 지시: AI 칼럼 생성 LLM을 Claude → OpenAI(GPT)로 전환
+> 상태: 완료 — 커밋 857c230 (AI 칼럼 OpenAI 전환)
 
 발행: 관리자 / 수행: 개발자
 브랜치: develop (main 직접 작업 금지)

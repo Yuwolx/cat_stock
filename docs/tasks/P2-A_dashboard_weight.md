@@ -1,4 +1,5 @@
 # 작업 지시: 대시보드 HTML 경량화 (plotly 4.8MB)
+> 상태: 완료 — 커밋 94a451a (Plotly 대시보드 HTML 경량화)
 
 발행: 관리자 / 수행: 개발자
 브랜치: develop (main 직접 작업 금지)
