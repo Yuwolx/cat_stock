@@ -20,6 +20,7 @@ def _date_context(day: str, *, requested: str = None, adjusted: bool = False) ->
 
 def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
     indices = {"kospi": {"close": 1}, "kosdaq": {"close": 2}}
+    index_trend = {"kospi": {"closes": [1.0, 2.0]}, "kosdaq": {"closes": [3.0, 4.0]}}
     macro = {"dow": "+1%"}
     leaders = [{"name": "A"}]
     sectors = [{"name": "반도체", "change_pct": 1.2}]
@@ -33,6 +34,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
 
     monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: date_context)
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: indices)
+    monkeypatch.setattr(market_service, "get_korean_index_trend", lambda target_date, use_mock_data=False: index_trend)
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: macro)
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: leaders)
     monkeypatch.setattr(market_service, "get_sector_changes", lambda use_mock_data=False: sectors)
@@ -51,6 +53,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
         **date_context,
         "is_mock_data": False,
         "indices": indices,
+        "index_trend": index_trend,
         "global_macro": macro,
         "leaders": leaders,
         "sectors": sectors,
@@ -61,6 +64,7 @@ def test_market_parallel_payload_matches_sequential_result(monkeypatch) -> None:
         "market_reports": market_reports,
         "collector_status": {
             "indices": {"status": "ok", "error": None},
+            "index_trend": {"status": "ok", "error": None},
             "global_macro": {"status": "ok", "error": None},
             "leaders": {"status": "ok", "error": None},
             "sectors": {"status": "ok", "error": None},
@@ -81,6 +85,7 @@ def test_market_parallel_collector_failure_keeps_remaining_payload(monkeypatch) 
 
     monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context("2026-06-03"))
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
+    monkeypatch.setattr(market_service, "get_korean_index_trend", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {"dow": "+1%"})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [{"name": "A"}])
     monkeypatch.setattr(market_service, "get_sector_changes", broken_sectors)
@@ -110,6 +115,7 @@ def test_market_parallel_keeps_derivatives_without_unsupported_kis_overlay(monke
 
     monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: _date_context("2026-06-03"))
     monkeypatch.setattr(market_service, "get_market_indices", lambda target_date, use_mock_data=False: {"kospi": {}})
+    monkeypatch.setattr(market_service, "get_korean_index_trend", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [])
     monkeypatch.setattr(market_service, "get_sector_changes", lambda use_mock_data=False: [])
@@ -138,6 +144,7 @@ def test_market_weekend_request_collects_resolved_trading_date(monkeypatch) -> N
 
     monkeypatch.setattr(market_service, "resolve_stock_trading_date", lambda target_date: date_context)
     monkeypatch.setattr(market_service, "get_market_indices", record_date)
+    monkeypatch.setattr(market_service, "get_korean_index_trend", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_global_macro_snapshot", lambda target_date, use_mock_data=False: {})
     monkeypatch.setattr(market_service, "get_trading_value_leaders", lambda target_date, use_mock_data=False: [])
     monkeypatch.setattr(market_service, "get_sector_changes", lambda use_mock_data=False: [])

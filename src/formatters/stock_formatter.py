@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from src.utils.data_status import data_status_section, stock_missing_items
 from src.utils.text_utils import display_value, format_krw_amount, format_krw_eok, format_list, section
+from src.utils.trend_utils import format_flow_trend_line, format_price_trend_line
 
 
 def _format_turnover(value: object) -> str:
@@ -41,6 +42,17 @@ def format_stock_report(payload: dict) -> str:
     kis_flow = payload.get("kis_flow", {})
     foreign_20d_krw = kis_flow.get("foreign_20d_krw")
     institution_20d_krw = kis_flow.get("institution_20d_krw")
+
+    daily_flows = flows.get("daily_flows") or {}
+    close_trend_line = format_price_trend_line("종가 흐름", daily_flows.get("close") or [], digits=0)
+    flow_trend_lines = [
+        line
+        for line in [
+            format_flow_trend_line("외국인 일별", daily_flows.get("foreign") or []),
+            format_flow_trend_line("기관 일별", daily_flows.get("institution") or []),
+        ]
+        if line
+    ]
 
     financial_lines = [
         (
@@ -84,6 +96,7 @@ def format_stock_report(payload: dict) -> str:
                     f"PBR {display_value(basics['pbr'])} | "
                     f"ROE {display_value(basics['roe'])}"
                 ),
+                *([close_trend_line] if close_trend_line else []),
             ],
         ),
         section(
@@ -103,6 +116,7 @@ def format_stock_report(payload: dict) -> str:
                 f"({_flow_basis(institution_20d_krw)})",
                 f"외국인 당일 순매수 {_format_krw_flow(kis_flow.get('foreign_today_krw'))} (금액 기준)",
                 f"기관 당일 순매수 {_format_krw_flow(kis_flow.get('institution_today_krw'))} (금액 기준)",
+                *flow_trend_lines,
                 f"공매도 거래량 비중 {display_value(short_selling.get('short_sale_volume_ratio'), '—')}",
             ],
         ),

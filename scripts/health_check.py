@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
 
-from src.collectors.market.global_collector import get_global_macro_snapshot
+from src.collectors.market.global_collector import get_global_macro_snapshot, get_korean_index_trend
 from src.collectors.market.krx_collector import (
     get_derivatives_snapshot,
     get_investor_flows,
@@ -69,6 +69,7 @@ def main() -> int:
         ("시황: 시장 뉴스 (네이버)", lambda: get_market_news(use_mock_data=False)),
         ("시황: 증권사 리포트 (네이버)", lambda: get_market_reports(use_mock_data=False)),
         ("시황: 글로벌 지표", lambda: get_global_macro_snapshot(target_date, use_mock_data=False)),
+        ("시황: 지수 흐름 (네이버)", lambda: get_korean_index_trend(target_date, use_mock_data=False)),
         (f"종목: 기본 정보 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_basics(CHECK_STOCK_NAME, use_mock_data=False)),
         (f"종목: 수급/뉴스 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_investor_flows(CHECK_STOCK_NAME, use_mock_data=False)),
     ]

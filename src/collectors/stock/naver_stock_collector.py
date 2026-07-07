@@ -483,6 +483,12 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
         return {
             "foreign_20d": "+1,245,000주",
             "institution_20d": "-342,000주",
+            "daily_flows": {
+                "dates": ["2026.05.23", "2026.05.26", "2026.05.27", "2026.05.28", "2026.05.29"],
+                "close": [76000.0, 76800.0, 77500.0, 78100.0, 78500.0],
+                "foreign": [-52000.0, 118000.0, 296000.0, 447000.0, 384000.0],
+                "institution": [21000.0, -64000.0, -98000.0, -120000.0, -81000.0],
+            },
             "news": [format_news_item(item) for item in news_items],
             "news_items": news_items,
             "naver_reports": [
@@ -493,17 +499,34 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
     row = _find_stock_row(stock_name)
     code = str(row["Code"]).zfill(6) if row is not None else get_stock_code(stock_name)
     if not code:
-        return {"foreign_20d": None, "institution_20d": None, "news": [], "news_items": [], "naver_reports": []}
+        return {
+            "foreign_20d": None,
+            "institution_20d": None,
+            "daily_flows": {},
+            "news": [],
+            "news_items": [],
+            "naver_reports": [],
+        }
 
     flow_df = _parse_investor_flow_table(code)
     foreign_sum = None
     institution_sum = None
+    daily_flows: dict[str, list] = {}
     if not flow_df.empty:
         flow_df = flow_df.dropna(subset=["date"]).head(20).copy()
         flow_df["foreign"] = pd.to_numeric(flow_df["foreign"], errors="coerce")
         flow_df["institution"] = pd.to_numeric(flow_df["institution"], errors="coerce")
         foreign_sum = flow_df["foreign"].sum(min_count=1)
         institution_sum = flow_df["institution"].sum(min_count=1)
+
+        flow_df["close"] = pd.to_numeric(flow_df["close"], errors="coerce")
+        ascending = flow_df.iloc[::-1]  # 네이버 표는 최근일이 먼저라 과거→최근으로 뒤집는다
+        daily_flows = {
+            "dates": [str(v) for v in ascending["date"].tolist()],
+            "close": [None if pd.isna(v) else float(v) for v in ascending["close"]],
+            "foreign": [None if pd.isna(v) else float(v) for v in ascending["foreign"]],
+            "institution": [None if pd.isna(v) else float(v) for v in ascending["institution"]],
+        }
 
     report_rows = [_enrich_report(item) for item in _parse_report_rows(code, limit=5)]
     naver_report_lines = []
@@ -516,6 +539,7 @@ def get_stock_investor_flows(stock_name: str, use_mock_data: bool = True) -> dic
     return {
         "foreign_20d": _format_signed_shares(foreign_sum),
         "institution_20d": _format_signed_shares(institution_sum),
+        "daily_flows": daily_flows,
         "news": [format_news_item(item) for item in news_items],
         "news_items": news_items,
         "naver_reports": naver_report_lines,

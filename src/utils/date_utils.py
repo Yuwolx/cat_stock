@@ -48,21 +48,17 @@ def _previous_weekday(day: date) -> date:
 
 @lru_cache(maxsize=64)
 def _nearest_krx_business_day(day: date) -> date | None:
-    previous_logging_disable = logging.root.manager.disable
+    # 코스피 일별 시세의 마지막 행 날짜 = 가장 가까운 실제 거래일 (휴장일 반영)
     try:
-        from pykrx import stock
+        from src.utils.naver_index_history import fetch_index_daily_rows
 
-        logging.disable(logging.CRITICAL)
-        krx_day = stock.get_nearest_business_day_in_a_week(day.strftime("%Y%m%d"), prev=True)
+        rows = fetch_index_daily_rows("KOSPI", day - timedelta(days=14), day)
     except Exception:
         return None
-    finally:
-        logging.disable(previous_logging_disable)
 
-    parsed = _parse_krx_date(krx_day)
-    if parsed and parsed <= day:
-        return parsed
-    return None
+    trading_days = [_parse_krx_date(row[0]) for row in rows]
+    valid = [parsed for parsed in trading_days if parsed and parsed <= day]
+    return max(valid) if valid else None
 
 
 def weekday_ko(day: str | date) -> str:

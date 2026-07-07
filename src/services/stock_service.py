@@ -48,6 +48,7 @@ def _empty_flows() -> dict:
     return {
         "foreign_20d": None,
         "institution_20d": None,
+        "daily_flows": {},
         "news": [],
         "news_items": [],
         "naver_reports": [],

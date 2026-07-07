@@ -4,6 +4,7 @@ from src.utils.text_utils import section
 
 MARKET_COLLECTOR_LABELS = {
     "indices": "한국 지수",
+    "index_trend": "지수 흐름",
     "global_macro": "글로벌 매크로",
     "leaders": "거래대금 상위",
     "sectors": "테마/그룹 등락",

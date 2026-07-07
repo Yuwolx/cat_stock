@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from src.utils.data_status import data_status_section, market_missing_items
 from src.utils.news_formatting import format_news_item
+from src.utils.trend_utils import format_price_trend_line
 from src.utils.text_utils import display_value, format_krw_amount, format_krw_eok, format_list, format_number, section
 
 
@@ -73,6 +74,16 @@ def format_market_briefing(payload: dict) -> str:
     header = f"[시황 브리핑 데이터 - {payload['target_date']}]"
     mock_notice = "현재는 더미 데이터가 포함되어 있습니다." if payload["is_mock_data"] else ""
 
+    index_trend = payload.get("index_trend") or {}
+    index_trend_lines = [
+        line
+        for line in [
+            format_price_trend_line("코스피", (index_trend.get("kospi") or {}).get("closes") or [], digits=2),
+            format_price_trend_line("코스닥", (index_trend.get("kosdaq") or {}).get("closes") or [], digits=2),
+        ]
+        if line
+    ]
+
     leader_lines = [
         (
             f"{item['name']} | 현재가 {display_value(item['price'])} | "
@@ -115,6 +126,7 @@ def format_market_briefing(payload: dict) -> str:
                     f"거래대금 {_fmt_krw_jo(indices['kosdaq']['turnover_trillion_krw'])} | "
                     f"전일대비 {_fmt_number(indices['kosdaq']['change_points'])}pt"
                 ),
+                *index_trend_lines,
             ],
         ),
         section(

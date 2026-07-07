@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
-from src.collectors.market.global_collector import get_global_macro_snapshot
+from src.collectors.market.global_collector import get_global_macro_snapshot, get_korean_index_trend
 from src.collectors.market.krx_collector import (
     get_derivatives_snapshot,
     get_investor_flows,
@@ -97,6 +97,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
             "indices": executor.submit(get_market_indices, data_date, use_mock_data=use_mock_data),
+            "index_trend": executor.submit(get_korean_index_trend, data_date, use_mock_data=use_mock_data),
             "global_macro": executor.submit(get_global_macro_snapshot, data_date, use_mock_data=use_mock_data),
             "leaders": executor.submit(get_trading_value_leaders, data_date, use_mock_data=use_mock_data),
             "sectors": executor.submit(get_sector_changes, use_mock_data=use_mock_data),
@@ -109,6 +110,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
 
     collector_status: dict[str, dict] = {}
     indices, collector_status["indices"] = _resolve_collector(futures, "indices", _empty_indices())
+    index_trend, collector_status["index_trend"] = _resolve_collector(futures, "index_trend", {})
     global_macro, collector_status["global_macro"] = _resolve_collector(futures, "global_macro", {})
     leaders, collector_status["leaders"] = _resolve_collector(futures, "leaders", [])
     sectors, collector_status["sectors"] = _resolve_collector(futures, "sectors", [])
@@ -126,6 +128,7 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
         **date_context,
         "is_mock_data": use_mock_data,
         "indices": indices,
+        "index_trend": index_trend,
         "global_macro": global_macro,
         "leaders": leaders,
         "sectors": sectors,

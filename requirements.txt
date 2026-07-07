@@ -6,6 +6,5 @@ yfinance==0.2.54
 python-dotenv==1.0.1
 pytest==8.3.5
 finance-datareader==0.9.96
-pykrx==1.0.51
 html5lib==1.1
 openai>=1.100.0
