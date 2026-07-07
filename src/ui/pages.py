@@ -79,18 +79,19 @@ def _render_newspaper_view() -> None:
     title = str(view.get("title") or "신문 보기")
     file_name = str(view.get("file_name") or "dashboard.html")
 
-    top_col, action_col = st.columns([1, 1], gap="small")
+    st.markdown('<div style="height:18px"></div>', unsafe_allow_html=True)
+    top_col, action_col = st.columns([8, 2], gap="small")
     with top_col:
         if st.button("← 텍스트 화면으로 돌아가기", key="newspaper_back"):
             st.session_state.pop("newspaper_view", None)
             st.rerun()
     with action_col:
         st.download_button(
-            "HTML 다운로드",
+            "HTML 저장",
             data=html,
             file_name=file_name,
             mime="text/html",
-            use_container_width=False,
+            use_container_width=True,
             key="newspaper_download",
         )
 

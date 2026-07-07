@@ -39,6 +39,7 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .rule-thin{border-top:1px solid #ccc;margin:16px 0;}
 
 /* ── CHART SECTIONS ── */
+.chart-empty{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#999;border:1px dashed #ccc;padding:12px 14px;margin-bottom:6px;}
 .chart-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:#666;border-top:1px solid #ccc;padding-top:10px;margin-bottom:8px;margin-top:18px;}
 .js-plotly-plot,.plotly-graph-div,.plot-container,.svg-container{max-width:100%!important;width:100%!important;overflow-x:hidden!important;touch-action:pan-y;}
 .js-plotly-plot *,.plotly-graph-div *{touch-action:pan-y;}

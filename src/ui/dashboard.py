@@ -158,6 +158,11 @@ def _news_cards_html(news_items: list[dict], fallback_news: list[str]) -> str:
     return f'<div class="news-grid">{"".join(cards)}</div>'
 
 
+def _chart_empty(message: str) -> str:
+    """데이터 없는 차트 자리 — 빈 캔버스 대신 한 줄로 접는다."""
+    return f'<div class="chart-empty">{escape(message)}</div>'
+
+
 def _fig_html(fig: go.Figure, first: bool = False) -> str:
     return fig.to_html(
         include_plotlyjs="cdn" if first else False,
@@ -254,15 +259,17 @@ def build_stock_dashboard(payload: dict) -> str:
     fin_sales = [_parse_fin_amount(r.get("sales")) for r in financials]
     fin_op = [_parse_fin_amount(r.get("op_income")) for r in financials]
     fin_net = [_parse_fin_amount(r.get("net_income")) for r in financials]
-    fin_layout = dict(**_PLOTLY_LAYOUT, height=220, barmode="group")
-    fin_fig = go.Figure(layout=fin_layout)
     if any(v is not None for v in fin_sales):
+        fin_layout = dict(**_PLOTLY_LAYOUT, height=220, barmode="group")
+        fin_fig = go.Figure(layout=fin_layout)
         fin_fig.add_trace(go.Bar(name="매출", x=fin_quarters, y=fin_sales, marker_color="rgba(26,26,26,0.15)", width=0.25))
         fin_fig.add_trace(go.Bar(name="영업이익", x=fin_quarters, y=fin_op, marker_color="rgba(26,26,26,0.55)", width=0.25))
         fin_fig.add_trace(go.Bar(name="순이익", x=fin_quarters, y=fin_net, marker_color="#1a1a1a", width=0.25))
-    fin_fig.update_yaxes(ticksuffix="조")
-    fin_chart = _fig_html(fin_fig, first=is_first)
-    is_first = False
+        fin_fig.update_yaxes(ticksuffix="조")
+        fin_chart = _fig_html(fin_fig, first=is_first)
+        is_first = False
+    else:
+        fin_chart = _chart_empty("재무 데이터 없음 — DART 연결 시 표시됩니다")
 
     # ── 수급 차트: 일별 20거래일 우선, 없으면 20일 합계 폴백 ────────
     kis_flow = payload.get("kis_flow", {})
@@ -282,24 +289,30 @@ def build_stock_dashboard(payload: dict) -> str:
         flow_fig.update_yaxes(ticksuffix="만주", zeroline=True, zerolinecolor="rgba(0,0,0,0.25)")
         flow_fig.update_xaxes(type="category", tickangle=-45)
         flow_eyebrow = "INVESTOR FLOW — DAILY, 20 SESSIONS (만주)"
+        flow_chart = _fig_html(flow_fig, first=is_first)
+        is_first = False
     else:
         foreign_raw = kis_flow.get("foreign_20d_krw") or flows.get("foreign_20d")
         inst_raw = kis_flow.get("institution_20d_krw") or flows.get("institution_20d")
         foreign_num = _parse_flow_num(foreign_raw) or 0
         inst_num = _parse_flow_num(inst_raw) or 0
-        flow_layout = dict(**_PLOTLY_LAYOUT, height=200)
-        flow_fig = go.Figure(layout=flow_layout)
-        flow_vals = [foreign_num, inst_num]
-        flow_colors = ["#cc2200" if v >= 0 else "#006633" for v in flow_vals]
         unit = "억" if kis_flow.get("foreign_20d_krw") else "주"
-        flow_fig.add_trace(go.Bar(
-            x=["외국인", "기관"], y=flow_vals, marker_color=flow_colors,
-            showlegend=False,
-            text=[f"{v:+,.1f}{unit}" if v else "—" for v in flow_vals],
-            textposition="outside",
-        ))
         flow_eyebrow = f"INVESTOR FLOW — 20 DAYS ({unit})"
-    flow_chart = _fig_html(flow_fig, first=False)
+        if foreign_num == 0 and inst_num == 0:
+            flow_chart = _chart_empty("수급 데이터 없음")
+        else:
+            flow_layout = dict(**_PLOTLY_LAYOUT, height=200)
+            flow_fig = go.Figure(layout=flow_layout)
+            flow_vals = [foreign_num, inst_num]
+            flow_colors = ["#cc2200" if v >= 0 else "#006633" for v in flow_vals]
+            flow_fig.add_trace(go.Bar(
+                x=["외국인", "기관"], y=flow_vals, marker_color=flow_colors,
+                showlegend=False,
+                text=[f"{v:+,.1f}{unit}" if v else "—" for v in flow_vals],
+                textposition="outside",
+            ))
+            flow_chart = _fig_html(flow_fig, first=is_first)
+            is_first = False
 
     # ── 사이드바: 핵심 지표 ────────────────────────────────────
     def metric(lbl: str, val: str, cls: str = "") -> str:
@@ -483,17 +496,19 @@ def build_market_dashboard(payload: dict) -> str:
         except Exception:
             leader_tvr.append(0)
 
-    vol_layout = dict(**_PLOTLY_LAYOUT, height=260)
-    vol_fig = go.Figure(layout=vol_layout)
     if leader_names:
+        vol_layout = dict(**_PLOTLY_LAYOUT, height=260)
+        vol_fig = go.Figure(layout=vol_layout)
         vol_fig.add_trace(go.Bar(
             x=leader_tvr[::-1], y=leader_names[::-1], orientation="h",
             marker_color="#1a1a1a", showlegend=False,
             text=[f"{v:,.0f}억" for v in leader_tvr[::-1]], textposition="outside",
         ))
-    vol_fig.update_xaxes(ticksuffix="억")
-    vol_chart = _fig_html(vol_fig, first=is_first)
-    is_first = False
+        vol_fig.update_xaxes(ticksuffix="억")
+        vol_chart = _fig_html(vol_fig, first=is_first)
+        is_first = False
+    else:
+        vol_chart = _chart_empty("거래대금 데이터 없음")
 
     # ── 수급 차트 ──────────────────────────────────────────────
     summary = investor_flows.get("summary", {})
@@ -504,17 +519,21 @@ def build_market_dashboard(payload: dict) -> str:
             flow_nums.append(float(str(v).replace(",", "")) if v not in (None, "—") else 0)
         except Exception:
             flow_nums.append(0)
-    sup_layout = dict(**_PLOTLY_LAYOUT, height=220)
-    sup_fig = go.Figure(layout=sup_layout)
-    sup_fig.add_trace(go.Bar(
-        x=["외국인", "기관", "개인"], y=flow_nums,
-        marker_color=["#cc2200" if v >= 0 else "#006633" for v in flow_nums],
-        showlegend=False,
-        text=[f"{v:+,.0f}억" if v else "—" for v in flow_nums],
-        textposition="outside",
-    ))
-    sup_fig.update_yaxes(ticksuffix="억")
-    sup_chart = _fig_html(sup_fig, first=False)
+    if any(flow_nums):
+        sup_layout = dict(**_PLOTLY_LAYOUT, height=220)
+        sup_fig = go.Figure(layout=sup_layout)
+        sup_fig.add_trace(go.Bar(
+            x=["외국인", "기관", "개인"], y=flow_nums,
+            marker_color=["#cc2200" if v >= 0 else "#006633" for v in flow_nums],
+            showlegend=False,
+            text=[f"{v:+,.0f}억" if v else "—" for v in flow_nums],
+            textposition="outside",
+        ))
+        sup_fig.update_yaxes(ticksuffix="억")
+        sup_chart = _fig_html(sup_fig, first=is_first)
+        is_first = False
+    else:
+        sup_chart = _chart_empty("수급 데이터 없음")
 
     # ── 사이드바: 글로벌 지표 ─────────────────────────────────
     global_items = [
