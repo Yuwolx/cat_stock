@@ -13,9 +13,9 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .ticker-bar{display:flex;background:#1e3932;color:#f4f0e6;margin-bottom:18px;overflow:hidden;}
 .ticker-item{flex:1;padding:9px 14px;border-right:1px solid rgba(255,255,255,.08);}
 .ticker-item:last-child{border-right:0;}
-.t-name{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.55;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+.t-name{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.72;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
 .t-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;letter-spacing:-.01em;}
-.t-val.up{color:#ff6b6b;}.t-val.dn{color:#51cf66;}.t-val.na{color:rgba(244,240,230,.4);}
+.t-val.up{color:#ffa198;}.t-val.dn{color:#7fe0ac;}.t-val.na{color:rgba(244,240,230,.8);}
 .date-notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #d8d0c0;background:#fffaf0;color:#4b4236;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.5;padding:8px 10px;margin:-6px 0 16px;}
 .date-notice strong{color:#1a1a1a;font-weight:700;}
 
@@ -94,8 +94,17 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .theme-table td.num{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
 .theme-table td.up{color:#cc2200;}.theme-table td.dn{color:#006633;}
 
+/* ── GLOBAL STRIP (티커 아래 가로 밴드) ── */
+.global-strip{display:grid;grid-template-columns:repeat(8,1fr);border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:-6px 0 20px;}
+.gs-item{padding:9px 10px 8px;border-right:1px solid rgba(0,0,0,.07);}
+.gs-item:last-child{border-right:0;}
+.gs-k{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.gs-v{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+.gs-v.up{color:#cc2200;}.gs-v.dn{color:#006633;}
+
 /* ── GLOBAL MINI GRID ── */
 .global-mini{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.global-mini--single{grid-template-columns:1fr;}
 .gm-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.07);}
 .gm-row:last-child{border-bottom:0;}
 .gm-name{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;}
@@ -116,4 +125,4 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .dot{width:7px;height:7px;border-radius:50%;}
 .dot-up{background:#cc2200;}.dot-near{background:#cc7700;}.dot-dn{background:#006633;}
 
-@media(max-width:768px){.main-grid{grid-template-columns:1fr;}.sidebar{border-left:0;padding-left:0;border-top:2px solid #1a1a1a;padding-top:16px;}.news-grid3{grid-template-columns:repeat(2,1fr);}.global-mini{grid-template-columns:1fr;}.flow2{grid-template-columns:1fr;}.ticker-bar{flex-wrap:wrap;}}
+@media(max-width:768px){.main-grid{grid-template-columns:1fr;}.sidebar{border-left:0;padding-left:0;border-top:2px solid #1a1a1a;padding-top:16px;}.news-grid3{grid-template-columns:repeat(2,1fr);}.global-mini{grid-template-columns:1fr;}.flow2{grid-template-columns:1fr;}.ticker-bar{flex-wrap:wrap;}.global-strip{grid-template-columns:repeat(4,1fr);}}

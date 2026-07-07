@@ -535,18 +535,19 @@ def build_market_dashboard(payload: dict) -> str:
     else:
         sup_chart = _chart_empty("수급 데이터 없음")
 
-    # ── 사이드바: 글로벌 지표 ─────────────────────────────────
+    # ── 글로벌 지표: 티커 아래 가로 스트립 ─────────────────────
     global_items = [
         ("다우", "dow"), ("S&P500", "sp500"), ("나스닥", "nasdaq"),
         ("달러/원", "usdkrw"), ("미10년물", "us10y"), ("WTI", "wti"),
         ("상해", "shanghai"), ("심천", "shenzhen"),
     ]
-    gm_rows = ""
+    gs_items = ""
     for lbl, key in global_items:
         val = str(macro.get(key) or "—")
         cls = _sign_class(val)
-        val_cls = f"gm-val {cls}" if cls else "gm-val na"
-        gm_rows += f'<div class="gm-row"><span class="gm-name">{escape(lbl)}</span><span class="{val_cls}">{escape(val)}</span></div>'
+        val_cls = f"gs-v {cls}" if cls else "gs-v"
+        gs_items += f'<div class="gs-item"><span class="gs-k">{escape(lbl)}</span><span class="{val_cls}">{escape(val)}</span></div>'
+    global_strip = f'<div class="global-strip">{gs_items}</div>'
 
     # ── 사이드바: 테마/섹터 ────────────────────────────────────
     sector_rows = ""
@@ -557,7 +558,7 @@ def build_market_dashboard(payload: dict) -> str:
         val_cls = f"gm-val {cls}" if cls else "gm-val na"
         sector_rows += f'<div class="gm-row"><span class="gm-name">{escape(s.get("name",""))}</span><span class="{val_cls}">{escape(val_str)}</span></div>'
 
-    # ── 수급 상위 ──────────────────────────────────────────────
+    # ── 수급 상위 (사이드바용) ─────────────────────────────────
     def _flow_col(names: list, kind: str) -> str:
         cls = "buy" if kind == "buy" else "sell"
         items = "".join(f'<div class="flow-item {cls}">{escape(str(n))}</div>' for n in names[:5]) or "—"
@@ -568,16 +569,16 @@ def build_market_dashboard(payload: dict) -> str:
     ib = investor_flows.get("institution_top_buy", [])
     is_ = investor_flows.get("institution_top_sell", [])
 
-    flow_section = f"""<div class="flow2">
-  <div class="flow-col">
-    <div class="flow-title">외국인 순매수</div>{_flow_col(fb,"buy")}
-    <div class="flow-title" style="margin-top:10px;">외국인 순매도</div>{_flow_col(fs,"sell")}
+    side_flows = f"""<div class="sb-section">
+    <div class="sb-title">외국인 수급 상위</div>
+    <div class="flow-title">순매수</div>{_flow_col(fb,"buy")}
+    <div class="flow-title" style="margin-top:10px;">순매도</div>{_flow_col(fs,"sell")}
   </div>
-  <div class="flow-col">
-    <div class="flow-title">기관 순매수</div>{_flow_col(ib,"buy")}
-    <div class="flow-title" style="margin-top:10px;">기관 순매도</div>{_flow_col(is_,"sell")}
-  </div>
-</div>"""
+  <div class="sb-section">
+    <div class="sb-title">기관 수급 상위</div>
+    <div class="flow-title">순매수</div>{_flow_col(ib,"buy")}
+    <div class="flow-title" style="margin-top:10px;">순매도</div>{_flow_col(is_,"sell")}
+  </div>"""
 
     # ── 등락률 상위 (지면에서는 상위 15개만, 나머지는 개수로 축약) ──
     def _mover_col(items: list, kind: str, limit: int) -> str:
@@ -600,13 +601,10 @@ def build_market_dashboard(payload: dict) -> str:
 
     sidebar = f"""<div class="sidebar">
   <div class="sb-section">
-    <div class="sb-title">GLOBAL MARKETS</div>
-    <div class="global-mini">{gm_rows}</div>
-  </div>
-  <div class="sb-section">
     <div class="sb-title">SECTOR · THEME</div>
-    <div class="global-mini">{sector_rows if sector_rows else '<span class="disc-empty">데이터 없음</span>'}</div>
+    <div class="global-mini global-mini--single">{sector_rows if sector_rows else '<span class="disc-empty">데이터 없음</span>'}</div>
   </div>
+  {side_flows}
   <div class="sb-section">
     <div class="sb-title">시장 이벤트</div>
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#444;line-height:1.8;">
@@ -623,14 +621,13 @@ def build_market_dashboard(payload: dict) -> str:
   {vol_chart}
   <div class="chart-eyebrow">INVESTOR NET BUY / SELL (억원)</div>
   {sup_chart}
-  <div class="rule-thin"></div>
-  {flow_section}
   <div class="chart-eyebrow">PRICE MOVERS</div>
   {movers_section}
 </div>"""
 
     body = f"""
 <div class="ticker-bar">{ticker}</div>
+{global_strip}
 {_date_notice_html(payload)}
 <div class="main-grid">
   {main_col}
