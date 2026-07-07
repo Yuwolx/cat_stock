@@ -665,15 +665,15 @@ def _render_market_page() -> None:
         render_page_intro("Market Briefing", "오늘 시황을 한 번에 정리합니다")
         render_ctrl_section("오늘의 브리핑")
         default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
-        if st.button("오늘의 브리핑 내리기", type="primary", use_container_width=True, key="market_generate"):
-            with st.spinner("내리는 중입니다..."):
+        if st.button("오늘의 브리핑 만들기", type="primary", use_container_width=True, key="market_generate"):
+            with st.spinner("만드는 중입니다..."):
                 result = generate_market_briefing(default_stock_date.isoformat())
             st.session_state["market_result"] = result
 
         with st.expander("다른 날짜 보기"):
             target_date = st.date_input("기준일", value=default_stock_date, format="YYYY-MM-DD")
-            if st.button("이 날짜로 내리기", use_container_width=True, key="market_generate_dated"):
-                with st.spinner("내리는 중입니다..."):
+            if st.button("이 날짜로 만들기", use_container_width=True, key="market_generate_dated"):
+                with st.spinner("만드는 중입니다..."):
                     result = generate_market_briefing(target_date.isoformat())
                 st.session_state["market_result"] = result
 
@@ -721,7 +721,7 @@ def _render_market_page() -> None:
         _render_dashboard_with_text_output(
             result_key="market_result",
             box_key="market",
-            placeholder="오늘의 브리핑 내리기를 누르면 여기에 오늘의 텍스트가 담깁니다.",
+            placeholder="오늘의 브리핑 만들기를 누르면 여기에 오늘의 텍스트가 담깁니다.",
             dashboard_builder=build_market_dashboard,
         )
 
@@ -739,7 +739,7 @@ def _render_stock_page() -> None:
             value=(default_stock_date, default_stock_date),
             format="YYYY-MM-DD",
         )
-        if st.button("종목 분석 내리기", type="primary", use_container_width=True, key="stock_generate"):
+        if st.button("종목 분석 만들기", type="primary", use_container_width=True, key="stock_generate"):
             name = stock_name.strip()
             if not name:
                 render_note("종목명을 먼저 입력해주세요.", tone="warn")
@@ -793,7 +793,7 @@ def _render_stock_page() -> None:
         _render_dashboard_with_text_output(
             result_key="stock_result",
             box_key="stock",
-            placeholder="종목명을 입력하고 종목 분석 내리기를 누르면 여기에 결과가 담깁니다.",
+            placeholder="종목명을 입력하고 종목 분석 만들기를 누르면 여기에 결과가 담깁니다.",
             dashboard_builder=build_stock_dashboard,
         )
 
@@ -805,7 +805,7 @@ def _render_theme_page() -> None:
         render_page_intro("Theme Study", "테마 공부 자료를 정리합니다")
         render_ctrl_section("분석 설정")
         theme_name = st.text_input("테마명", placeholder="예: HBM, 2차전지, 원전")
-        if st.button("테마 자료 내리기", type="primary", use_container_width=True, key="theme_generate"):
+        if st.button("테마 자료 만들기", type="primary", use_container_width=True, key="theme_generate"):
             name = theme_name.strip()
             if not name:
                 render_note("테마명을 먼저 입력해주세요.", tone="warn")
@@ -853,7 +853,7 @@ def _render_theme_page() -> None:
         _render_dashboard_with_text_output(
             result_key="theme_result",
             box_key="theme",
-            placeholder="테마명을 입력하고 테마 자료 내리기를 누르면 여기에 결과가 담깁니다.",
+            placeholder="테마명을 입력하고 테마 자료 만들기를 누르면 여기에 결과가 담깁니다.",
             dashboard_builder=build_theme_dashboard,
         )
 
