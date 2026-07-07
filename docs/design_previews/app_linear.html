@@ -45,14 +45,14 @@ body{background:var(--canvas);color:var(--ink-mute);font-family:var(--sans);padd
 .meta{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);line-height:1.9;}
 .meta .k{color:#62666d;}
 .out{padding:0;overflow:hidden;}
-.out-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:5;background:var(--s1);border-radius:10px 10px 0 0;}
+.out-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--hairline);}
 .out-head .t{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;}
 .pulse{width:7px;height:7px;border-radius:50%;background:#27a644;}
 .actions{display:flex;gap:6px;}
 .btn{font-size:12px;font-weight:500;border-radius:6px;padding:6px 12px;cursor:pointer;border:1px solid var(--hairline-strong);background:var(--s2);color:var(--ink-mute);}
 .btn:hover{color:var(--ink);border-color:#4a4a52;}
 .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
-.output{padding:18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:var(--ink-mute);}
+.output{padding:18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:var(--ink-mute);max-height:calc(100vh - 330px);min-height:280px;overflow:auto;}
 .output .sec{color:var(--ink);font-weight:600;}
 .output .up{color:var(--up);} .output .dn{color:var(--dn);}
 .footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--hairline);font-size:11.5px;color:var(--ink-subtle);display:flex;justify-content:space-between;font-family:var(--mono);}
@@ -90,7 +90,7 @@ body{background:var(--canvas);color:var(--ink-mute);font-family:var(--sans);padd
     <main class="card out">
       <div class="out-head">
         <span class="t"><span class="pulse"></span> 시황 브리핑 — 생성 완료</span>
-        <span class="actions"><button class="btn primary">복사</button><button class="btn">.txt</button><button class="btn">신문 보기 →</button></span>
+        <span class="actions"><button class="btn primary">복사</button><button class="btn">.txt 저장</button><button class="btn">오늘의 신문</button></span>
       </div>
       <div class="output">[시황 브리핑 데이터 - 2026-07-07]
 
@@ -123,9 +123,7 @@ body{background:var(--canvas);color:var(--ink-mute);font-family:var(--sans);padd
 <span class="sec">■ 주요 뉴스</span>
 - 삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도 (이데일리)
 - LFP 수주 랠리에 이차전지 소재주 일제히 강세 (한국경제)
-- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)
-
-※ 스크롤해도 위의 복사 버튼이 따라옵니다 — "복사 고정" 레이아웃 데모</div>
+- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)</div>
     </main>
   </div>
 

@@ -37,16 +37,16 @@ body{background:var(--canvas);color:var(--body);font-family:var(--sans);padding:
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.02em;}
 .field input{width:100%;background:#fff;border:1px solid var(--hairline);border-radius:8px;padding:10px 12px;font-size:14px;font-family:var(--sans);color:var(--ink);}
-.gen{width:100%;background:var(--primary);color:#fff;border:0;border-radius:9999px;padding:12px 0;font-size:15px;font-weight:600;font-family:var(--sans);cursor:pointer;margin-top:4px;}
+.gen{width:100%;background:var(--primary);color:#fff;border:1px solid var(--primary-active);border-radius:10px;padding:12px 0;font-size:15px;font-weight:600;font-family:var(--sans);letter-spacing:.01em;cursor:pointer;margin-top:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(20,20,19,.12);}
 .gen:hover{background:var(--primary-active);}
 .hint{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;}
-.out-head{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5;background:var(--canvas);padding:12px 0 10px;}
+.out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .out-head .t{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);}
 .actions{display:flex;gap:8px;}
-.btn{font-size:13px;font-weight:600;border-radius:9999px;padding:8px 16px;text-decoration:none;cursor:pointer;border:1px solid var(--hairline);background:#fff;color:var(--ink);font-family:var(--sans);}
+.btn{font-size:13px;font-weight:600;border-radius:9px;padding:8px 15px;text-decoration:none;cursor:pointer;border:1px solid var(--hairline);background:#fff;color:var(--ink);font-family:var(--sans);box-shadow:0 1px 1.5px rgba(20,20,19,.07);}
 .btn.primary{background:var(--ink);color:var(--on-dark);border-color:var(--ink);}
 .btn.paper{background:var(--primary);color:#fff;border-color:var(--primary);}
-.output{background:#fff;border:1px solid var(--hairline);border-radius:14px;padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;color:var(--body);white-space:pre-wrap;}
+.output{background:#fff;border:1px solid var(--hairline);border-radius:14px;padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;color:var(--body);white-space:pre-wrap;max-height:calc(100vh - 400px);min-height:280px;overflow:auto;}
 .output .sec{color:var(--ink);font-weight:600;}
 .notice{display:flex;gap:8px;align-items:flex-start;background:var(--card);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--body);margin-bottom:12px;line-height:1.6;}
 .footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--hairline);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
@@ -70,7 +70,7 @@ body{background:var(--canvas);color:var(--body);font-family:var(--sans);padding:
   <div class="panel">
     <aside class="ctrl">
       <h2>브리핑 설정</h2>
-      <button class="gen">오늘의 브리핑 생성 →</button>
+      <button class="gen">오늘의 브리핑 만들기</button>
       <details>
         <summary>다른 날짜 보기</summary>
         <div class="field"><label>분석 기준일</label><input value="2026-07-07"></div>
@@ -82,7 +82,7 @@ body{background:var(--canvas);color:var(--body);font-family:var(--sans);padding:
       <div class="notice">🐱 <span><b>생성 완료.</b> 아래 텍스트를 복사해 ChatGPT에 붙여넣으세요. 오늘은 모든 데이터가 정상 수집됐어요.</span></div>
       <div class="out-head">
         <span class="t">시황 브리핑 텍스트</span>
-        <span class="actions"><a class="btn primary">복사</a><a class="btn">.txt</a><a class="btn paper">신문 보기 →</a></span>
+        <span class="actions"><a class="btn primary">복사</a><a class="btn">.txt 저장</a><a class="btn paper">오늘의 신문</a></span>
       </div>
       <div class="output">[시황 브리핑 데이터 - 2026-07-07]
 
@@ -115,9 +115,7 @@ body{background:var(--canvas);color:var(--body);font-family:var(--sans);padding:
 <span class="sec">■ 주요 뉴스</span>
 - 삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도 (이데일리)
 - LFP 수주 랠리에 이차전지 소재주 일제히 강세 (한국경제)
-- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)
-
-※ 스크롤해도 위의 복사 버튼이 따라옵니다 — "복사 고정" 레이아웃 데모</div>
+- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)</div>
     </main>
   </div>
 

@@ -39,19 +39,19 @@ body{background:var(--canvas);color:var(--ink);font-family:var(--sans);padding-b
 .field{margin-bottom:16px;}
 .field label{display:block;font-size:12.5px;font-weight:500;color:var(--mute);margin-bottom:6px;}
 .field input{width:100%;background:var(--soft);border:1px solid var(--hairline);border-radius:8px;padding:11px 12px;font-size:14px;color:var(--ink);font-family:var(--sans);}
-.gen{width:100%;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:13px 0;font-size:14.5px;font-weight:600;cursor:pointer;letter-spacing:.01em;}
+.gen{width:100%;background:linear-gradient(180deg,#2a2650,var(--navy) 60%);color:#fff;border:1px solid var(--navy-deep);border-radius:8px;padding:13px 0;font-size:14.5px;font-weight:600;cursor:pointer;letter-spacing:.01em;box-shadow:inset 0 1px 0 rgba(201,180,250,.35);}
 .gen:hover{background:var(--navy-deep);}
 .kbd{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:10px;}
 .kbd span{border:1px solid var(--hairline);border-radius:4px;padding:1px 6px;background:var(--soft);}
 .streak{margin-top:22px;background:var(--teal);color:#d9efe9;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6;}
 .streak b{color:#fff;}
-.out-head{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5;background:var(--canvas);padding:12px 0;}
+.out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .out-head .t{font-size:15px;font-weight:600;letter-spacing:-.01em;}
 .actions{display:flex;gap:8px;}
 .btn{font-size:13px;font-weight:600;border-radius:8px;padding:8px 15px;cursor:pointer;border:1px solid var(--hairline);background:#fff;color:var(--ink);}
 .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;}
 .btn.violet{background:var(--violet);border-color:var(--violet);color:var(--navy-deep);}
-.output{background:var(--soft);border:1px solid var(--hairline);border-radius:12px;padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:#3c3a37;}
+.output{background:var(--soft);border:1px solid var(--hairline);border-radius:12px;padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:#3c3a37;max-height:calc(100vh - 430px);min-height:260px;overflow:auto;}
 .output .sec{color:var(--navy);font-weight:600;}
 .footer{max-width:960px;margin:46px auto 0;padding:16px 24px 0;border-top:1px solid var(--hairline);font-size:12px;color:var(--mute);display:flex;justify-content:space-between;}
 @media(max-width:800px){.panel{grid-template-columns:1fr;}}
@@ -88,7 +88,7 @@ body{background:var(--canvas);color:var(--ink);font-family:var(--sans);padding-b
     <main>
       <div class="out-head">
         <span class="t">시황 브리핑 · 생성 완료 (8.7s)</span>
-        <span class="actions"><button class="btn primary">복사</button><button class="btn">.txt</button><button class="btn violet">신문 보기 →</button></span>
+        <span class="actions"><button class="btn primary">복사</button><button class="btn">.txt 저장</button><button class="btn violet">오늘의 신문</button></span>
       </div>
       <div class="output">[시황 브리핑 데이터 - 2026-07-07]
 
@@ -121,9 +121,7 @@ body{background:var(--canvas);color:var(--ink);font-family:var(--sans);padding-b
 <span class="sec">■ 주요 뉴스</span>
 - 삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도 (이데일리)
 - LFP 수주 랠리에 이차전지 소재주 일제히 강세 (한국경제)
-- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)
-
-※ 스크롤해도 위의 복사 버튼이 따라옵니다 — "복사 고정" 레이아웃 데모</div>
+- 원/달러 환율 1,380원대 재진입… 수출주 방어력 주목 (연합인포맥스)</div>
     </main>
   </div>
 </div>
