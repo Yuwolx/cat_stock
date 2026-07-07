@@ -96,7 +96,9 @@ def _render_newspaper_view() -> None:
         )
 
     st.markdown(f'<div class="newspaper-view-title">{escape(title)}</div>', unsafe_allow_html=True)
-    st.html(html)
+    # st.html은 스크립트를 실행하지 않아 Plotly 차트가 빈 캔버스로 남는다.
+    # 스크립트가 실행되는 iframe(components.html)으로 렌더링한다.
+    components.html(html, height=1500, scrolling=True)
 
 
 def render_app() -> None:
