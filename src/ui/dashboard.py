@@ -264,23 +264,41 @@ def build_stock_dashboard(payload: dict) -> str:
     fin_chart = _fig_html(fin_fig, first=is_first)
     is_first = False
 
-    # ── 수급 차트 ──────────────────────────────────────────────
+    # ── 수급 차트: 일별 20거래일 우선, 없으면 20일 합계 폴백 ────────
     kis_flow = payload.get("kis_flow", {})
-    foreign_raw = kis_flow.get("foreign_20d_krw") or flows.get("foreign_20d")
-    inst_raw = kis_flow.get("institution_20d_krw") or flows.get("institution_20d")
-    foreign_num = _parse_flow_num(foreign_raw) or 0
-    inst_num = _parse_flow_num(inst_raw) or 0
-    flow_layout = dict(**_PLOTLY_LAYOUT, height=200)
-    flow_fig = go.Figure(layout=flow_layout)
-    flow_vals = [foreign_num, inst_num]
-    flow_colors = ["#cc2200" if v >= 0 else "#006633" for v in flow_vals]
-    unit = "억" if kis_flow.get("foreign_20d_krw") else "주"
-    flow_fig.add_trace(go.Bar(
-        x=["외국인", "기관"], y=flow_vals, marker_color=flow_colors,
-        showlegend=False,
-        text=[f"{v:+,.1f}{unit}" if v else "—" for v in flow_vals],
-        textposition="outside",
-    ))
+    daily_flows = flows.get("daily_flows") or {}
+    daily_foreign = daily_flows.get("foreign") or []
+    daily_inst = daily_flows.get("institution") or []
+    daily_dates = [str(d)[5:] for d in (daily_flows.get("dates") or [])]  # "2026.07.04" → "07.04"
+
+    if any(v is not None for v in daily_foreign) or any(v is not None for v in daily_inst):
+        def _to_man(values: list) -> list:
+            return [None if v is None else v / 10_000 for v in values]
+
+        flow_layout = dict(**_PLOTLY_LAYOUT, height=220, barmode="group", bargap=0.25)
+        flow_fig = go.Figure(layout=flow_layout)
+        flow_fig.add_trace(go.Bar(name="외국인", x=daily_dates, y=_to_man(daily_foreign), marker_color="#1a1a1a"))
+        flow_fig.add_trace(go.Bar(name="기관", x=daily_dates, y=_to_man(daily_inst), marker_color="rgba(26,26,26,0.35)"))
+        flow_fig.update_yaxes(ticksuffix="만주", zeroline=True, zerolinecolor="rgba(0,0,0,0.25)")
+        flow_fig.update_xaxes(type="category", tickangle=-45)
+        flow_eyebrow = "INVESTOR FLOW — DAILY, 20 SESSIONS (만주)"
+    else:
+        foreign_raw = kis_flow.get("foreign_20d_krw") or flows.get("foreign_20d")
+        inst_raw = kis_flow.get("institution_20d_krw") or flows.get("institution_20d")
+        foreign_num = _parse_flow_num(foreign_raw) or 0
+        inst_num = _parse_flow_num(inst_raw) or 0
+        flow_layout = dict(**_PLOTLY_LAYOUT, height=200)
+        flow_fig = go.Figure(layout=flow_layout)
+        flow_vals = [foreign_num, inst_num]
+        flow_colors = ["#cc2200" if v >= 0 else "#006633" for v in flow_vals]
+        unit = "억" if kis_flow.get("foreign_20d_krw") else "주"
+        flow_fig.add_trace(go.Bar(
+            x=["외국인", "기관"], y=flow_vals, marker_color=flow_colors,
+            showlegend=False,
+            text=[f"{v:+,.1f}{unit}" if v else "—" for v in flow_vals],
+            textposition="outside",
+        ))
+        flow_eyebrow = f"INVESTOR FLOW — 20 DAYS ({unit})"
     flow_chart = _fig_html(flow_fig, first=False)
 
     # ── 사이드바: 핵심 지표 ────────────────────────────────────
@@ -352,7 +370,7 @@ def build_stock_dashboard(payload: dict) -> str:
   {ma_html}
   <div class="chart-eyebrow">QUARTERLY FINANCIALS (조원)</div>
   {fin_chart}
-  <div class="chart-eyebrow">INVESTOR FLOW — 20 DAYS ({unit})</div>
+  <div class="chart-eyebrow">{flow_eyebrow}</div>
   {flow_chart}
 </div>"""
 
@@ -400,16 +418,61 @@ def build_market_dashboard(payload: dict) -> str:
 
     # ── 티커 바 ────────────────────────────────────────────────
     def idx_cls(v: object) -> str:
-        return _sign_class(str(v))
+        # change_pct는 숫자로 오면 "+"가 없어 _sign_class가 상승을 놓치므로 숫자를 우선 판정
+        try:
+            num = float(str(v).replace(",", "").replace("%", "").strip())
+        except (TypeError, ValueError):
+            return _sign_class(str(v))
+        if num > 0:
+            return "up"
+        if num < 0:
+            return "dn"
+        return ""
+
+    def signed_pct(v: object) -> str:
+        try:
+            return f"{float(str(v).replace(',', '')):+.2f}%"
+        except (TypeError, ValueError):
+            return f"{v}%" if v not in (None, "", "—") else "—"
 
     ticker = (
         _ticker_item("코스피", str(kospi.get("close") or "—"), idx_cls(kospi.get("change_pct")))
-        + _ticker_item("등락", f"{kospi.get('change_pct','—')}%", idx_cls(kospi.get("change_pct")))
+        + _ticker_item("등락", signed_pct(kospi.get("change_pct")), idx_cls(kospi.get("change_pct")))
         + _ticker_item("코스닥", str(kosdaq.get("close") or "—"), idx_cls(kosdaq.get("change_pct")))
         + _ticker_item("달러/원", str(macro.get("usdkrw") or "—"))
         + _ticker_item("나스닥", str(macro.get("nasdaq") or "—"), idx_cls(macro.get("nasdaq")))
         + _ticker_item("미10년물", str(macro.get("us10y") or "—"))
     )
+
+    # ── 지수 흐름 차트 (최근 10거래일, 첫날 대비 %) ───────────────
+    index_trend = payload.get("index_trend") or {}
+    kospi_closes = [v for v in ((index_trend.get("kospi") or {}).get("closes") or []) if v is not None]
+    kosdaq_closes = [v for v in ((index_trend.get("kosdaq") or {}).get("closes") or []) if v is not None]
+    trend_block = ""
+    if len(kospi_closes) >= 2 or len(kosdaq_closes) >= 2:
+        def _pct_series(closes: list) -> list:
+            base = closes[0]
+            return [(v / base - 1) * 100 for v in closes]
+
+        def _session_labels(n: int) -> list:
+            return [f"D-{n - 1 - i}" if i < n - 1 else "당일" for i in range(n)]
+
+        trend_layout = dict(**_PLOTLY_LAYOUT, height=200)
+        trend_fig = go.Figure(layout=trend_layout)
+        if len(kospi_closes) >= 2:
+            trend_fig.add_trace(go.Scatter(
+                name="코스피", x=_session_labels(len(kospi_closes)), y=_pct_series(kospi_closes),
+                mode="lines+markers", line=dict(color="#1a1a1a", width=2), marker=dict(size=4),
+            ))
+        if len(kosdaq_closes) >= 2:
+            trend_fig.add_trace(go.Scatter(
+                name="코스닥", x=_session_labels(len(kosdaq_closes)), y=_pct_series(kosdaq_closes),
+                mode="lines+markers", line=dict(color="#6f7683", width=2, dash="dot"), marker=dict(size=4),
+            ))
+        trend_fig.update_yaxes(ticksuffix="%", zeroline=True, zerolinecolor="rgba(0,0,0,0.25)")
+        trend_chart = _fig_html(trend_fig, first=is_first)
+        is_first = False
+        trend_block = f'<div class="chart-eyebrow">INDEX TREND — 10 SESSIONS (CUMULATIVE %)</div>\n  {trend_chart}'
 
     # ── 거래대금 상위 차트 ─────────────────────────────────────
     leader_names = [item.get("name", "") for item in leaders[:10]]
@@ -497,17 +560,22 @@ def build_market_dashboard(payload: dict) -> str:
   </div>
 </div>"""
 
-    # ── 등락률 상위 ───────────────────────────────────────────
+    # ── 등락률 상위 (지면에서는 상위 15개만, 나머지는 개수로 축약) ──
     def _mover_col(items: list, kind: str, limit: int) -> str:
         cls = "buy" if kind == "buy" else "sell"
-        return "".join(f'<div class="flow-item {cls}">{escape(str(item))}</div>' for item in items[:limit]) or "—"
+        shown = items[:limit]
+        html = "".join(f'<div class="flow-item {cls}">{escape(str(item))}</div>' for item in shown) or "—"
+        rest = len(items) - len(shown)
+        if rest > 0:
+            html += f'<div class="flow-item" style="opacity:.55;">외 {rest}종목 (텍스트 출력에 전체 포함)</div>'
+        return html
 
     movers_section = f"""<div class="flow2">
   <div class="flow-col">
-    <div class="flow-title">당일 상승 상위 50</div>{_mover_col(events.get("new_highs", []), "buy", 50)}
+    <div class="flow-title">당일 상승 상위</div>{_mover_col(events.get("new_highs", []), "buy", 15)}
   </div>
   <div class="flow-col">
-    <div class="flow-title">당일 하락 상위 20</div>{_mover_col(events.get("new_lows", []), "sell", 20)}
+    <div class="flow-title">당일 하락 상위</div>{_mover_col(events.get("new_lows", []), "sell", 15)}
   </div>
 </div>"""
 
@@ -531,6 +599,7 @@ def build_market_dashboard(payload: dict) -> str:
 
     main_col = f"""<div class="main-col">
   {_column_html(column, date_str)}
+  {trend_block}
   <div class="chart-eyebrow">TODAY'S TRADING LEADERS (억원)</div>
   {vol_chart}
   <div class="chart-eyebrow">INVESTOR NET BUY / SELL (억원)</div>
@@ -564,19 +633,125 @@ def build_market_dashboard(payload: dict) -> str:
 
 
 # ══════════════════════════════════════════════════════════════
-# 3. 테마 공부 대시보드 (데이터 연결 전 플레이스홀더)
+# 3. 테마 공부 대시보드
 # ══════════════════════════════════════════════════════════════
+
+def _theme_pct(value: object) -> float | None:
+    try:
+        return float(str(value).replace("%", "").replace("+", "").replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
 
 def build_theme_dashboard(payload: dict) -> str:
     theme_name = payload.get("theme_name", "")
-    parts = ["""
-<div class="tbl-card">
-  <div class="sec-ttl">준비 중</div>
-  <p style="font-size:13px;color:#6f7683;padding:12px 0;">테마 공부 대시보드는 실데이터 연결 후 제공됩니다.</p>
-</div>"""]
-    return _wrap(
-        title=theme_name,
-        eyebrow="테마 공부",
-        date_str=payload.get("target_date", ""),
-        body="\n".join(parts),
+    stocks = payload.get("stocks") or []
+    news_bundle = payload.get("news_bundle") or {}
+    peer_bundle = payload.get("peer_bundle") or {}
+    date_str = payload.get("target_date", "")
+
+    # ── 티커 바: 테마 요약 ─────────────────────────────────────
+    pcts = [p for p in (_theme_pct(s.get("change_pct")) for s in stocks) if p is not None]
+    up_count = sum(1 for p in pcts if p > 0)
+    down_count = sum(1 for p in pcts if p < 0)
+    avg_pct = sum(pcts) / len(pcts) if pcts else None
+    avg_str = f"{avg_pct:+.2f}%" if avg_pct is not None else "—"
+    leader = max(stocks, key=lambda s: _theme_pct(s.get("change_pct")) or float("-inf")) if pcts else None
+    ticker = (
+        _ticker_item("테마", theme_name or "—")
+        + _ticker_item("편입 종목", f"{len(stocks)}개" if stocks else "—")
+        + _ticker_item("평균 등락", avg_str, _sign_class(avg_str))
+        + _ticker_item("상승", f"{up_count}종목", "up" if up_count else "")
+        + _ticker_item("하락", f"{down_count}종목", "dn" if down_count else "")
+        + _ticker_item("주도주", str((leader or {}).get("name") or "—"))
+    )
+    ticker_html = f'<div class="ticker-bar">{ticker}</div>'
+
+    # ── 등락률 차트 ────────────────────────────────────────────
+    chart_stocks = sorted(
+        [s for s in stocks if _theme_pct(s.get("change_pct")) is not None],
+        key=lambda s: _theme_pct(s.get("change_pct")),
+    )[-12:]
+    chart_block = ""
+    if chart_stocks:
+        names = [str(s.get("name") or "") for s in chart_stocks]
+        values = [_theme_pct(s.get("change_pct")) for s in chart_stocks]
+        bar_layout = dict(**_PLOTLY_LAYOUT, height=max(200, 24 * len(names)))
+        bar_fig = go.Figure(layout=bar_layout)
+        bar_fig.add_trace(go.Bar(
+            x=values, y=names, orientation="h",
+            marker_color=["#cc2200" if v >= 0 else "#006633" for v in values],
+            showlegend=False,
+            text=[f"{v:+.2f}%" for v in values], textposition="outside",
+        ))
+        bar_fig.update_xaxes(ticksuffix="%", zeroline=True, zerolinecolor="rgba(0,0,0,0.25)")
+        chart_block = (
+            '<div class="chart-eyebrow">THEME MOVERS — DAILY CHANGE (%)</div>\n'
+            + _fig_html(bar_fig, first=True)
+        )
+
+    # ── 종목 테이블 ────────────────────────────────────────────
+    if stocks:
+        rows = []
+        for s in stocks:
+            pct = _theme_pct(s.get("change_pct"))
+            cls = "up" if (pct or 0) > 0 else ("dn" if (pct or 0) < 0 else "")
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(s.get('name') or '—'))}</td>"
+                f'<td class="num">{escape(str(s.get("market_cap") or "—"))}</td>'
+                f'<td class="num">{escape(str(s.get("price") or "—"))}</td>'
+                f'<td class="num {cls}">{escape(str(s.get("change_pct") or "—"))}</td>'
+                f'<td class="num">{escape(str(s.get("per") or "—"))}</td>'
+                f'<td class="num">{escape(str(s.get("pbr") or "—"))}</td>'
+                "</tr>"
+            )
+        table_html = (
+            '<table class="theme-table"><thead><tr>'
+            "<th>종목</th><th>시가총액</th><th>현재가</th><th>등락률</th><th>PER</th><th>PBR</th>"
+            f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+        )
+    else:
+        table_html = '<div class="news-empty">테마 종목 데이터 없음 — 테마명을 다시 확인해 주세요.</div>'
+
+    # ── 사이드바: 뉴스/리포트/공시 ─────────────────────────────
+    def _line_rows(lines: list, empty: str) -> str:
+        items = "".join(f'<div class="rpt-row"><div class="rpt-title">{escape(str(line))}</div></div>' for line in lines[:8])
+        return items or f'<div class="rpt-broker">{escape(empty)}</div>'
+
+    sidebar = f"""<div class="sidebar">
+  <div class="sb-section">
+    <div class="sb-title">THEME WIRE</div>
+    {_line_rows(news_bundle.get("news") or [], "관련 뉴스 없음")}
+  </div>
+  <div class="sb-section">
+    <div class="sb-title">ANALYST DESK</div>
+    {_line_rows(news_bundle.get("reports") or [], "리포트 없음")}
+  </div>
+  <div class="sb-section">
+    <div class="sb-title">DISCLOSURES</div>
+    {_line_rows(peer_bundle.get("disclosures") or [], "공시 없음")}
+  </div>
+</div>"""
+
+    main_col = f"""<div class="main-col">
+  {chart_block}
+  <div class="chart-eyebrow">CONSTITUENTS</div>
+  {table_html}
+</div>"""
+
+    body = f"""
+{ticker_html}
+<div class="main-grid">
+  {main_col}
+  {sidebar}
+</div>
+"""
+
+    return _dispatch_wrap(
+        page_title=theme_name or "테마 공부",
+        masthead_name=theme_name or "THEME STUDY",
+        masthead_sub="THEME INTELLIGENCE REPORT · CAT STOCK",
+        date_str=date_str,
+        body=body,
     )

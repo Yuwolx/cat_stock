@@ -7,6 +7,8 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
+
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 NAVER_FINANCE_BASE_URL = "https://finance.naver.com"
@@ -24,33 +26,55 @@ def _normalize(text: str) -> str:
     return re.sub(r"[\s\-_·/]", "", text).lower()
 
 
+def _load_theme_directory() -> dict[str, str]:
+    """네이버 테마 목록 전 페이지를 읽어 {정규화된 테마명: themeNo} 사전 구성.
+
+    목록은 등락률순 페이지네이션이라 1페이지만 읽으면 그날 순위권 밖 테마를
+    못 찾는다. 전체(~7페이지)를 읽고 1시간 캐시한다.
+    """
+    cached = get_ttl_cache("naver_theme_directory", ttl_seconds=3600)
+    if cached is not None:
+        return cached
+
+    directory: dict[str, str] = {}
+    for page in range(1, 11):
+        soup = _fetch_soup(f"{NAVER_FINANCE_BASE_URL}/sise/theme.naver?page={page}")
+        theme_links = soup.select(
+            'a[href*="sise_group_detail.naver"][href*="type=theme"], a[href*="theme_detail.naver"]'
+        )
+        if not theme_links:
+            break
+        for link in theme_links:
+            name = link.get_text(strip=True)
+            href = link.get("href", "")
+            match = re.search(r"(?:themeNo|no)=(\d+)", href)
+            if not match or not name:
+                continue
+            directory.setdefault(_normalize(name), match.group(1))
+
+    if not directory:
+        logger.warning(
+            "Naver parser returned 0 rows: theme_list (%s)",
+            f"{NAVER_FINANCE_BASE_URL}/sise/theme.naver",
+        )
+        return directory
+    return set_ttl_cache("naver_theme_directory", directory)
+
+
 def _find_theme_no(theme_name: str) -> str | None:
-    """테마 목록 페이지에서 테마명으로 themeNo 검색"""
+    """테마 목록에서 테마명으로 themeNo 검색 (정확 일치 우선, 부분 일치 폴백)"""
     try:
-        soup = _fetch_soup("https://finance.naver.com/sise/theme.naver")
+        directory = _load_theme_directory()
     except Exception:
         return None
 
     normalized_target = _normalize(theme_name)
-    best_no: str | None = None
-
-    theme_links = soup.select('a[href*="sise_group_detail.naver"][href*="type=theme"], a[href*="theme_detail.naver"]')
-    if not theme_links:
-        logger.warning("Naver parser returned 0 rows: theme_list (%s)", "https://finance.naver.com/sise/theme.naver")
-
-    for link in theme_links:
-        name = link.get_text(strip=True)
-        href = link.get("href", "")
-        match = re.search(r"(?:themeNo|no)=(\d+)", href)
-        if not match:
-            continue
-        normalized_name = _normalize(name)
-        if normalized_name == normalized_target:
-            return match.group(1)
-        if normalized_target in normalized_name and best_no is None:
-            best_no = match.group(1)
-
-    return best_no
+    if normalized_target in directory:
+        return directory[normalized_target]
+    for name, theme_no in directory.items():
+        if normalized_target in name:
+            return theme_no
+    return None
 
 
 def _compact_text(text: str | None) -> str | None:

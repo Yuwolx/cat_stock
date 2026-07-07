@@ -24,6 +24,7 @@ from src.services.column_service import generate_stock_column
 from src.utils.concurrency import future_result
 from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
 
 
 SHORT_BALANCE_RATIO_UNSUPPORTED = "미제공"
@@ -92,6 +93,11 @@ def generate_stock_report(
     report_to: str | None = None,
     use_mock_data: bool = False,
 ) -> dict:
+    cache_key = ("stock_report", stock_name, report_from, report_to, use_mock_data)
+    cached = get_ttl_cache(cache_key)
+    if cached is not None:
+        return cached
+
     settings = get_settings()
     date_context = resolve_stock_trading_date()
     target_date = date_context["target_date"]
@@ -179,4 +185,4 @@ def generate_stock_report(
     payload["column"] = generate_stock_column(payload)
     text = format_stock_report(payload)
     path = save_output_text(f"stock_{stock_name}", target_date, text)
-    return {"text": text, "path": path, "payload": payload}
+    return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})

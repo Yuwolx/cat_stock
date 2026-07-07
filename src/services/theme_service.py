@@ -7,9 +7,15 @@ from src.config.settings import get_settings
 from src.formatters.theme_formatter import format_theme_report
 from src.utils.date_utils import today_kst_string
 from src.utils.file_utils import save_output_text
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
 
 
 def generate_theme_report(theme_name: str, use_mock_data: bool = False) -> dict:
+    cache_key = ("theme_report", theme_name, use_mock_data)
+    cached = get_ttl_cache(cache_key)
+    if cached is not None:
+        return cached
+
     settings = get_settings()
     target_date = today_kst_string()
     payload = {
@@ -26,4 +32,4 @@ def generate_theme_report(theme_name: str, use_mock_data: bool = False) -> dict:
     }
     text = format_theme_report(payload)
     path = save_output_text(f"theme_{theme_name}", target_date, text)
-    return {"text": text, "path": path, "payload": payload}
+    return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})

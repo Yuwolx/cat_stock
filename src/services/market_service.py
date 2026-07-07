@@ -19,6 +19,7 @@ from src.formatters.market_formatter import format_market_briefing
 from src.services.column_service import generate_market_column
 from src.utils.date_utils import resolve_stock_trading_date
 from src.utils.file_utils import save_output_text
+from src.utils.ttl_cache import get_ttl_cache, set_ttl_cache
 
 
 def _empty_indices() -> dict:
@@ -92,6 +93,11 @@ def _resolve_collector(futures: dict[str, object], key: str, default: object) ->
 
 
 def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> dict:
+    cache_key = ("market_briefing", target_date, use_mock_data)
+    cached = get_ttl_cache(cache_key)
+    if cached is not None:
+        return cached
+
     date_context = resolve_stock_trading_date(target_date)
     data_date = date_context["target_date"]
     with ThreadPoolExecutor(max_workers=10) as executor:
@@ -142,4 +148,4 @@ def generate_market_briefing(target_date: str, use_mock_data: bool = False) -> d
     payload["column"] = generate_market_column(payload)
     text = format_market_briefing(payload)
     path = save_output_text("market_briefing", data_date, text)
-    return {"text": text, "path": path, "payload": payload}
+    return set_ttl_cache(cache_key, {"text": text, "path": path, "payload": payload})
