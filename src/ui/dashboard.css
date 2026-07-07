@@ -10,7 +10,7 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .masthead-sub{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid #1a1a1a;border-bottom:3px solid #1a1a1a;padding:5px 0;margin-bottom:0;}
 
 /* ── TICKER BAR ── */
-.ticker-bar{display:flex;background:#1a1a1a;color:#f4f0e6;margin-bottom:18px;overflow:hidden;}
+.ticker-bar{display:flex;background:#1e3932;color:#f4f0e6;margin-bottom:18px;overflow:hidden;}
 .ticker-item{flex:1;padding:9px 14px;border-right:1px solid rgba(255,255,255,.08);}
 .ticker-item:last-child{border-right:0;}
 .t-name{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.55;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
@@ -24,7 +24,7 @@ body{background:#f4f0e6;font-family:'Crimson Text',Georgia,'Times New Roman',ser
 .main-col,.sidebar{min-width:0;max-width:100%;overflow-x:hidden;}
 
 /* ── COLUMN SECTION ── */
-.section-tag{display:inline-block;background:#1a1a1a;color:#f4f0e6;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;margin-bottom:10px;}
+.section-tag{display:inline-block;background:#1e3932;color:#f4f0e6;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;margin-bottom:10px;}
 .column-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(20px,2.4vw,26px);font-weight:700;line-height:1.22;letter-spacing:-.01em;word-break:keep-all;margin-bottom:9px;}
 .byline{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;letter-spacing:.03em;border-bottom:1px solid #aaa;padding-bottom:10px;margin-bottom:12px;}
 .col-body{font-size:16px;line-height:1.74;color:#222;}
