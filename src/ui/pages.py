@@ -62,7 +62,7 @@ def _open_newspaper_view(title: str, html: str, file_name: str) -> None:
 
 
 def _render_newspaper_button(*, title: str, html: str, file_name: str, key: str) -> None:
-    if st.button("신문 보기 →", use_container_width=False, key=key):
+    if st.button("오늘의 신문", use_container_width=False, key=key):
         _open_newspaper_view(title, html, file_name)
         st.rerun()
 
@@ -518,13 +518,19 @@ def _render_market_page() -> None:
 
     with ctrl_col:
         render_page_intro("Market Briefing", "오늘 시황을 한 번에 정리합니다")
-        render_ctrl_section("분석 설정")
+        render_ctrl_section("오늘의 브리핑")
         default_stock_date = date.fromisoformat(resolve_stock_trading_date(date.today())["target_date"])
-        target_date = st.date_input("기준일", value=default_stock_date, format="YYYY-MM-DD")
-        if st.button("브리핑 생성 →", type="primary", use_container_width=True, key="market_generate"):
-            with st.spinner("정리하고 있습니다..."):
-                result = generate_market_briefing(target_date.isoformat())
+        if st.button("오늘의 브리핑 내리기", type="primary", use_container_width=True, key="market_generate"):
+            with st.spinner("내리는 중입니다..."):
+                result = generate_market_briefing(default_stock_date.isoformat())
             st.session_state["market_result"] = result
+
+        with st.expander("다른 날짜 보기"):
+            target_date = st.date_input("기준일", value=default_stock_date, format="YYYY-MM-DD")
+            if st.button("이 날짜로 내리기", use_container_width=True, key="market_generate_dated"):
+                with st.spinner("내리는 중입니다..."):
+                    result = generate_market_briefing(target_date.isoformat())
+                st.session_state["market_result"] = result
 
         with st.expander("연결 데이터"):
             render_list(
@@ -552,14 +558,14 @@ def _render_market_page() -> None:
                 key="market_newspaper_view",
             )
             st.download_button(
-                "TXT 다운로드",
+                ".txt 저장",
                 data=result["text"],
                 file_name=f"market_briefing_{_compact_date(result['payload']['target_date'])}.txt",
                 mime="text/plain",
                 use_container_width=False,
             )
             st.download_button(
-                "신문 HTML",
+                "신문 .html 저장",
                 data=dash_html,
                 file_name=market_dashboard_file,
                 mime="text/html",
@@ -570,7 +576,7 @@ def _render_market_page() -> None:
         _render_dashboard_with_text_output(
             result_key="market_result",
             box_key="market",
-            placeholder="기준일을 선택하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            placeholder="오늘의 브리핑 내리기를 누르면 여기에 오늘의 텍스트가 담깁니다.",
             dashboard_builder=build_market_dashboard,
         )
 
@@ -588,7 +594,7 @@ def _render_stock_page() -> None:
             value=(default_stock_date, default_stock_date),
             format="YYYY-MM-DD",
         )
-        if st.button("분석 생성 →", type="primary", use_container_width=True, key="stock_generate"):
+        if st.button("종목 분석 내리기", type="primary", use_container_width=True, key="stock_generate"):
             name = stock_name.strip()
             if not name:
                 render_note("종목명을 먼저 입력해주세요.", tone="warn")
@@ -624,14 +630,14 @@ def _render_stock_page() -> None:
                 key="stock_newspaper_view",
             )
             st.download_button(
-                "TXT 다운로드",
+                ".txt 저장",
                 data=result["text"],
                 file_name=f"stock_{result['payload']['basics']['name']}.txt",
                 mime="text/plain",
                 use_container_width=False,
             )
             st.download_button(
-                "신문 HTML",
+                "신문 .html 저장",
                 data=dash_html,
                 file_name=stock_dashboard_file,
                 mime="text/html",
@@ -642,7 +648,7 @@ def _render_stock_page() -> None:
         _render_dashboard_with_text_output(
             result_key="stock_result",
             box_key="stock",
-            placeholder="종목명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            placeholder="종목명을 입력하고 종목 분석 내리기를 누르면 여기에 결과가 담깁니다.",
             dashboard_builder=build_stock_dashboard,
         )
 
@@ -654,7 +660,7 @@ def _render_theme_page() -> None:
         render_page_intro("Theme Study", "테마 공부 자료를 정리합니다")
         render_ctrl_section("분석 설정")
         theme_name = st.text_input("테마명", placeholder="예: HBM, 2차전지, 원전")
-        if st.button("자료 생성 →", type="primary", use_container_width=True, key="theme_generate"):
+        if st.button("테마 자료 내리기", type="primary", use_container_width=True, key="theme_generate"):
             name = theme_name.strip()
             if not name:
                 render_note("테마명을 먼저 입력해주세요.", tone="warn")
@@ -684,14 +690,14 @@ def _render_theme_page() -> None:
                 key="theme_newspaper_view",
             )
             st.download_button(
-                "TXT 다운로드",
+                ".txt 저장",
                 data=result["text"],
                 file_name=f"theme_{result['payload']['theme_name']}.txt",
                 mime="text/plain",
                 use_container_width=False,
             )
             st.download_button(
-                "신문 HTML",
+                "신문 .html 저장",
                 data=dash_html,
                 file_name=theme_dashboard_file,
                 mime="text/html",
@@ -702,7 +708,7 @@ def _render_theme_page() -> None:
         _render_dashboard_with_text_output(
             result_key="theme_result",
             box_key="theme",
-            placeholder="테마명을 입력하고 생성 버튼을 누르면 여기에 결과가 나타납니다.",
+            placeholder="테마명을 입력하고 테마 자료 내리기를 누르면 여기에 결과가 담깁니다.",
             dashboard_builder=build_theme_dashboard,
         )
 
@@ -754,11 +760,6 @@ def _render_output_box(result_text: str, placeholder: str, box_key: str) -> None
         f"""
         <div id="{box_id}" class="cat-output-shell">
           <div class="cat-output-header">
-            <div class="cat-output-dots">
-              <span class="cat-dot cat-dot--r"></span>
-              <span class="cat-dot cat-dot--y"></span>
-              <span class="cat-dot cat-dot--g"></span>
-            </div>
             <span class="cat-output-label">{escape(label)}</span>
             <button class="cat-copy-button" type="button" data-cat-copy-target="{box_id}" {disabled_attr}>복사</button>
           </div>

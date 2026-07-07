@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime
 from html import escape
 from pathlib import Path
 
 import streamlit as st
+
+from src.utils.date_utils import KST, WEEKDAY_KO
 
 
 def _load_logo_b64() -> str:
@@ -37,18 +40,21 @@ def inject_app_styles() -> None:
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
         :root {
-          --bg: #faf7f1;
-          --bg-soft: #f3efe7;
-          --surface: rgba(255, 255, 255, 0.55);
-          --ink: #111318;
-          --ink-soft: #303743;
-          --muted: #6f7683;
-          --line: rgba(17, 19, 24, 0.09);
-          --line-strong: rgba(17, 19, 24, 0.14);
-          --blue: #8b97e8;
-          --blue-soft: rgba(139, 151, 232, 0.12);
-          --green-soft: rgba(93, 177, 128, 0.12);
-          --amber-soft: rgba(220, 149, 67, 0.14);
+          --bg: #f2f0eb;
+          --bg-soft: #edebe9;
+          --surface: #ffffff;
+          --ink: #212b26;
+          --ink-soft: #3c4a45;
+          --muted: #77776f;
+          --line: #dfdcd4;
+          --line-strong: #cfccc2;
+          --green: #006241;
+          --house: #1e3932;
+          --gold: #cba258;
+          --blue: #006241; /* 구 악센트 참조 호환 */
+          --blue-soft: rgba(0, 98, 65, 0.10);
+          --green-soft: rgba(0, 98, 65, 0.10);
+          --amber-soft: rgba(203, 162, 88, 0.16);
         }
 
         html, body, [class*="css"], [data-testid="stAppViewContainer"] {
@@ -56,14 +62,15 @@ def inject_app_styles() -> None:
         }
 
         [data-testid="stAppViewContainer"] {
-          background:
-            radial-gradient(circle at top left, rgba(139, 151, 232, 0.10), transparent 26%),
-            linear-gradient(180deg, #fdfbf7 0%, var(--bg) 100%);
+          background: var(--bg);
           color: var(--ink);
         }
 
         [data-testid="stHeader"],
         [data-testid="stToolbar"],
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"],
+        .stAppDeployButton,
         #MainMenu,
         footer {
           display: none !important;
@@ -85,7 +92,7 @@ def inject_app_styles() -> None:
 
         .block-container {
           max-width: 1520px;
-          padding-top: 22px;
+          padding-top: 0;
           padding-bottom: 56px;
           padding-left: 22px;
           padding-right: 22px;
@@ -93,6 +100,43 @@ def inject_app_styles() -> None:
 
         .cat-shell {
           margin-bottom: 14px;
+        }
+
+        /* 스타일/스크립트 주입 전용 markdown 요소가 차지하는 공간 제거 */
+        [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] > style:first-child:last-child),
+        [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] > script:first-child:last-child) {
+          display: none !important;
+        }
+
+        /* ── 하우스 그린 헤더 밴드 (풀블리드) ── */
+        .st-key-mode_logo_toggle {
+          background: var(--house);
+          width: 100vw !important;
+          max-width: none !important;
+          margin-left: calc(50% - 50vw) !important;
+          padding: 20px calc(50vw - 50%) 0 !important;
+          box-shadow: 0 26px 0 var(--house); /* 요소 사이 flex gap을 같은 색으로 메움 */
+        }
+
+        .cat-shell--band {
+          background: var(--house);
+          width: 100vw;
+          margin-left: calc(50% - 50vw);
+          padding: 4px calc(50vw - 50%) 24px;
+          border-bottom: 1px solid rgba(203, 162, 88, 0.55);
+          margin-bottom: 16px;
+        }
+
+        .cat-shell--band .cat-shell__title {
+          color: #fdfcf9;
+          font-size: clamp(21px, 2.2vw, 27px);
+          font-weight: 700;
+          letter-spacing: -0.015em;
+        }
+
+        .cat-shell--band .cat-shell__sub {
+          color: rgba(255, 255, 255, 0.62);
+          letter-spacing: 0.01em;
         }
 
         .cat-shell__eyebrow {
@@ -167,9 +211,9 @@ def inject_app_styles() -> None:
         }
 
         [data-baseweb="tab-highlight"] {
-          background: var(--blue) !important;
+          background: var(--green) !important;
           height: 2px !important;
-          border-radius: 999px !important;
+          border-radius: 0 !important;
         }
 
         .cat-section {
@@ -310,7 +354,7 @@ def inject_app_styles() -> None:
           letter-spacing: -0.01em !important;
           padding-left: 0 !important;
           padding-right: 0 !important;
-          caret-color: var(--blue) !important;
+          caret-color: var(--green) !important;
         }
 
         .stDateInput input,
@@ -323,7 +367,7 @@ def inject_app_styles() -> None:
         }
 
         .stTextInput [data-baseweb="input"]:focus-within {
-          border-bottom-color: var(--blue) !important;
+          border-bottom-color: var(--green) !important;
           border-bottom-width: 1.5px !important;
         }
 
@@ -366,33 +410,47 @@ def inject_app_styles() -> None:
         }
 
         .stButton > button {
-          background: linear-gradient(135deg, #6f8cf1 0%, #7c72e8 100%) !important;
+          background: transparent !important;
+          color: var(--house) !important;
+          border: 1px solid var(--house) !important;
+          border-radius: 3px !important;
+          letter-spacing: 0.04em !important;
+          font-weight: 600 !important;
+        }
+
+        .stButton > button[data-testid="stBaseButton-primary"],
+        .stButton > button[kind="primary"] {
+          background: var(--green) !important;
           color: #ffffff !important;
-          border: 0 !important;
-          border-radius: 14px !important;
+          border: 1px solid var(--green) !important;
+          font-weight: 700 !important;
         }
 
         .stDownloadButton > button {
           background: transparent !important;
-          color: #0066cc !important;
-          border: 1px solid rgba(0, 102, 204, 0.34) !important;
-          border-radius: 12px !important;
+          color: var(--house) !important;
+          border: 1px solid var(--house) !important;
+          border-radius: 3px !important;
+          letter-spacing: 0.04em !important;
         }
 
         .stButton > button:hover,
         .stDownloadButton > button:hover {
-          transform: translateY(-1px);
+          transform: none;
           opacity: 1;
         }
 
-        .stButton > button:hover {
-          background: linear-gradient(135deg, #6785ee 0%, #7669e2 100%) !important;
+        .stButton > button:hover,
+        .stDownloadButton > button:hover {
+          background: var(--bg-soft) !important;
+          color: var(--house) !important;
         }
 
-        .stDownloadButton > button:hover {
-          background: rgba(0, 102, 204, 0.06) !important;
-          border-color: rgba(0, 102, 204, 0.48) !important;
-          color: #0071e3 !important;
+        .stButton > button[data-testid="stBaseButton-primary"]:hover,
+        .stButton > button[kind="primary"]:hover {
+          background: var(--house) !important;
+          border-color: var(--house) !important;
+          color: #ffffff !important;
         }
 
         .stCaption p {
@@ -403,16 +461,16 @@ def inject_app_styles() -> None:
         /* 출력 텍스트 박스 */
         .stTextArea textarea {
           font: 11.5px/1.55 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace !important;
-          color: #303743 !important;
-          background: #faf7f1 !important;
-          border: 1px solid rgba(17,19,24,0.14) !important;
-          border-radius: 12px !important;
+          color: var(--ink-soft) !important;
+          background: #ffffff !important;
+          border: 1px solid var(--line) !important;
+          border-radius: 4px !important;
           resize: none !important;
           box-shadow: none !important;
         }
         .stTextArea textarea:focus {
           box-shadow: none !important;
-          border-color: rgba(17,19,24,0.14) !important;
+          border-color: var(--line) !important;
         }
         .stTextArea [data-baseweb="textarea"] {
           background: transparent !important;
@@ -422,104 +480,100 @@ def inject_app_styles() -> None:
         /* 결과 없을 때 플레이스홀더 */
         .output-placeholder {
           height: 420px;
-          border: 1px solid rgba(17,19,24,0.14);
-          border-radius: 12px;
-          background: #faf7f1;
+          border: 1px solid var(--line);
+          border-radius: 4px;
+          background: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           text-align: center;
-          color: #6f7683;
+          color: var(--muted);
           font-size: 12px;
           line-height: 1.6;
         }
 
-        /* ── 출력 박스 ── */
+        /* ── 출력 박스: 보고 있는 화면 높이에 맞춤 ── */
         .cat-output-shell {
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           width: 100%;
-          height: clamp(440px, 64vh, 620px);
+          height: clamp(320px, calc(100dvh - 400px), 860px);
           min-width: 0;
           overflow: hidden;
-          border: 1px solid rgba(17, 19, 24, 0.14);
-          border-radius: 12px;
-          background: transparent;
+          border: 1px solid var(--line);
+          border-radius: 4px;
+          background: #ffffff;
         }
 
-        /* 터미널 헤더 바 */
+        /* 출력 헤더 바 */
         .cat-output-header {
           box-sizing: border-box;
-          flex: 0 0 40px;
+          flex: 0 0 44px;
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 0 14px;
-          background: #16161e;
-          border-radius: 12px 12px 0 0;
+          gap: 12px;
+          padding: 0 16px;
+          background: #ffffff;
+          border-bottom: 1px solid var(--line);
+          border-radius: 4px 4px 0 0;
         }
-
-        .cat-output-dots {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-shrink: 0;
-        }
-
-        .cat-dot {
-          width: 11px;
-          height: 11px;
-          border-radius: 50%;
-          display: block;
-        }
-
-        .cat-dot--r { background: #ff5f57; }
-        .cat-dot--y { background: #ffbd2e; }
-        .cat-dot--g { background: #28c840; }
 
         .cat-output-label {
           flex: 1;
-          color: rgba(255, 255, 255, 0.28);
-          font: 600 9px/1 "SF Mono", "Cascadia Code", ui-monospace, monospace;
-          letter-spacing: 0.10em;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: var(--muted);
+          font: 600 9.5px/1 "SF Mono", "Cascadia Code", ui-monospace, monospace;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
+        }
+
+        .cat-output-label::before {
+          content: "";
+          display: inline-block;
+          width: 22px;
+          height: 1px;
+          background: var(--gold);
+          flex-shrink: 0;
         }
 
         .cat-copy-button {
           flex-shrink: 0;
-          min-height: 26px;
-          padding: 0 12px;
-          border: 1px solid rgba(255, 255, 255, 0.20);
-          border-radius: 999px;
-          background: transparent;
-          color: rgba(255, 255, 255, 0.55);
+          min-height: 28px;
+          padding: 0 15px;
+          border: 1px solid var(--house);
+          border-radius: 3px;
+          background: var(--house);
+          color: #ffffff;
           font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+          letter-spacing: 0.05em;
           cursor: pointer;
           transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
         }
 
         .cat-copy-button:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.38);
-          color: rgba(255, 255, 255, 0.85);
+          background: var(--green);
+          border-color: var(--green);
+          color: #ffffff;
         }
 
         .cat-copy-button:disabled {
-          opacity: 0.30;
+          opacity: 0.28;
           cursor: default;
         }
 
         .cat-copy-button.is-copied {
-          background: rgba(40, 200, 64, 0.18);
-          border-color: #28c840;
-          color: #28c840;
+          background: rgba(0, 98, 65, 0.10);
+          border-color: var(--green);
+          color: var(--green);
         }
 
         .cat-copy-button.is-failed {
           background: transparent;
-          border-color: rgba(255, 95, 87, 0.5);
-          color: #ff5f57;
+          border-color: rgba(179, 38, 30, 0.5);
+          color: #b3261e;
         }
 
         /* 출력 콘텐츠 영역 */
@@ -530,7 +584,7 @@ def inject_app_styles() -> None:
           overflow: hidden;
           display: flex;
           flex-direction: column;
-          background: #faf7f1;
+          background: #ffffff;
         }
 
         .cat-output-pre,
@@ -545,12 +599,22 @@ def inject_app_styles() -> None:
           white-space: pre-wrap;
           word-break: keep-all;
           overflow-wrap: anywhere;
-          color: #303743;
-          background: #faf7f1;
+          color: var(--ink-soft);
+          background: #ffffff;
         }
 
         .cat-output-pre {
           font: 12px/1.62 "SF Mono", "Cascadia Code", ui-monospace, monospace;
+        }
+
+        .cat-output-pre::-webkit-scrollbar,
+        .cat-output-placeholder::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        .cat-output-pre::-webkit-scrollbar-thumb,
+        .cat-output-placeholder::-webkit-scrollbar-thumb {
+          background: var(--line);
         }
 
         .cat-output-placeholder {
@@ -558,7 +622,7 @@ def inject_app_styles() -> None:
           align-items: center;
           justify-content: center;
           text-align: center;
-          color: #6f7683;
+          color: var(--muted);
           font: 12px/1.6 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
         }
 
@@ -903,15 +967,25 @@ def render_shell_with_toggle(mode: str) -> None:
     이용해 이 버튼만 eyebrow 텍스트처럼 스타일링한다.
     """
     service_label = "CAT STOCK" if mode == "stock" else "CAT COIN"
+
+    now = datetime.now(KST)
+    if now.hour < 12:
+        greeting = "좋은 아침입니다."
+    elif now.hour < 18:
+        greeting = "좋은 오후입니다."
+    else:
+        greeting = "좋은 저녁입니다."
+    date_line = f"{now.year}년 {now.month}월 {now.day}일 {WEEKDAY_KO[now.weekday()]}요일"
+
     title = (
-        "주식 데이터를 정리해드립니다."
+        f"{greeting} 오늘의 데이터를 준비해 두었어요."
         if mode == "stock"
         else "코인 시장을 공부합니다."
     )
     sub = (
-        "시황 브리핑, 개별 종목 분석, 테마 공부 자료를 만들고 바로 복사할 수 있습니다."
+        f"{date_line} — 시황 브리핑 · 개별 종목 · 테마 공부를 만들고 바로 복사하세요."
         if mode == "stock"
-        else "시장 온도, 섹터 흐름, 개별 코인 구조를 대시보드로 공부합니다."
+        else f"{date_line} — 시장 온도, 섹터 흐름, 개별 코인 구조를 대시보드로 공부합니다."
     )
 
     logo_before = ""
@@ -947,25 +1021,25 @@ def render_shell_with_toggle(mode: str) -> None:
             padding: 0 !important;
             min-height: 0 !important;
             height: auto !important;
-            color: var(--muted, #6f7683) !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.02em !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2em !important;
             cursor: pointer !important;
             transition: color 120ms ease !important;
-            font-family: Manrope, Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
             transform: none !important;
             line-height: 1 !important;
         }}
         .st-key-mode_logo_toggle button p {{
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.02em !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2em !important;
             color: inherit !important;
             margin: 0 !important;
         }}
         .st-key-mode_logo_toggle button:hover {{
-            color: var(--ink, #111318) !important;
+            color: #cba258 !important;
             background: transparent !important;
             background-image: none !important;
             box-shadow: none !important;
@@ -990,7 +1064,7 @@ def render_shell_with_toggle(mode: str) -> None:
     sub_html = f'<p class="cat-shell__sub">{escape(sub)}</p>' if sub else ""
     st.markdown(
         f"""
-        <div class="cat-shell" style="margin-top: -18px;">
+        <div class="cat-shell cat-shell--band">
           <h1 class="cat-shell__title">{title_html}</h1>
           {sub_html}
         </div>

@@ -80,4 +80,4 @@ def test_newspaper_button_opens_dedicated_view(monkeypatch) -> None:
         "html": "<html>paper</html>",
         "file_name": "market.html",
     }
-    assert calls == [("button", "신문 보기 →", "market_newspaper_view"), ("rerun",)]
+    assert calls == [("button", "오늘의 신문", "market_newspaper_view"), ("rerun",)]
