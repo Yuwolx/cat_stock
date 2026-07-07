@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAT STOCK — Stripe 스타일 미리보기</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Stripe-inspired: 네이비 잉크 + 일렉트릭 인디고, 상단 그라디언트 메시, 얇은 웨이트, tabular 숫자, 필 버튼 */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --primary:#533afd; --primary-deep:#4434d4; --ink:#0d253d; --ink-2:#273951; --mute:#64748d;
+  --canvas:#fff; --soft:#f6f9fc; --hairline:#e3e8ee; --ruby:#ea2261; --magenta:#f96bee;
+  --sans:"Inter","Noto Sans KR",system-ui,sans-serif;
+  --up:#e0245e; --dn:#0f7c4f;
+}
+body{background:var(--canvas);color:var(--ink-2);font-family:var(--sans);font-weight:300;padding-bottom:80px;}
+.mesh{position:relative;overflow:hidden;padding:0 24px 40px;}
+.mesh::before{content:"";position:absolute;inset:0;height:280px;transform:skewY(-6deg);transform-origin:top left;
+  background:linear-gradient(100deg,#533afd 0%,#7a5cff 28%,#f96bee 62%,#ffd66e 100%);opacity:.92;z-index:-1;}
+.page{max-width:1080px;margin:0 auto;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 0;color:#fff;}
+.logo{font-weight:600;font-size:19px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;}
+.nav a{color:rgba(255,255,255,.9);text-decoration:none;font-size:14.5px;font-weight:500;margin-left:22px;}
+.hero{padding:26px 0 34px;color:#fff;}
+.hero .eyebrow{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:10px;}
+.hero h1{font-size:clamp(30px,4.4vw,46px);font-weight:300;letter-spacing:-.025em;line-height:1.08;max-width:22ch;word-break:keep-all;}
+.hero p{font-size:16px;font-weight:300;max-width:56ch;margin-top:14px;opacity:.94;line-height:1.5;word-break:keep-all;}
+.hero .cta{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:#fff;font-size:15px;font-weight:400;border-radius:9999px;padding:10px 20px;text-decoration:none;margin-top:20px;}
+.statcard{background:var(--canvas);border-radius:12px;box-shadow:0 6px 24px -8px rgba(0,55,112,.25),0 2px 6px -2px rgba(0,55,112,.15);
+  display:grid;grid-template-columns:repeat(6,1fr);overflow:hidden;}
+.stat{padding:18px 18px;border-right:1px solid var(--hairline);}
+.stat:last-child{border-right:0;}
+.stat .k{font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);}
+.stat .v{font-size:19px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--ink);margin-top:5px;}
+.stat .d{font-size:12px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:400;}
+.d.up{color:var(--up);} .d.dn{color:var(--dn);}
+.content{max-width:1080px;margin:36px auto 0;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;}
+.panel{background:var(--canvas);border:1px solid var(--hairline);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
+.panel h2{font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.01em;margin-bottom:4px;}
+.panel .sub{font-size:12.5px;color:var(--mute);margin-bottom:16px;}
+.chart svg{width:100%;height:170px;display:block;}
+.bars .row{display:grid;grid-template-columns:126px 1fr 70px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--soft);}
+.bars .row:last-child{border-bottom:0;}
+.bars .name{font-size:14px;font-weight:400;color:var(--ink);}
+.bars .track{height:8px;background:var(--soft);border-radius:9999px;overflow:hidden;}
+.bars .fill{height:100%;background:linear-gradient(90deg,#533afd,#7a5cff);border-radius:9999px;}
+.bars .val{font-size:13px;font-variant-numeric:tabular-nums;text-align:right;color:var(--ink-2);}
+.flow3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.flowcell{background:var(--soft);border-radius:8px;padding:16px;}
+.flowcell .k{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);}
+.flowcell .v{font-size:22px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:6px;}
+.v.sell{color:var(--up);} .v.buy{color:var(--dn);} .v.neutral{color:var(--ink);}
+.newsrow{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--soft);align-items:baseline;}
+.newsrow:last-child{border-bottom:0;}
+.newsrow a{color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:400;word-break:keep-all;}
+.newsrow a:hover{color:var(--primary);}
+.newsrow .src{flex-shrink:0;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;}
+.sidepanel{background:var(--soft);border-radius:12px;padding:18px 20px;margin-bottom:22px;}
+.sidepanel h3{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:10px;}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(13,37,61,.06);font-size:13.5px;}
+.kv:last-child{border-bottom:0;}
+.kv span{color:var(--ink-2);} .kv b{font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink);}
+.kv b.up{color:var(--up);} .kv b.dn{color:var(--dn);}
+.badge{display:inline-block;font-size:10.5px;font-weight:500;letter-spacing:.04em;color:var(--primary);background:rgba(83,58,253,.08);border-radius:9999px;padding:3px 10px;margin-bottom:8px;}
+.footer{max-width:1080px;margin:44px auto 0;padding:0 24px;font-size:12.5px;color:var(--mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+@media(max-width:840px){.content{grid-template-columns:1fr;}.statcard{grid-template-columns:repeat(3,1fr);}.stat:nth-child(3){border-right:0;}}
+</style>
+</head>
+<body>
+<div class="mesh">
+  <div class="page">
+    <header class="topbar">
+      <div class="logo">🐱 cat_stock</div>
+      <nav class="nav"><a href="#">시황</a><a href="#">종목</a><a href="#">테마</a><a href="#">코인</a></nav>
+    </header>
+    <section class="hero">
+      <div class="eyebrow">Market Briefing · 2026-07-07 월요일</div>
+      <h1>외국인 매도 공세 속,<br>이차전지만 홀로 버텼다</h1>
+      <p>코스피 5거래일 누적 −7.2%. 외국인 6,708억 순매도에도 이차전지 밸류체인으로는 자금이 역행했습니다. 아래 데이터를 그대로 복사해 분석에 쓰세요.</p>
+      <a class="cta" href="#">분석용 텍스트 복사 →</a>
+    </section>
+    <section class="statcard">
+      <div class="stat"><div class="k">코스피</div><div class="v">7,708.82</div><div class="d up">−1.87%</div></div>
+      <div class="stat"><div class="k">코스닥</div><div class="v">845.10</div><div class="d up">−0.23%</div></div>
+      <div class="stat"><div class="k">달러/원</div><div class="v">1,383.2</div><div class="d">+4.1</div></div>
+      <div class="stat"><div class="k">나스닥</div><div class="v">+0.61%</div><div class="d">밤사이</div></div>
+      <div class="stat"><div class="k">미 10년물</div><div class="v">4.18%</div><div class="d">−2bp</div></div>
+      <div class="stat"><div class="k">WTI</div><div class="v">$71.4</div><div class="d">−0.8%</div></div>
+    </section>
+  </div>
+</div>
+
+<div class="content">
+  <main>
+    <div class="panel chart">
+      <h2>지수 흐름</h2>
+      <div class="sub">최근 10거래일 · 첫날 대비 누적 %</div>
+      <svg viewBox="0 0 600 170" preserveAspectRatio="none">
+        <line x1="0" y1="30" x2="600" y2="30" stroke="#e3e8ee"/>
+        <line x1="0" y1="85" x2="600" y2="85" stroke="#e3e8ee"/>
+        <line x1="0" y1="140" x2="600" y2="140" stroke="#e3e8ee"/>
+        <polyline fill="none" stroke="#533afd" stroke-width="2.5" points="0,54 66,44 133,58 200,40 266,52 333,66 400,118 466,96 533,104 600,132"/>
+        <polyline fill="none" stroke="#f96bee" stroke-width="2" points="0,60 66,58 133,64 200,52 266,60 333,70 400,106 466,102 533,112 600,120"/>
+        <circle cx="600" cy="132" r="4" fill="#533afd"/>
+      </svg>
+      <div class="sub" style="margin:8px 0 0;">— 코스피 · — 코스닥 &nbsp;|&nbsp; 5일 누적 −7.2% · 2일 연속 하락</div>
+    </div>
+
+    <div class="panel">
+      <h2>거래대금 상위</h2>
+      <div class="sub">당일 기준 · 단위 조원</div>
+      <div class="bars">
+        <div class="row"><div class="name">삼성전자</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="val">4.2조</div></div>
+        <div class="row"><div class="name">SK하이닉스</div><div class="track"><div class="fill" style="width:74%"></div></div><div class="val">3.1조</div></div>
+        <div class="row"><div class="name">한화에어로</div><div class="track"><div class="fill" style="width:43%"></div></div><div class="val">1.8조</div></div>
+        <div class="row"><div class="name">두산에너빌리티</div><div class="track"><div class="fill" style="width:29%"></div></div><div class="val">1.2조</div></div>
+        <div class="row"><div class="name">현대차</div><div class="track"><div class="fill" style="width:21%"></div></div><div class="val">0.9조</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>투자자별 수급</h2>
+      <div class="sub">당일 순매수 · 억원</div>
+      <div class="flow3">
+        <div class="flowcell"><div class="k">외국인</div><div class="v sell">−6,708</div></div>
+        <div class="flowcell"><div class="k">기관</div><div class="v buy">+2,551</div></div>
+        <div class="flowcell"><div class="k">개인</div><div class="v neutral">+4,043</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>주요 뉴스</h2>
+      <div class="sub">네이버 금융 · 실시간</div>
+      <div class="newsrow"><a href="#">삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도</a><span class="src">이데일리 17:15</span></div>
+      <div class="newsrow"><a href="#">LFP 수주 랠리에 이차전지 소재주 일제히 강세</a><span class="src">한국경제 16:40</span></div>
+      <div class="newsrow"><a href="#">원/달러 환율 1,380원대 재진입… 수출주 방어력 주목</a><span class="src">인포맥스 15:58</span></div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="sidepanel">
+      <h3>Global Markets</h3>
+      <div class="kv"><span>다우</span><b class="up">+0.36%</b></div>
+      <div class="kv"><span>S&amp;P500</span><b class="up">+0.74%</b></div>
+      <div class="kv"><span>WTI</span><b>$71.4</b></div>
+      <div class="kv"><span>상해</span><b class="dn">−0.28%</b></div>
+    </div>
+    <div class="sidepanel">
+      <h3>Sector · Theme</h3>
+      <div class="kv"><span>이차전지</span><b class="up">+3.41%</b></div>
+      <div class="kv"><span>조선</span><b class="up">+1.87%</b></div>
+      <div class="kv"><span>반도체</span><b class="dn">−2.30%</b></div>
+      <div class="kv"><span>바이오</span><b class="dn">−1.12%</b></div>
+    </div>
+    <div class="sidepanel" style="background:#fff;border:1px solid var(--hairline);">
+      <span class="badge">AI COLUMN</span>
+      <div style="font-size:14px;font-weight:500;color:var(--ink);line-height:1.45;word-break:keep-all;">외국인 매도는 반도체에 집중됐고, 기관은 이차전지·조선으로 순환했다. 수급의 결이 갈린 하루.</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:8px;">CAT STOCK AI Analysis</div>
+    </div>
+  </aside>
+</div>
+
+<footer class="footer"><span>cat_stock — Korean Market Intelligence</span><span>참고: 상승=빨강, 하락=초록 (한국 시장 관례)</span></footer>
+</body>
+</html>

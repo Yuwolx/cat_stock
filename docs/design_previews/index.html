@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAT STOCK 디자인 후보 미리보기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Noto Sans KR",sans-serif;background:#f5f5f3;color:#222;padding:48px 24px;}
+.wrap{max-width:900px;margin:0 auto;}
+h1{font-size:26px;margin-bottom:6px;}
+.sub{color:#777;font-size:14px;margin-bottom:32px;}
+.card{background:#fff;border:1px solid #e2e2de;border-radius:10px;padding:24px 26px;margin-bottom:18px;display:block;text-decoration:none;color:inherit;transition:box-shadow .15s;}
+.card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);}
+.card h2{font-size:19px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.card p{font-size:14px;line-height:1.65;color:#555;word-break:keep-all;}
+.fit{margin-top:10px;font-size:13px;color:#333;}
+.fit b{color:#111;}
+.note{margin-top:28px;font-size:13px;color:#888;line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐱 CAT STOCK 디자인 후보 3종</h1>
+  <div class="sub">awesome-design-md 레포(74개 브랜드)에서 서비스 성격에 맞춰 추린 후보. 각 카드를 클릭하면 같은 시황 브리핑 데이터를 해당 스타일로 렌더링한 목업이 열립니다. 아직 앱에는 적용하지 않았습니다.</div>
+
+  <a class="card" href="wired.html">
+    <h2>1. Wired — 정제된 흑백 에디토리얼 <span class="chip" style="background:#000;color:#fff;">신문 컨셉의 진화</span></h2>
+    <p>흑백 듀엣 + 세리프 디스플레이 + 헤어라인 + 사각 지오메트리. 장식을 다 걷어내고 타이포그래피가 전부인 잡지 문법.</p>
+    <div class="fit"><b>어울리는 이유:</b> 지금의 "신문(DISPATCH)" 정체성을 버리지 않고 세련되게 다듬는 방향. 데이터 밀도가 높아도 시끄럽지 않음. <b>리스크:</b> 무채색이라 "선물" 특유의 따뜻함은 약해짐.</div>
+  </a>
+
+  <a class="card" href="posthog.html">
+    <h2>2. PostHog — 크림 캔버스 + 고양이 마지널리아 <span class="chip" style="background:#f7a501;color:#23251d;">선물 감성 최대</span></h2>
+    <p>따뜻한 크림 배경, 흰 카드 + 올리브 보더, 옐로 CTA, 그리고 페이지 곳곳의 마스코트. PostHog의 고슴도치 자리를 고양이가 대신함.</p>
+    <div class="fit"><b>어울리는 이유:</b> cat_stock의 고양이 정체성과 "여자친구 선물"이라는 본질에 가장 밀착. 데이터 카드는 진지하고 캐릭터는 다정한 대비가 이 서비스의 목소리와 같음. <b>리스크:</b> 금융 서비스로서의 긴장감은 셋 중 가장 낮음.</div>
+  </a>
+
+  <a class="card" href="stripe.html">
+    <h2>3. Stripe — 핀테크 인프라 무드 <span class="chip" style="background:#533afd;color:#fff;">프로덕트 신뢰감</span></h2>
+    <p>네이비 잉크 + 일렉트릭 인디고, 상단 그라디언트 메시, 얇은 웨이트 타이포, tabular 숫자, 필 버튼. 돈을 다루는 서비스의 표준 문법.</p>
+    <div class="fit"><b>어울리는 이유:</b> "다른 유저가 생길 수도 있는" 프로덕트로 키울 때 가장 확장성 있는 얼굴. 숫자 가독성(tabular figures)이 금융 데이터와 찰떡. <b>리스크:</b> 개성(신문·고양이)이 가장 많이 희석됨.</div>
+  </a>
+
+  <div class="note">
+    비교 포인트: 세 목업 모두 동일한 mock 데이터(2026-07-07 시황)를 사용 · 한국 관례(상승=빨강)는 wired/stripe 목업 하단 참고 · 실제 적용 시 Plotly 차트 테마와 Streamlit 앱 셸도 같은 토큰으로 맞추게 됩니다.<br>
+    원본 디자인 시스템: <code>Desktop/권혁준/awesome-design-md/design-md/{wired, posthog, stripe}/DESIGN.md</code>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAT STOCK — PostHog 스타일 미리보기</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* PostHog-inspired: 따뜻한 크림 캔버스, 마스코트(고양이) 마지널리아, 흰 카드 + 올리브 보더, 옐로 CTA */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --primary:#f7a501; --on-primary:#23251d; --ink:#23251d; --body:#4d4f46; --mute:#6c6e63;
+  --hairline:#bfc1b7; --hairline-soft:#dcdfd2; --canvas:#eeefe9; --soft:#e5e7e0; --card:#fff;
+  --red:#cd4239; --red-soft:#f7d6d3; --green:#2c8c66; --green-soft:#d9eddf; --blue:#2c84e0; --blue-soft:#dceaf6;
+  --sans:"IBM Plex Sans KR",-apple-system,sans-serif; --mono:"IBM Plex Mono",monospace;
+}
+body{background:var(--canvas);color:var(--body);font-family:var(--sans);padding:0 20px 80px;}
+.page{max-width:1100px;margin:0 auto;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 0;}
+.logo{font-weight:700;font-size:20px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.logo .cat{font-size:26px;}
+.nav a{color:var(--body);text-decoration:none;font-size:15px;font-weight:600;margin-left:20px;}
+.nav a.active{color:var(--ink);border-bottom:2px solid var(--primary);padding-bottom:3px;}
+.hero{display:flex;align-items:flex-start;gap:20px;background:var(--card);border:1px solid var(--hairline);border-radius:6px;padding:24px;margin-bottom:20px;position:relative;}
+.hero .mascot{font-size:52px;line-height:1;}
+.hero h1{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--ink);word-break:keep-all;margin-bottom:8px;}
+.hero p{font-size:15px;line-height:1.71;max-width:64ch;word-break:keep-all;}
+.hero .date{font-family:var(--mono);font-size:12px;color:var(--mute);text-transform:uppercase;margin-bottom:6px;}
+.hero .cta{position:absolute;right:24px;bottom:20px;background:var(--primary);color:var(--on-primary);font-size:14px;font-weight:700;border:1.5px solid #b17816;border-radius:6px;padding:9px 16px;text-decoration:none;box-shadow:0 2px 0 #b17816;}
+.statrow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
+.stat{background:var(--card);border:1px solid var(--hairline);border-radius:6px;padding:12px 14px;}
+.stat .k{font-family:var(--mono);font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;}
+.stat .v{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink);margin-top:3px;font-variant-numeric:tabular-nums;}
+.stat.dn .v{color:var(--red);} .stat.up .v{color:var(--green);}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;}
+.card{background:var(--card);border:1px solid var(--hairline);border-radius:6px;padding:18px 20px;margin-bottom:20px;}
+.card h2{font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.card h2 .emoji{font-size:18px;}
+.chart svg{width:100%;height:160px;display:block;}
+.legend{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-top:8px;}
+.legend .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+.bars .row{display:grid;grid-template-columns:120px 1fr 66px;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--hairline-soft);}
+.bars .row:last-child{border-bottom:0;}
+.bars .name{font-size:14px;font-weight:600;color:var(--ink);}
+.bars .track{height:16px;background:var(--soft);border-radius:4px;overflow:hidden;}
+.bars .fill{height:100%;background:var(--blue);border-radius:4px;}
+.bars .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--body);}
+.flow3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pill{border-radius:6px;padding:14px;text-align:center;border:1px solid var(--hairline-soft);}
+.pill .k{font-size:12px;font-weight:600;color:var(--mute);}
+.pill .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:4px;}
+.pill.sell{background:var(--red-soft);} .pill.sell .v{color:var(--red);}
+.pill.buy{background:var(--green-soft);} .pill.buy .v{color:var(--green);}
+.pill.neutral{background:var(--blue-soft);} .pill.neutral .v{color:var(--blue);}
+.newsitem{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--hairline-soft);align-items:baseline;}
+.newsitem:last-child{border-bottom:0;}
+.newsitem .tag{flex-shrink:0;font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--soft);color:var(--mute);}
+.newsitem a{color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:600;word-break:keep-all;}
+.newsitem a:hover{color:#1d4ed8;text-decoration:underline;}
+.sidecard{background:var(--card);border:1px solid var(--hairline);border-radius:6px;padding:16px 18px;margin-bottom:20px;}
+.sidecard h3{font-size:13px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.03em;margin-bottom:10px;display:flex;gap:6px;align-items:center;}
+.kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--hairline-soft);font-size:13.5px;}
+.kv:last-child{border-bottom:0;}
+.kv b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;}
+.kv b.up{color:var(--green);} .kv b.dn{color:var(--red);}
+.catnote{background:var(--card);border:1.5px dashed var(--hairline);border-radius:6px;padding:14px 16px;font-size:13.5px;display:flex;gap:10px;align-items:center;}
+.catnote .cat{font-size:30px;}
+.footer{margin-top:40px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--mute);}
+@media(max-width:820px){.grid{grid-template-columns:1fr;}.statrow{grid-template-columns:repeat(3,1fr);}.hero .cta{position:static;display:inline-block;margin-top:12px;}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="logo"><span class="cat">🐱</span> cat_stock</div>
+    <nav class="nav"><a href="#" class="active">시황</a><a href="#">종목</a><a href="#">테마</a><a href="#">코인</a></nav>
+  </header>
+
+  <section class="hero">
+    <div class="mascot">🐱‍💻</div>
+    <div>
+      <div class="date">Market Briefing · 2026-07-07 (월)</div>
+      <h1>외국인 매도 공세 속, 이차전지만 홀로 버텼다</h1>
+      <p>코스피가 5거래일 누적 7.2% 밀리는 동안 외국인은 6,708억을 순매도했어요. 그런데 이차전지 밸류체인으로는 오히려 자금이 들어왔습니다. 오늘 브리핑에서 눈여겨볼 부분이에요.</p>
+    </div>
+    <a class="cta" href="#">분석용 텍스트 복사</a>
+  </section>
+
+  <section class="statrow">
+    <div class="stat dn"><div class="k">코스피</div><div class="v">7,708.82</div></div>
+    <div class="stat dn"><div class="k">등락</div><div class="v">−1.87%</div></div>
+    <div class="stat dn"><div class="k">코스닥</div><div class="v">845.10</div></div>
+    <div class="stat"><div class="k">달러/원</div><div class="v">1,383.2</div></div>
+    <div class="stat up"><div class="k">나스닥</div><div class="v">+0.61%</div></div>
+    <div class="stat"><div class="k">미10년물</div><div class="v">4.18%</div></div>
+  </section>
+
+  <div class="grid">
+    <main>
+      <div class="card chart">
+        <h2><span class="emoji">📉</span> 지수 흐름 — 최근 10거래일</h2>
+        <svg viewBox="0 0 600 160" preserveAspectRatio="none">
+          <line x1="0" y1="28" x2="600" y2="28" stroke="#dcdfd2"/>
+          <line x1="0" y1="80" x2="600" y2="80" stroke="#dcdfd2"/>
+          <line x1="0" y1="132" x2="600" y2="132" stroke="#dcdfd2"/>
+          <polyline fill="none" stroke="#2c84e0" stroke-width="2.5" points="0,50 66,41 133,54 200,37 266,48 333,62 400,112 466,90 533,98 600,126"/>
+          <polyline fill="none" stroke="#7c44a6" stroke-width="2" stroke-dasharray="5 4" points="0,56 66,54 133,60 200,48 266,56 333,66 400,100 466,96 533,106 600,114"/>
+          <circle cx="600" cy="126" r="4.5" fill="#2c84e0"/>
+        </svg>
+        <div class="legend"><span class="dot" style="background:#2c84e0"></span>코스피 &nbsp; <span class="dot" style="background:#7c44a6"></span>코스닥 &nbsp;·&nbsp; 5일 누적 −7.2% · 2일 연속 하락</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="emoji">💰</span> 거래대금 상위</h2>
+        <div class="bars">
+          <div class="row"><div class="name">삼성전자</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="val">4.2조</div></div>
+          <div class="row"><div class="name">SK하이닉스</div><div class="track"><div class="fill" style="width:74%"></div></div><div class="val">3.1조</div></div>
+          <div class="row"><div class="name">한화에어로</div><div class="track"><div class="fill" style="width:43%"></div></div><div class="val">1.8조</div></div>
+          <div class="row"><div class="name">두산에너빌리티</div><div class="track"><div class="fill" style="width:29%"></div></div><div class="val">1.2조</div></div>
+          <div class="row"><div class="name">현대차</div><div class="track"><div class="fill" style="width:21%"></div></div><div class="val">0.9조</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="emoji">🔄</span> 투자자별 수급</h2>
+        <div class="flow3">
+          <div class="pill sell"><div class="k">외국인</div><div class="v">−6,708억</div></div>
+          <div class="pill buy"><div class="k">기관</div><div class="v">+2,551억</div></div>
+          <div class="pill neutral"><div class="k">개인</div><div class="v">+4,043억</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="emoji">📰</span> 주요 뉴스</h2>
+        <div class="newsitem"><span class="tag">반도체</span><a href="#">삼성전자, 3분기 잠정 실적 앞두고 외국인 12일 연속 순매도</a></div>
+        <div class="newsitem"><span class="tag">이차전지</span><a href="#">LFP 수주 랠리에 이차전지 소재주 일제히 강세</a></div>
+        <div class="newsitem"><span class="tag">매크로</span><a href="#">원/달러 환율 1,380원대 재진입… 수출주 방어력 주목</a></div>
+      </div>
+
+      <div class="catnote"><span class="cat">🐈</span> <span><b>냥이 메모</b> — 외국인 수급 항목이 오늘 수집에 실패하면 여기에 안내가 떠요. 텍스트에도 같은 내용이 들어가서 ChatGPT가 추측하지 않아요.</span></div>
+    </main>
+
+    <aside>
+      <div class="sidecard">
+        <h3>🌍 Global Markets</h3>
+        <div class="kv"><span>다우</span><b class="up">+0.36%</b></div>
+        <div class="kv"><span>S&amp;P500</span><b class="up">+0.74%</b></div>
+        <div class="kv"><span>WTI</span><b>$71.4</b></div>
+        <div class="kv"><span>상해</span><b class="dn">−0.28%</b></div>
+      </div>
+      <div class="sidecard">
+        <h3>🏷️ Sector · Theme</h3>
+        <div class="kv"><span>이차전지</span><b class="up">+3.41%</b></div>
+        <div class="kv"><span>조선</span><b class="up">+1.87%</b></div>
+        <div class="kv"><span>반도체</span><b class="dn">−2.30%</b></div>
+        <div class="kv"><span>바이오</span><b class="dn">−1.12%</b></div>
+      </div>
+      <div class="sidecard">
+        <h3>🛒 외국인 순매수 상위</h3>
+        <div class="kv"><span>에코프로비엠</span><b class="up">+1,204억</b></div>
+        <div class="kv"><span>HD현대중공업</span><b class="up">+887억</b></div>
+        <div class="kv"><span>삼성바이오</span><b class="up">+512억</b></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="footer">cat_stock 🐾 Korean Market Intelligence — made with love</footer>
+</div>
+</body>
+</html>
