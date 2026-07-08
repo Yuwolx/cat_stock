@@ -6,8 +6,10 @@ name: collector-health-check
 
 on:
   schedule:
-    # UTC 22:30 = 한국 시간 07:30, 일-목(UTC) = 월-금(KST) 아침
+    # UTC 22:30 = 한국 시간 07:30, 일-목(UTC) = 월-금(KST) 아침 (장전 — 순위류는 스킵)
     - cron: "30 22 * * 0-4"
+    # UTC 00:15 = 한국 시간 09:15, 월-금 개장 직후 — 일중 순위 수집기까지 전체 점검
+    - cron: "15 0 * * 1-5"
   workflow_dispatch:
 
 jobs:

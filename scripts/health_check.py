@@ -38,9 +38,17 @@ from src.collectors.stock.naver_stock_collector import (
     get_stock_basics,
     get_stock_investor_flows,
 )
-from src.utils.date_utils import resolve_stock_trading_date
+from src.utils.date_utils import KST, resolve_stock_trading_date
 
 CHECK_STOCK_NAME = "삼성전자"
+
+
+def _is_pre_open() -> bool:
+    """KST 09:05 이전 — 네이버의 일중 순위 페이지는 장전에 리셋되어 비어 있을 수 있다."""
+    from datetime import datetime
+
+    now = datetime.now(KST)
+    return now.hour < 9 or (now.hour == 9 and now.minute < 5)
 
 
 def _is_empty(value: object) -> bool:
@@ -59,23 +67,25 @@ def main() -> int:
     target_date = resolve_stock_trading_date()["target_date"]
     print(f"점검 기준일: {target_date}\n")
 
+    # (이름, 실행, 장전 빈 결과 허용 여부) — 일중 순위류는 개장 전 리셋으로 비어 있을 수 있다
     checks = [
-        ("시황: 한국 지수 (KRX)", lambda: get_market_indices(target_date, use_mock_data=False)),
-        ("시황: 외국인/기관 수급 (KRX)", lambda: get_investor_flows(target_date, use_mock_data=False)),
-        ("시황: 파생/프로그램 (KRX)", lambda: get_derivatives_snapshot(target_date, use_mock_data=False)),
-        ("시황: 거래대금 상위 (네이버)", lambda: get_trading_value_leaders(target_date, use_mock_data=False)),
-        ("시황: 테마/그룹 등락 (네이버)", lambda: get_sector_changes(use_mock_data=False)),
-        ("시황: 시장 이벤트 (네이버)", lambda: get_market_event_lists(target_date, use_mock_data=False)),
-        ("시황: 시장 뉴스 (네이버)", lambda: get_market_news(use_mock_data=False)),
-        ("시황: 증권사 리포트 (네이버)", lambda: get_market_reports(use_mock_data=False)),
-        ("시황: 글로벌 지표", lambda: get_global_macro_snapshot(target_date, use_mock_data=False)),
-        ("시황: 지수 흐름 (네이버)", lambda: get_korean_index_trend(target_date, use_mock_data=False)),
-        (f"종목: 기본 정보 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_basics(CHECK_STOCK_NAME, use_mock_data=False)),
-        (f"종목: 수급/뉴스 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_investor_flows(CHECK_STOCK_NAME, use_mock_data=False)),
+        ("시황: 한국 지수 (KRX)", lambda: get_market_indices(target_date, use_mock_data=False), False),
+        ("시황: 외국인/기관 수급 (KRX)", lambda: get_investor_flows(target_date, use_mock_data=False), True),
+        ("시황: 파생/프로그램 (KRX)", lambda: get_derivatives_snapshot(target_date, use_mock_data=False), True),
+        ("시황: 거래대금 상위 (네이버)", lambda: get_trading_value_leaders(target_date, use_mock_data=False), True),
+        ("시황: 테마/그룹 등락 (네이버)", lambda: get_sector_changes(use_mock_data=False), True),
+        ("시황: 시장 이벤트 (네이버)", lambda: get_market_event_lists(target_date, use_mock_data=False), True),
+        ("시황: 시장 뉴스 (네이버)", lambda: get_market_news(use_mock_data=False), False),
+        ("시황: 증권사 리포트 (네이버)", lambda: get_market_reports(use_mock_data=False), False),
+        ("시황: 글로벌 지표", lambda: get_global_macro_snapshot(target_date, use_mock_data=False), False),
+        ("시황: 지수 흐름 (네이버)", lambda: get_korean_index_trend(target_date, use_mock_data=False), False),
+        (f"종목: 기본 정보 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_basics(CHECK_STOCK_NAME, use_mock_data=False), False),
+        (f"종목: 수급/뉴스 (네이버, {CHECK_STOCK_NAME})", lambda: get_stock_investor_flows(CHECK_STOCK_NAME, use_mock_data=False), False),
     ]
 
+    pre_open = _is_pre_open()
     failures: list[str] = []
-    for name, run in checks:
+    for name, run, empty_ok_pre_open in checks:
         started = time.monotonic()
         try:
             data = run()
@@ -87,8 +97,11 @@ def main() -> int:
 
         elapsed = time.monotonic() - started
         if _is_empty(data):
-            print(f"[비어있음] {name} ({elapsed:.1f}s)")
-            failures.append(f"{name}: 빈 결과")
+            if pre_open and empty_ok_pre_open:
+                print(f"[장전-스킵] {name} ({elapsed:.1f}s) — 개장 전 순위 리셋으로 빈 결과, 09:15 재점검에서 확인")
+            else:
+                print(f"[비어있음] {name} ({elapsed:.1f}s)")
+                failures.append(f"{name}: 빈 결과")
         else:
             print(f"[정상]     {name} ({elapsed:.1f}s)")
 
